@@ -25,11 +25,21 @@ export function PageTitle({ children, subtitle }: { children: ReactNode; subtitl
   )
 }
 
-export function EmptyState({ title, description }: { title: string; description?: string }) {
+export function EmptyState({
+  title,
+  description,
+  action,
+}: {
+  title: string
+  description?: string
+  /** Um estado vazio que diz o que fazer deve oferecer o caminho para fazer. */
+  action?: ReactNode
+}) {
   return (
     <Card className="text-center">
       <p className="font-medium text-slate-700">{title}</p>
       {description ? <p className="mt-1 text-sm text-slate-500">{description}</p> : null}
+      {action ? <div className="mt-3 flex justify-center">{action}</div> : null}
     </Card>
   )
 }

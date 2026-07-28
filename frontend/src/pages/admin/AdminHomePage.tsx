@@ -25,10 +25,29 @@ export function AdminHomePage() {
       {!data.seasonId ? (
         <EmptyState
           title="Nenhuma temporada ativa"
-          description="Crie e ative uma temporada para comecar a publicar rodadas."
+          description="A temporada agrupa as rodadas e define o ranking premiado. E o primeiro passo."
+          action={
+            <Link
+              to="/admin/temporadas"
+              className="inline-flex min-h-11 items-center rounded-xl bg-brand-600 px-4 text-sm font-semibold text-white"
+            >
+              Criar temporada
+            </Link>
+          }
         />
       ) : data.weeks.length === 0 ? (
-        <EmptyState title="Nenhuma rodada publicada nesta temporada" />
+        <EmptyState
+          title="Nenhuma rodada publicada nesta temporada"
+          description="Crie o rascunho da primeira semana, cadastre a licao e as perguntas."
+          action={
+            <Link
+              to="/admin/rodadas"
+              className="inline-flex min-h-11 items-center rounded-xl bg-brand-600 px-4 text-sm font-semibold text-white"
+            >
+              Criar rodada
+            </Link>
+          }
+        />
       ) : (
         <Card>
           <h2 className="mb-3 text-sm font-semibold text-slate-700">Participacao por semana</h2>

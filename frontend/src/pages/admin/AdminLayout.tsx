@@ -1,9 +1,13 @@
 import { NavLink, Outlet } from 'react-router-dom'
 
+// A ordem segue o fluxo real de trabalho: temporada -> rodada -> pessoas.
+
+// Rotulos curtos: as quatro abas precisam caber lado a lado em uma tela de 360 px,
+// senao as ultimas ficam escondidas fora do campo de visao.
 const tabs = [
-  { to: '/admin', label: 'Visao geral', end: true },
-  { to: '/admin/rodadas', label: 'Rodadas', end: false },
+  { to: '/admin', label: 'Geral', end: true },
   { to: '/admin/temporadas', label: 'Temporadas', end: false },
+  { to: '/admin/rodadas', label: 'Rodadas', end: false },
   { to: '/admin/participantes', label: 'Pessoas', end: false },
 ]
 
