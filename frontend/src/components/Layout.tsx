@@ -1,15 +1,16 @@
 import { NavLink, Outlet, useLocation } from 'react-router-dom'
 import { useSession } from '../auth/SessionContext'
+import { LogoMark } from './Logo'
 import { Avatar } from './ui'
 
 const items = [
-  { to: '/', label: 'Inicio', icon: '🏠', end: true },
+  { to: '/', label: 'Início', icon: '🏠', end: true },
   { to: '/ranking', label: 'Ranking', icon: '🏆', end: false },
-  { to: '/historico', label: 'Historico', icon: '📅', end: false },
+  { to: '/historico', label: 'Histórico', icon: '📅', end: false },
   { to: '/perfil', label: 'Perfil', icon: '👤', end: false },
 ]
 
-/** Layout mobile-first: cabecalho enxuto e navegação inferior ao alcance do polegar. */
+/** Layout mobile-first: cabeçalho enxuto e navegação inferior ao alcance do polegar. */
 export function Layout() {
   const { me } = useSession()
   const location = useLocation()
@@ -22,9 +23,14 @@ export function Layout() {
       {!immersive && (
         <header className="sticky top-0 z-10 border-b border-slate-200 bg-white/95 backdrop-blur">
           <div className="flex items-center justify-between px-4 py-3">
-            <div>
-              <p className="text-xs font-medium uppercase tracking-wide text-slate-500">Desafio semanal</p>
-              <p className="text-base font-bold text-slate-900">{me?.gcName ?? 'GC Domus'}</p>
+            <div className="flex items-center gap-3">
+              <LogoMark size={38} />
+              <div>
+                <p className="text-xs font-medium uppercase tracking-wide text-slate-500">
+                  Desafio semanal
+                </p>
+                <p className="text-base font-bold text-slate-900">{me?.gcName ?? 'GC Domus'}</p>
+              </div>
             </div>
 
             <div className="flex items-center gap-3">

@@ -1,5 +1,32 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="GC Domus">
-  <rect width="512" height="512" rx="112" fill="#0f172a"/>
-  <path d="M256 96 96 216v200h120V296h80v120h120V216z" fill="none" stroke="#38bdf8" stroke-width="28" stroke-linejoin="round"/>
-  <circle cx="256" cy="214" r="30" fill="#facc15"/>
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Icone quadrado para favicon e PWA. Usa o mesmo telhado e gradiente do logo, mas mantem
+  apenas "gc" no lugar do lockup completo: "domus" ficaria ilegivel a 32 px.
+-->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="gc domus">
+
+  <defs>
+    <linearGradient id="g" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#00c8a0"/>
+      <stop offset="50%" stop-color="#ff6b4a"/>
+      <stop offset="100%" stop-color="#8a00d4"/>
+    </linearGradient>
+  </defs>
+
+  <rect width="512" height="512" rx="112" fill="#000"/>
+
+  <!-- Telhado -->
+  <g stroke="url(#g)" stroke-width="24" fill="none" stroke-linecap="round">
+    <polyline points="96,250 256,140 416,250"/>
+    <polyline points="96,296 256,186 416,296"/>
+    <line x1="96" y1="250" x2="96" y2="296"/>
+    <line x1="416" y1="250" x2="416" y2="296"/>
+  </g>
+
+  <text x="256" y="268" text-anchor="middle"
+        font-family="Arial, Helvetica, sans-serif" font-size="112" font-weight="700" fill="#ffffff">gc</text>
+
+  <text x="256" y="420" text-anchor="middle"
+        font-family="Arial, Helvetica, sans-serif" font-size="76" font-weight="700" fill="#ffffff">domus</text>
+
 </svg>

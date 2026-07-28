@@ -1,13 +1,13 @@
 {
-  "name": "GC Domus - Desafios",
-  "short_name": "GC Domus",
+  "name": "gc domus - Desafios",
+  "short_name": "gc domus",
   "description": "Desafios semanais das lições do GC Domus",
   "start_url": "/",
   "scope": "/",
   "display": "standalone",
   "orientation": "portrait",
-  "background_color": "#0f172a",
-  "theme_color": "#0f172a",
+  "background_color": "#000000",
+  "theme_color": "#000000",
   "lang": "pt-BR",
   "icons": [
     {

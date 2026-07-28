@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 420" role="img" aria-label="gc domus">
+
+  <defs>
+    <linearGradient id="g" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#00c8a0"/>
+      <stop offset="50%" stop-color="#ff6b4a"/>
+      <stop offset="100%" stop-color="#8a00d4"/>
+    </linearGradient>
+  </defs>
+
+  <rect width="100%" height="100%" fill="#000"/>
+
+  <!-- Telhado -->
+  <g stroke="url(#g)" stroke-width="10" fill="none" stroke-linecap="round">
+    <polyline points="160,165 450,70 740,165"/>
+    <polyline points="160,195 450,100 740,195"/>
+    <line x1="160" y1="165" x2="160" y2="195"/>
+    <line x1="740" y1="165" x2="740" y2="195"/>
+  </g>
+
+  <text x="450" y="175" text-anchor="middle"
+        font-family="Arial, Helvetica, sans-serif" font-size="70" font-weight="700" fill="#ffffff">gc</text>
+
+  <text x="450" y="305" text-anchor="middle"
+        font-family="Arial, Helvetica, sans-serif" font-size="145" font-weight="700" fill="#ffffff">domus</text>
+
+</svg>
