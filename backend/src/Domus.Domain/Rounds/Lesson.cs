@@ -3,7 +3,7 @@ using Domus.Domain.Common;
 namespace Domus.Domain.Rounds;
 
 /// <summary>
-/// Conteudo estudado na semana. Owned type da rodada (colunas na própria tabela Rounds).
+/// Conteúdo estudado na semana. Owned type da rodada (colunas na própria tabela Rounds).
 /// Pode estar vazio enquanto a rodada e rascunho; e obrigatorio para publicar (RN-08).
 /// </summary>
 public sealed class Lesson
@@ -36,8 +36,8 @@ public sealed class Lesson
     public static Lesson Create(string title, string scriptureReference, string content, string? externalUrl) =>
         new(
             Guard.Text(title, "Titulo da licao", 160),
-            Guard.Text(scriptureReference, "Referencia biblica", 160),
-            Guard.Text(content, "Conteudo da licao", 20_000),
+            Guard.Text(scriptureReference, "Referência  bíblica", 160),
+            Guard.Text(content, "Conteúdo da licao", 20_000),
             Guard.OptionalAbsoluteUrl(externalUrl, "Link da licao", 500));
 
     public bool IsComplete =>

@@ -38,7 +38,7 @@ public sealed record MyAttemptSummaryDto(
     long? TotalTimeMs,
     int? Position);
 
-/// <summary>Licao da semana.</summary>
+/// <summary>Lição da semana.</summary>
 public sealed record LessonDto(string Title, string ScriptureReference, string Content, string? ExternalUrl);
 
 /// <summary>Pergunta entregue durante a tentativa. Sem qualquer indicacao de alternativa correta (RNF-02).</summary>

@@ -115,7 +115,7 @@ function LessonEditor({
 
   return (
     <Card>
-      <h2 className="mb-3 text-sm font-semibold text-slate-700">Licao da semana</h2>
+      <h2 className="mb-3 text-sm font-semibold text-slate-700">Lição da semana</h2>
 
       {!editable ? (
         <div>
@@ -139,7 +139,7 @@ function LessonEditor({
             <Input required maxLength={160} value={title} onChange={(event) => setTitle(event.target.value)} />
           </Field>
 
-          <Field label="Referencia biblica">
+          <Field label="Referência  bíblica">
             <Input
               required
               maxLength={160}
@@ -149,7 +149,7 @@ function LessonEditor({
             />
           </Field>
 
-          <Field label="Conteudo" hint="Aceita markdown simples: ## titulo, **negrito**, listas e links.">
+          <Field label="Conteúdo" hint="Aceita markdown simples: ## titulo, **negrito**, listas e links.">
             <Textarea
               required
               rows={8}

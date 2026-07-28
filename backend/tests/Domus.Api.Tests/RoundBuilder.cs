@@ -79,9 +79,9 @@ internal static class RoundBuilder
     {
         var lesson = await admin.PutAsJsonAsync($"/api/admin/rounds/{roundId}/lesson", new
         {
-            title = "Licao de teste",
+            title = "Lição de teste",
             scriptureReference = "Joao 1.1",
-            content = "Conteudo da licao de teste.",
+            content = "Conteúdo da licao de teste.",
             externalUrl = (string?)null
         });
         lesson.EnsureSuccessStatusCode();

@@ -201,7 +201,7 @@ public sealed class Round : Entity
         var problems = new List<string>();
 
         if (IsPublished) problems.Add("A rodada ja esta publicada.");
-        if (!Lesson.IsComplete) problems.Add("Preencha titulo, referencia biblica e conteúdo da licao.");
+        if (!Lesson.IsComplete) problems.Add("Preencha titulo, referencia bíblica e conteúdo da licao.");
         if (_questions.Count == 0) problems.Add("Cadastre ao menos uma pergunta.");
         if (ClosesAt <= OpensAt) problems.Add("O fechamento deve ser posterior a abertura.");
 

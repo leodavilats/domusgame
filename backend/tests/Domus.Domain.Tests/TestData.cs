@@ -34,7 +34,7 @@ internal static class TestData
             scoring: scoring ?? RoundScoringSettings.Default,
             now: (opensAt ?? Sunday13h).AddDays(-1));
 
-        round.SetLesson(Lesson.Create("A graca de Deus", "Efesios 2.1-10", "Conteudo da licao.", null));
+        round.SetLesson(Lesson.Create("A graca de Deus", "Efesios 2.1-10", "Conteúdo da licao.", null));
 
         for (var i = 1; i <= questionCount; i++)
         {
