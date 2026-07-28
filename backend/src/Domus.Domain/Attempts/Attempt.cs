@@ -89,7 +89,7 @@ public sealed class Attempt : Entity
 
     public static Attempt Start(Round round, Guid participantId, DateTimeOffset now)
     {
-        Guard.Requires(participantId != Guid.Empty, "Participante invalido.");
+        Guard.Requires(participantId != Guid.Empty, "Participante inválido.");
         Guard.State(round.IsOpenAt(now), "Esta rodada não esta aberta para respostas.");
         Guard.State(round.Questions.Count > 0, "Esta rodada não tem perguntas.");
 

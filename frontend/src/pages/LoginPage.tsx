@@ -33,7 +33,7 @@ export function LoginPage() {
     <div className="mx-auto flex min-h-dvh w-full max-w-md flex-col justify-center gap-4 p-4">
       <div className="text-center">
         <h1 className="text-2xl font-bold text-slate-900">GC Domus</h1>
-        <p className="mt-1 text-sm text-slate-500">Desafios semanais das licoes do GC</p>
+        <p className="mt-1 text-sm text-slate-500">Desafios semanais das lições do GC</p>
       </div>
 
       <Card>

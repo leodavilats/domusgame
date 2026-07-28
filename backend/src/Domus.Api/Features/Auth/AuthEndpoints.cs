@@ -43,7 +43,7 @@ public static class AuthEndpoints
 
         if (!settings.MatchesInvite(request.InviteCode))
         {
-            throw new DomainValidationException("Código de convite invalido. Peca o codigo ao lider do GC.");
+            throw new DomainValidationException("Código de convite inválido. Peça o codigo ao lider do GC.");
         }
 
         var id = Guid.CreateVersion7();
@@ -80,7 +80,7 @@ public static class AuthEndpoints
         DomusQueries queries,
         CancellationToken ct)
     {
-        const string invalid = "E-mail ou senha invalidos.";
+        const string invalid = "E-mail ou senha inválidos.";
 
         var user = await userManager.FindByEmailAsync((request.Email ?? string.Empty).Trim());
         if (user is null) throw new DomainValidationException(invalid);

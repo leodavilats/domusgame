@@ -7,8 +7,8 @@ import { useSession } from '../auth/SessionContext'
 import { Button, Card, ErrorBox, Field, Input, Spinner } from '../components/ui'
 
 const messages: Record<string, string> = {
-  convite: 'Código de convite invalido. Peca o codigo ao lider do GC.',
-  nome: 'Nome de exibição invalido. Use de 2 a 40 caracteres.',
+  convite: 'Código de convite inválido. Peça o codigo ao lider do GC.',
+  nome: 'Nome de exibição inválido. Use de 2 a 40 caracteres.',
   'nome-em-uso': 'Já existe alguém com esse nome de exibição.',
   conta: 'Não foi possivel criar a conta com o Google.',
 }

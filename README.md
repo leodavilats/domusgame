@@ -124,13 +124,28 @@ Todas as chaves aceitam variáveis de ambiente no formato `Secao__Chave`.
 | `Database__ApplyMigrationsOnStartup` | `true` em Dev | aplica o esquema no start |
 | `Gc__Name` | `GC Domus` | nome exibido no app |
 | `Gc__InviteCode` | gerado | código de convite inicial |
-| `Admin__Email` / `Admin__Password` / `Admin__DisplayName` | — | administrador criado no seed |
+| `Admin__Email` / `Admin__Password` / `Admin__DisplayName` | — | administrador de bootstrap (ver abaixo) |
 | `Seed__Demo` | `false` | cria dados de demonstração |
 | `Authentication__Google__ClientId` / `ClientSecret` | vazio | ativa o login com Google |
 | `App__PublicUrl` | `http://localhost:5080` | usado em links compartilhados |
 
 O login com Google só é registrado quando as duas chaves estão preenchidas — o app funciona
 normalmente sem elas, com e-mail e senha.
+
+### Administrador de bootstrap
+
+`Admin__Password` é a **fonte da verdade** para essa conta. A cada start:
+
+- se o e-mail ainda não existe, a conta é criada;
+- se já existe e a senha configurada é diferente da armazenada, **a senha é sincronizada** e
+  qualquer bloqueio por tentativas é limpo (registra um aviso no log);
+- se o papel não for administrador, ele é restaurado.
+
+Isso existe porque a alternativa — ignorar a variável depois do primeiro deploy — tranca o
+administrador do lado de fora sem nenhuma pista do motivo. Para trocar a senha, altere a variável
+e faça o redeploy.
+
+Uma falha aqui **não derruba a aplicação**: é registrada no log e o serviço continua no ar.
 
 ### Conexão com o banco
 

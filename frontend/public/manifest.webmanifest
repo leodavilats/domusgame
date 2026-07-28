@@ -1,7 +1,7 @@
 {
   "name": "GC Domus - Desafios",
   "short_name": "GC Domus",
-  "description": "Desafios semanais das licoes do GC Domus",
+  "description": "Desafios semanais das lições do GC Domus",
   "start_url": "/",
   "scope": "/",
   "display": "standalone",

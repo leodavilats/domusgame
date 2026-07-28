@@ -60,7 +60,7 @@ public sealed class Participant : Entity
         DateTimeOffset now,
         ParticipantRole role = ParticipantRole.Participant)
     {
-        Guard.Requires(id != Guid.Empty, "Identificador do participante invalido.");
+        Guard.Requires(id != Guid.Empty, "Identificador do participante inválido.");
         return new Participant(id, displayName, avatarUrl, role, now);
     }
 
@@ -105,7 +105,7 @@ public sealed class Participant : Entity
 
         if (value.Any(char.IsControl))
         {
-            throw new DomainValidationException("Nome de exibição contem caracteres invalidos.");
+            throw new DomainValidationException("Nome de exibição contem caracteres inválidos.");
         }
 
         return value;

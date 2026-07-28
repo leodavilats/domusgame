@@ -93,6 +93,7 @@ public sealed class DatabaseSeeder(
         if (existing is not null)
         {
             await EnsureAdminRoleAsync(existing.Id, options, now, ct);
+            await SyncAdminPasswordAsync(existing, options.AdminPassword);
             return;
         }
 
@@ -128,6 +129,45 @@ public sealed class DatabaseSeeder(
 
         await db.SaveChangesAsync(ct);
         logger.LogInformation("Administrador inicial criado: {Email}", options.AdminEmail);
+    }
+
+    /// <summary>
+    /// Admin__Password e a fonte da verdade para a conta de bootstrap: se a variavel mudar,
+    /// a senha do administrador acompanha. Sem isso, alterar a variavel depois do primeiro
+    /// deploy nao teria efeito nenhum - e o administrador ficaria trancado do lado de fora
+    /// sem nenhuma pista do motivo.
+    /// </summary>
+    private async Task SyncAdminPasswordAsync(AppUser user, string password)
+    {
+        if (await userManager.CheckPasswordAsync(user, password))
+        {
+            // Ja e a senha configurada: nada a fazer.
+            await ClearLockoutAsync(user);
+            return;
+        }
+
+        var token = await userManager.GeneratePasswordResetTokenAsync(user);
+        var result = await userManager.ResetPasswordAsync(user, token, password);
+
+        if (result.Succeeded)
+        {
+            await ClearLockoutAsync(user);
+            logger.LogWarning(
+                "Senha do administrador {Email} sincronizada com Admin__Password.", user.Email);
+            return;
+        }
+
+        logger.LogError(
+            "Nao foi possivel sincronizar a senha do administrador: {Errors}",
+            string.Join("; ", result.Errors.Select(e => e.Description)));
+    }
+
+    private async Task ClearLockoutAsync(AppUser user)
+    {
+        if (user.AccessFailedCount == 0 && user.LockoutEnd is null) return;
+
+        await userManager.ResetAccessFailedCountAsync(user);
+        await userManager.SetLockoutEndDateAsync(user, null);
     }
 
     private async Task EnsureAdminRoleAsync(Guid userId, SeedOptions options, DateTimeOffset now, CancellationToken ct)

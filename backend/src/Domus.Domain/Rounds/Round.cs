@@ -174,7 +174,7 @@ public sealed class Round : Entity
     public void MoveQuestion(Guid questionId, int offset)
     {
         EnsureDraft();
-        Guard.Requires(offset is -1 or 1, "Movimento invalido.");
+        Guard.Requires(offset is -1 or 1, "Movimento inválido.");
 
         var ordered = OrderedQuestions.ToList();
         var index = ordered.FindIndex(q => q.Id == questionId);

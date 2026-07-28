@@ -48,7 +48,7 @@ public sealed class ExceptionHandlingMiddleware(RequestDelegate next, ILogger<Ex
 
     private static (int Status, string Title) Map(Exception exception) => exception switch
     {
-        DomainValidationException => (StatusCodes.Status400BadRequest, "Dados invalidos"),
+        DomainValidationException => (StatusCodes.Status400BadRequest, "Dados inválidos"),
         DomainRuleException => (StatusCodes.Status409Conflict, "Operação não permitida"),
         NotFoundException => (StatusCodes.Status404NotFound, "Não encontrado"),
         UnauthorizedException => (StatusCodes.Status401Unauthorized, "Não autenticado"),
