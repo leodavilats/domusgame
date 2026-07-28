@@ -1,0 +1,8 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!--
+    Camada de dominio: ZERO dependencias externas (regra de dependencia, doc 05 secao 4).
+    Um teste de arquitetura garante que isso continue verdadeiro.
+  -->
+
+</Project>

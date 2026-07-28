@@ -1,0 +1,11 @@
+**/bin
+**/obj
+**/node_modules
+**/dist
+backend/src/Domus.Api/wwwroot
+.git
+.github
+docs
+*.md
+.vs
+.env

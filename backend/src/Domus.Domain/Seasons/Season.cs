@@ -1,0 +1,124 @@
+using Domus.Domain.Common;
+
+namespace Domus.Domain.Seasons;
+
+public enum SeasonStatus
+{
+    /// <summary>Criada, ainda nao e a temporada corrente.</summary>
+    Draft = 0,
+
+    /// <summary>Temporada corrente. No maximo uma por vez (RN-02, indice unico parcial).</summary>
+    Active = 1,
+
+    /// <summary>Encerrada, com podio congelado (RN-04).</summary>
+    Finished = 2
+}
+
+/// <summary>Colocado do podio, congelado no encerramento da temporada (RN-04).</summary>
+public sealed class SeasonPodiumEntry : Entity
+{
+    private SeasonPodiumEntry() : base() => DisplayName = string.Empty;
+
+    internal SeasonPodiumEntry(Guid seasonId, int position, PodiumCandidate candidate)
+        : base(NewId())
+    {
+        SeasonId = seasonId;
+        Position = Guard.InRange(position, 1, 3, "Posicao do podio");
+        ParticipantId = candidate.ParticipantId;
+        DisplayName = Guard.Text(candidate.DisplayName, "Nome", Participants.Participant.DisplayNameMaxLength);
+        TotalPoints = candidate.TotalPoints;
+        TotalTimeMs = candidate.TotalTimeMs;
+    }
+
+    public Guid SeasonId { get; private set; }
+    public int Position { get; private set; }
+    public Guid ParticipantId { get; private set; }
+    public string DisplayName { get; private set; }
+    public int TotalPoints { get; private set; }
+    public long TotalTimeMs { get; private set; }
+}
+
+/// <summary>Candidato ao podio, ja ordenado pelo servico de ranking.</summary>
+public readonly record struct PodiumCandidate(Guid ParticipantId, string DisplayName, int TotalPoints, long TotalTimeMs);
+
+/// <summary>Periodo de competicao que agrupa rodadas e define o ranking premiado.</summary>
+public sealed class Season : Entity
+{
+    public const int MaxPodiumPositions = 3;
+
+    private readonly List<SeasonPodiumEntry> _podium = [];
+
+    private Season() : base() => Name = string.Empty;
+
+    private Season(string name, DateOnly startsOn, DateOnly endsOn, DateTimeOffset now)
+        : base(NewId())
+    {
+        Name = Guard.Text(name, "Nome da temporada", 80);
+        ValidatePeriod(startsOn, endsOn);
+        StartsOn = startsOn;
+        EndsOn = endsOn;
+        Status = SeasonStatus.Draft;
+        CreatedAt = now;
+    }
+
+    public string Name { get; private set; }
+    public DateOnly StartsOn { get; private set; }
+    public DateOnly EndsOn { get; private set; }
+    public SeasonStatus Status { get; private set; }
+    public DateTimeOffset? FinishedAt { get; private set; }
+    public DateTimeOffset CreatedAt { get; private set; }
+
+    public IReadOnlyList<SeasonPodiumEntry> Podium => _podium;
+
+    public bool IsFinished => Status == SeasonStatus.Finished;
+
+    public static Season Create(string name, DateOnly startsOn, DateOnly endsOn, DateTimeOffset now) =>
+        new(name, startsOn, endsOn, now);
+
+    public void Update(string name, DateOnly startsOn, DateOnly endsOn)
+    {
+        // I-S3: temporada encerrada e imutavel.
+        Guard.State(!IsFinished, "Temporada encerrada nao pode ser alterada.");
+
+        ValidatePeriod(startsOn, endsOn);
+        Name = Guard.Text(name, "Nome da temporada", 80);
+        StartsOn = startsOn;
+        EndsOn = endsOn;
+    }
+
+    public void Activate()
+    {
+        Guard.State(!IsFinished, "Temporada encerrada nao pode ser reativada.");
+        Status = SeasonStatus.Active;
+    }
+
+    /// <summary>Volta para rascunho quando outra temporada assume o lugar de ativa.</summary>
+    public void Deactivate()
+    {
+        Guard.State(!IsFinished, "Temporada encerrada nao pode ser desativada.");
+        Status = SeasonStatus.Draft;
+    }
+
+    /// <summary>
+    /// I-S4: encerra a temporada e congela o podio. Os candidatos devem chegar
+    /// ja ordenados pelo criterio de desempate (RN-31).
+    /// </summary>
+    public void Finish(DateTimeOffset now, IEnumerable<PodiumCandidate> orderedCandidates)
+    {
+        Guard.State(!IsFinished, "Temporada ja esta encerrada.");
+
+        _podium.Clear();
+        var position = 1;
+        foreach (var candidate in orderedCandidates.Take(MaxPodiumPositions))
+        {
+            _podium.Add(new SeasonPodiumEntry(Id, position, candidate));
+            position++;
+        }
+
+        Status = SeasonStatus.Finished;
+        FinishedAt = now;
+    }
+
+    private static void ValidatePeriod(DateOnly startsOn, DateOnly endsOn) =>
+        Guard.Requires(startsOn < endsOn, "A data de inicio deve ser anterior a data de fim.");
+}

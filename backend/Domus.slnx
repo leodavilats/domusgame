@@ -1,0 +1,11 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/Domus.Domain/Domus.Domain.csproj" />
+    <Project Path="src/Domus.Infrastructure/Domus.Infrastructure.csproj" />
+    <Project Path="src/Domus.Api/Domus.Api.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/Domus.Domain.Tests/Domus.Domain.Tests.csproj" />
+    <Project Path="tests/Domus.Api.Tests/Domus.Api.Tests.csproj" />
+  </Folder>
+</Solution>

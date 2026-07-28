@@ -1,0 +1,20 @@
+{
+  "name": "GC Domus - Desafios",
+  "short_name": "GC Domus",
+  "description": "Desafios semanais das licoes do GC Domus",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#0f172a",
+  "theme_color": "#0f172a",
+  "lang": "pt-BR",
+  "icons": [
+    {
+      "src": "/icone.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}

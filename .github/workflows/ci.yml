@@ -1,0 +1,54 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  backend:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+
+      - name: Restaurar
+        working-directory: backend
+        run: dotnet restore
+
+      - name: Compilar
+        working-directory: backend
+        run: dotnet build --no-restore -c Release
+
+      - name: Testes de dominio
+        working-directory: backend
+        run: dotnet test tests/Domus.Domain.Tests --no-build -c Release --verbosity normal
+
+      # Os testes de integracao sobem um Postgres via Testcontainers (Docker ja existe no runner).
+      - name: Testes de integracao
+        working-directory: backend
+        run: dotnet test tests/Domus.Api.Tests --no-build -c Release --verbosity normal
+
+  frontend:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Instalar
+        working-directory: frontend
+        run: npm ci
+
+      - name: Verificar tipos e compilar
+        working-directory: frontend
+        run: npm run build -- --outDir dist --emptyOutDir

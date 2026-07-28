@@ -1,0 +1,39 @@
+services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: domus
+      POSTGRES_USER: domus
+      POSTGRES_PASSWORD: domus
+    ports:
+      - '5432:5432'
+    volumes:
+      - domus-db:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U domus -d domus']
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      ASPNETCORE_ENVIRONMENT: Production
+      ConnectionStrings__Postgres: 'Host=db;Port=5432;Database=domus;Username=domus;Password=domus'
+      Database__ApplyMigrationsOnStartup: 'true'
+      Gc__Name: 'GC Domus'
+      Gc__InviteCode: 'DOMUS2026'
+      Admin__Email: 'admin@domus.local'
+      Admin__Password: 'Domus@2026'
+      Admin__DisplayName: 'Administrador'
+      Seed__Demo: 'true'
+    ports:
+      - '5080:8080'
+
+volumes:
+  domus-db:
