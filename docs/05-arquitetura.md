@@ -77,7 +77,7 @@ domusgame/
 │  │     ├─ Program.cs
 │  │     ├─ Common/                 # ErrorHandling, CurrentUser, Results, Validation
 │  │     ├─ Features/
-│  │     │  ├─ Auth/                # Register, Login, Logout, Me, GoogleCallback
+│  │     │  ├─ Auth/                # Register, Login, Logout, Me
 │  │     │  ├─ Dashboard/           # GetDashboard
 │  │     │  ├─ Rounds/              # ListRounds, GetRound, GetReview
 │  │     │  ├─ Attempts/            # StartAttempt, GetAttemptState, SubmitAnswer, GetResult
@@ -130,7 +130,7 @@ arquitetura simples (assembly do domínio sem referências proibidas).
 | Tempo | `TimeProvider` (BCL) injetado; domínio recebe `DateTimeOffset now` | Testável sem abstração própria (`FakeTimeProvider`) |
 | Identidade | ASP.NET Core Identity + cookie `httpOnly`, `SameSite=Lax`, 60 dias | Login persistente no celular, sem token exposto a XSS |
 | Papéis | `Participants.Role` → claim no login (sem tabelas de role) | Duas tabelas e um join a menos |
-| Google | `AddGoogle` registrado **só se** houver `ClientId`/`ClientSecret` | O app funciona sem configurar Google |
+| Login social | Fora da v1 | Retirado por decisão do dono do produto; o histórico do Git guarda a implementação |
 | Erros | Middleware único → `ProblemDetails` (400/401/403/404/409/500) | Contrato de erro consistente |
 | Serialização | `System.Text.Json`, camelCase, enums como string | Contrato legível no front |
 | Logs | `ILogger` + console estruturado | Suficiente para a escala |
@@ -154,8 +154,6 @@ Todas as rotas sob `/api`. Autenticação por cookie. Erros em `ProblemDetails`.
 | `POST` | `/api/auth/login` | `{ email, password }` |
 | `POST` | `/api/auth/logout` | |
 | `GET` | `/api/auth/me` | sessão atual ou 401 |
-| `GET` | `/api/auth/google/start` | `?inviteCode=&displayName=` → redireciona ao Google |
-| `GET` | `/api/auth/google/callback` | cria/entra e redireciona ao painel |
 
 ### Participante
 
@@ -245,7 +243,6 @@ idempotência por `(AttemptId, QuestionId)` (RNF-05), tentativa única por `(Rou
 | `Gc__InviteCode` | gerado | código inicial |
 | `Admin__Email` / `Admin__Password` / `Admin__DisplayName` | — | administrador inicial |
 | `Seed__Demo` | `false` | dados de demonstração |
-| `Authentication__Google__ClientId` / `ClientSecret` | vazio | login Google (opcional) |
 | `App__PublicUrl` | `http://localhost:5080` | links de compartilhamento |
 | `App__TimeZone` | `America/Sao_Paulo` | apresentação |
 

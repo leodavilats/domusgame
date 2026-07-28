@@ -1,10 +1,8 @@
-using System.Security.Claims;
 using Domus.Api.Common;
 using Domus.Domain.Common;
 using Domus.Domain.Participants;
 using Domus.Infrastructure.Identity;
 using Domus.Infrastructure.Persistence;
-using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 
@@ -16,8 +14,6 @@ public sealed record LoginRequest(string Email, string Password);
 
 public static class AuthEndpoints
 {
-    public const string GoogleScheme = "Google";
-
     public static void MapAuthEndpoints(this IEndpointRouteBuilder app)
     {
         var group = app.MapGroup("/api/auth").RequireRateLimiting(RateLimitPolicies.Auth);
@@ -26,8 +22,6 @@ public static class AuthEndpoints
         group.MapPost("/login", LoginAsync);
         group.MapPost("/logout", LogoutAsync).RequireAuthorization();
         group.MapGet("/me", MeAsync).RequireAuthorization();
-        group.MapGet("/google/start", GoogleStartAsync);
-        group.MapGet("/google/callback", GoogleCallbackAsync);
     }
 
     private static async Task<IResult> RegisterAsync(
@@ -129,99 +123,6 @@ public static class AuthEndpoints
             participant.ShowInRanking, participant.IsAdmin, settings.GcName));
     }
 
-    // ------------------------------------------------------------------ Google (opcional)
-
-    private static async Task<IResult> GoogleStartAsync(
-        SignInManager<AppUser> signInManager,
-        IAuthenticationSchemeProvider schemes,
-        string? inviteCode,
-        string? displayName)
-    {
-        if (await schemes.GetSchemeAsync(GoogleScheme) is null)
-        {
-            return Results.Redirect("/entrar?erro=google-indisponivel");
-        }
-
-        var properties = signInManager.ConfigureExternalAuthenticationProperties(
-            GoogleScheme, "/api/auth/google/callback");
-
-        properties.Items["inviteCode"] = inviteCode ?? string.Empty;
-        properties.Items["displayName"] = displayName ?? string.Empty;
-
-        return Results.Challenge(properties, [GoogleScheme]);
-    }
-
-    private static async Task<IResult> GoogleCallbackAsync(
-        DomusDbContext db,
-        UserManager<AppUser> userManager,
-        SignInManager<AppUser> signInManager,
-        DomusQueries queries,
-        TimeProvider clock,
-        CancellationToken ct)
-    {
-        var info = await signInManager.GetExternalLoginInfoAsync();
-        if (info is null) return Results.Redirect("/entrar?erro=google");
-
-        var signedIn = await signInManager.ExternalLoginSignInAsync(
-            info.LoginProvider, info.ProviderKey, isPersistent: true, bypassTwoFactor: true);
-
-        if (signedIn.Succeeded) return Results.Redirect("/");
-
-        var email = info.Principal.FindFirstValue(ClaimTypes.Email);
-        if (string.IsNullOrWhiteSpace(email)) return Results.Redirect("/entrar?erro=google-sem-email");
-
-        // Conta ja existente com o mesmo e-mail: apenas vincula o login do Google.
-        var existing = await userManager.FindByEmailAsync(email);
-        if (existing is not null)
-        {
-            await userManager.AddLoginAsync(existing, info);
-            await signInManager.SignInAsync(existing, isPersistent: true);
-            return Results.Redirect("/");
-        }
-
-        var items = info.AuthenticationProperties?.Items ?? new Dictionary<string, string?>();
-        items.TryGetValue("inviteCode", out var inviteCode);
-        items.TryGetValue("displayName", out var requestedName);
-
-        var settings = await queries.GetSettingsAsync(ct);
-        if (!settings.MatchesInvite(inviteCode)) return Results.Redirect("/cadastro?erro=convite");
-
-        var displayName = FirstNonEmpty(
-            requestedName,
-            info.Principal.FindFirstValue(ClaimTypes.Name),
-            email.Split('@')[0]);
-
-        var id = Guid.CreateVersion7();
-
-        Participant participant;
-        try
-        {
-            participant = Participant.Register(
-                id, displayName, info.Principal.FindFirstValue("picture"), clock.GetUtcNow());
-        }
-        catch (DomainValidationException)
-        {
-            return Results.Redirect("/cadastro?erro=nome");
-        }
-
-        var taken = await db.Participants
-            .AnyAsync(p => p.NormalizedDisplayName == participant.NormalizedDisplayName, ct);
-
-        if (taken) return Results.Redirect("/cadastro?erro=nome-em-uso");
-
-        var user = new AppUser(id, email) { EmailConfirmed = true };
-        var created = await userManager.CreateAsync(user);
-        if (!created.Succeeded) return Results.Redirect("/cadastro?erro=conta");
-
-        await userManager.AddLoginAsync(user, info);
-
-        db.Participants.Add(participant);
-        await db.SaveChangesAsync(ct);
-
-        await signInManager.SignInAsync(user, isPersistent: true);
-        return Results.Redirect("/");
-    }
-
     // ------------------------------------------------------------------ apoio
 
     internal static async Task EnsureDisplayNameIsFreeAsync(
@@ -241,8 +142,6 @@ public static class AuthEndpoints
         }
     }
 
-    private static string FirstNonEmpty(params string?[] candidates) =>
-        candidates.FirstOrDefault(c => !string.IsNullOrWhiteSpace(c))?.Trim() ?? "Participante";
 
     private static string Translate(IdentityResult result)
     {

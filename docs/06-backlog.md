@@ -15,7 +15,7 @@
 | 0 — Fundação | ✅ estrutura, solution, Dockerfile, compose e CI criados |
 | 1 — Domínio | ✅ entidades, `ScoringPolicy`, `Attempt` e testes escritos |
 | 2 — Persistência | ✅ contexto, configurações, Identity, seed e migration `InitialCreate` aplicada em banco limpo |
-| 3 — Auth e perfil | ✅ cadastro com convite, login, Google opcional, perfil e exclusão |
+| 3 — Auth e perfil | ✅ cadastro com convite, login, perfil e exclusão |
 | 4 — Participação | ✅ painel, tentativa, respostas, resultado, revisão, rankings |
 | 5 — Administração | ✅ temporadas, rodadas, lição, perguntas, publicação, estatísticas, convite, CSV |
 | 6–8 — Front-end | ✅ todas as telas; `npm run build` limpo |
@@ -99,7 +99,6 @@ trocasse de trimestre.
 | 3.1 | Middleware de erros → `ProblemDetails`; `CurrentUser`; JSON camelCase + enums string | erro de domínio devolve o status correto |
 | 3.2 | `POST /auth/register` com código de convite | conta criada; código inválido = 400 |
 | 3.3 | `POST /auth/login`, `/logout`, `GET /auth/me` | cookie de 60 dias |
-| 3.4 | Google (registrado só se configurado) | app sobe sem credenciais do Google |
 | 3.5 | Rate limiting em `/auth/*` | 6ª tentativa em 1 min = 429 |
 | 3.6 | `PUT /profile`, `DELETE /profile` | anonimização preserva tentativas |
 

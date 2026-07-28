@@ -196,7 +196,7 @@ optar por ficar fora do ranking (ele conhece o gabarito). Ver RN-22.
   Sem código não há autocadastro.
 - **RN-35** — O administrador pode gerar um novo código, invalidando o anterior.
 - **RN-36** — O participante tem um **nome de exibição** obrigatório (é o que aparece no ranking).
-  Foto é opcional (usa a do Google, se houver).
+  Foto é opcional (informada por URL).
 - **RN-37** — Não coletamos data de nascimento, telefone nem endereço. O único dado pessoal
   obrigatório é nome de exibição + e-mail (identidade da conta).
 - **RN-38** — O participante pode excluir sua conta. Suas tentativas são anonimizadas (o histórico
@@ -210,7 +210,7 @@ optar por ficar fora do ranking (ele conhece o gabarito). Ver RN-22.
 
 | ID | Requisito |
 | --- | --- |
-| RF-01 | Cadastrar-se com código de convite, via conta Google ou e-mail + senha. |
+| RF-01 | Cadastrar-se com código de convite, usando e-mail + senha. |
 | RF-02 | Autenticar-se e manter sessão em sessões longas no celular. |
 | RF-03 | Editar perfil: nome de exibição, foto (URL), preferência de aparecer no ranking. |
 | RF-04 | Ver a home com: rodada da semana (estado e contagem regressiva), sua pontuação na temporada, sua posição no ranking e seu streak de participação. |
@@ -273,7 +273,7 @@ optar por ficar fora do ranking (ele conhece o gabarito). Ver RN-22.
 | # | Tema | Decisão | Motivo |
 | --- | --- | --- | --- |
 | 24 | Cadastro | Código de convite do GC, sem fila de aprovação | Barra estranhos com 1 campo, sem trabalho manual recorrente |
-| 25 | Login | Google + e-mail/senha (ASP.NET Core Identity) | Sem infraestrutura de e-mail (magic link exigiria SMTP), sem custo, sem lock-in |
+| 25 | Login | **E-mail/senha** (ASP.NET Core Identity) | Sem infraestrutura de e-mail (magic link exigiria SMTP), sem custo, sem lock-in. O login social foi retirado da v1 por decisão do dono do produto |
 | 26–27 | Faixa etária / menores | Não coletar data de nascimento; sem ranking por idade | Menos dado pessoal, menos risco LGPD, menos tela |
 | 28 | Identidade pública | Nome de exibição obrigatório, foto opcional, opt-out do ranking | Simples e respeitoso |
 | 29 | Notificações | Nenhuma automática na v1; divulgação pelo grupo de WhatsApp + contagem regressiva na home | Push/e-mail/WhatsApp custam infraestrutura para 30 pessoas que já têm grupo |

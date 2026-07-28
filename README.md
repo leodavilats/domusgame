@@ -133,11 +133,7 @@ Todas as chaves aceitam variáveis de ambiente no formato `Secao__Chave`.
 | `Gc__InviteCode` | gerado | código de convite inicial |
 | `Admin__Email` / `Admin__Password` / `Admin__DisplayName` | — | administrador de bootstrap (ver abaixo) |
 | `Seed__Demo` | `false` | cria dados de demonstração |
-| `Authentication__Google__ClientId` / `ClientSecret` | vazio | ativa o login com Google |
 | `App__PublicUrl` | `http://localhost:5080` | usado em links compartilhados |
-
-O login com Google só é registrado quando as duas chaves estão preenchidas — o app funciona
-normalmente sem elas, com e-mail e senha.
 
 ### Administrador de bootstrap
 

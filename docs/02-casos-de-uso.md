@@ -41,7 +41,7 @@
 
 **Fluxo principal**
 1. Visitante acessa `/cadastro`.
-2. Informa código de convite, nome de exibição e escolhe **Google** ou **e-mail + senha**.
+2. Informa código de convite, nome de exibição, e-mail e senha.
 3. Sistema valida o código contra o convite ativo.
 4. Sistema cria a conta com papel `Participant` e `ShowInRanking = true`.
 5. Sistema autentica e redireciona para o painel inicial.
@@ -58,13 +58,12 @@
 ## UC-02 — Autenticar-se
 
 **Fluxo principal**
-1. Visitante acessa `/entrar`, escolhe Google ou informa e-mail + senha.
+1. Visitante acessa `/entrar` e informa e-mail + senha.
 2. Sistema valida credenciais e emite **cookie de sessão `httpOnly`** de longa duação.
 3. Redireciona para o painel inicial.
 
 **Exceções**
 - **E1** Credenciais inválidas → mensagem genérica ("E-mail ou senha inválidos"), sem revelar se o e-mail existe.
-- **E2** Conta Google sem cadastro prévio → exige código de convite (cai em UC-01).
 - **E3** Excesso de tentativas → bloqueio temporário.
 
 ---

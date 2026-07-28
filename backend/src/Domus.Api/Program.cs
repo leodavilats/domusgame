@@ -50,24 +50,9 @@ builder.Services
     .AddClaimsPrincipalFactory<AppUserClaimsPrincipalFactory>()
     .AddDefaultTokenProviders();
 
-// AddIdentityCookies devolve IdentityCookiesBuilder, entao guardamos o AuthenticationBuilder
-// original para poder encadear provedores externos depois.
-var authentication = builder.Services.AddAuthentication(IdentityConstants.ApplicationScheme);
-authentication.AddIdentityCookies();
-
-// Login com Google so entra no ar quando as credenciais estao configuradas (decisao 25).
-var googleClientId = configuration["Authentication:Google:ClientId"];
-var googleClientSecret = configuration["Authentication:Google:ClientSecret"];
-
-if (!string.IsNullOrWhiteSpace(googleClientId) && !string.IsNullOrWhiteSpace(googleClientSecret))
-{
-    authentication.AddGoogle(AuthEndpoints.GoogleScheme, options =>
-    {
-        options.ClientId = googleClientId;
-        options.ClientSecret = googleClientSecret;
-        options.SignInScheme = IdentityConstants.ExternalScheme;
-    });
-}
+builder.Services
+    .AddAuthentication(IdentityConstants.ApplicationScheme)
+    .AddIdentityCookies();
 
 builder.Services.ConfigureApplicationCookie(options =>
 {
