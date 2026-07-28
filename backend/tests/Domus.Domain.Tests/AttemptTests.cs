@@ -49,7 +49,7 @@ public class AttemptTests
         var again = attempt.ServeCurrentQuestion(round, During.AddSeconds(10))!;
 
         Assert.Equal(first.Question.Id, again.Question.Id);
-        Assert.Equal(first.ServedAt, again.ServedAt);   // cronometro nao reinicia
+        Assert.Equal(first.ServedAt, again.ServedAt);   // cronometro não reinicia
         Assert.Single(attempt.Answers);
     }
 
@@ -121,7 +121,7 @@ public class AttemptTests
         var repeat = attempt.Submit(round, served.Question.Id, TestData.WrongOptionOf(round, 1).Id, During.AddSeconds(6));
 
         Assert.Equal(first.AnswerId, repeat.AnswerId);
-        Assert.Equal(14, attempt.TotalPoints);       // nao repontuou
+        Assert.Equal(14, attempt.TotalPoints);       // não repontuou
         Assert.Single(attempt.Answers);
     }
 

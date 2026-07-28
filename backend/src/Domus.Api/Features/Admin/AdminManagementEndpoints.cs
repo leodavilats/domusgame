@@ -134,7 +134,7 @@ public static class AdminManagementEndpoints
             participant.IsAdmin &&
             await ProfileEndpoints.IsLastAdminAsync(db, id, ct))
         {
-            throw new DomainRuleException("Nao e possivel remover o ultimo administrador.");
+            throw new DomainRuleException("Não e possivel remover o ultimo administrador.");
         }
 
         participant.ChangeRole(request.Role);
@@ -163,7 +163,7 @@ public static class AdminManagementEndpoints
         CancellationToken ct)
     {
         var settings = await db.GcSettings.SingleOrDefaultAsync(s => s.Id == GcSettings.SingletonId, ct)
-            ?? throw new NotFoundException("Configuracao do GC nao encontrada.");
+            ?? throw new NotFoundException("Configuracao do GC não encontrada.");
 
         var now = clock.GetUtcNow();
         var code = string.IsNullOrWhiteSpace(request.Code) ? GcSettings.GenerateCode() : request.Code;

@@ -9,7 +9,7 @@ const outcomes: Record<AnswerOutcome, { label: string; tone: 'success' | 'danger
   Incorrect: { label: 'Errou', tone: 'danger' },
   Blank: { label: 'Em branco', tone: 'warning' },
   TimedOut: { label: 'Tempo esgotado', tone: 'warning' },
-  Pending: { label: 'Nao respondida', tone: 'neutral' },
+  Pending: { label: 'Não respondida', tone: 'neutral' },
 }
 
 export function ReviewPage() {
@@ -29,7 +29,7 @@ export function ReviewPage() {
 
       <Card>
         <p className="text-sm text-slate-600">
-          Voce fez <strong>{data.totalPoints}</strong> de {data.maxPoints} pontos, com{' '}
+          Você fez <strong>{data.totalPoints}</strong> de {data.maxPoints} pontos, com{' '}
           <strong>{data.correctCount}</strong> acertos em {formatDuration(data.totalTimeMs)}.
         </p>
       </Card>

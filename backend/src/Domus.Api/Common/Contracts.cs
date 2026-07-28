@@ -3,7 +3,7 @@ using Domus.Domain.Rounds;
 
 namespace Domus.Api.Common;
 
-/// <summary>Sessao atual.</summary>
+/// <summary>Sessão atual.</summary>
 public sealed record MeDto(
     Guid Id,
     string DisplayName,
@@ -57,7 +57,7 @@ public sealed record AttemptQuestionDto(
 
 public sealed record AttemptOptionDto(Guid Id, string Text);
 
-/// <summary>Estado da tentativa em andamento. Nao expoe pontos: isso revelaria acertos (RN-21).</summary>
+/// <summary>Estado da tentativa em andamento. Não expoe pontos: isso revelaria acertos (RN-21).</summary>
 public sealed record AttemptStateDto(
     Guid AttemptId,
     Guid RoundId,
@@ -68,7 +68,7 @@ public sealed record AttemptStateDto(
 
 public sealed record SubmitAnswerRequest(Guid QuestionId, Guid? SelectedOptionId);
 
-/// <summary>Resposta do envio. Deliberadamente nao informa acerto.</summary>
+/// <summary>Resposta do envio. Deliberadamente não informa acerto.</summary>
 public sealed record SubmitAnswerResponse(
     Guid AnswerId,
     bool TimedOut,

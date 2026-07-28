@@ -143,7 +143,7 @@ export function QuizPage() {
     try {
       applyState(await api.post<AttemptState>(`/api/rounds/${roundId}/attempts`))
     } catch (caught) {
-      setError(caught instanceof ApiError ? caught.message : 'Nao foi possivel iniciar.')
+      setError(caught instanceof ApiError ? caught.message : 'Não foi possivel iniciar.')
       setStage('rules')
     }
   }
@@ -211,7 +211,7 @@ export function QuizPage() {
 
         {question.mediaType === 'Audio' && question.mediaUrl && (
           <audio controls src={question.mediaUrl} className="mt-3 w-full">
-            Seu navegador nao suporta audio.
+            Seu navegador não suporta audio.
           </audio>
         )}
 
@@ -245,7 +245,7 @@ export function QuizPage() {
           {question.order === total ? 'Responder e finalizar' : 'Confirmar e avancar'}
         </Button>
         <p className="mt-2 text-center text-xs text-slate-500">
-          Nao da para voltar depois de confirmar.
+          Não da para voltar depois de confirmar.
         </p>
       </div>
     </div>
@@ -271,7 +271,7 @@ function RulesCard({
         </h1>
 
         <ul className="mt-4 space-y-2 text-sm text-slate-700">
-          <li>• Voce tem <strong>uma unica tentativa</strong> nesta rodada.</li>
+          <li>• Você tem <strong>uma única tentativa</strong> nesta rodada.</li>
           <li>
             • Sao <strong>{summary?.questionCount ?? '-'} perguntas</strong>, uma de cada vez, sem voltar.
           </li>

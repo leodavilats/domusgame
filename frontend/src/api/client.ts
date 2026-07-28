@@ -38,7 +38,7 @@ async function request<T>(method: string, path: string, body?: unknown): Promise
   const text = await response.text()
 
   if (!response.ok) {
-    let message = 'Nao foi possivel completar a operacao.'
+    let message = 'Não foi possivel completar a operação.'
 
     if (text) {
       try {
@@ -49,7 +49,7 @@ async function request<T>(method: string, path: string, body?: unknown): Promise
       }
     }
 
-    if (response.status === 401) message = 'Sua sessao expirou. Entre novamente.'
+    if (response.status === 401) message = 'Sua sessão expirou. Entre novamente.'
     if (response.status === 429) message = 'Muitas tentativas seguidas. Aguarde um minuto.'
 
     throw new ApiError(response.status, message)

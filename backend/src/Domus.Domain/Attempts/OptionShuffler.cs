@@ -5,7 +5,7 @@ namespace Domus.Domain.Attempts;
 /// <summary>
 /// RN-16: embaralha as alternativas por tentativa, de forma deterministica.
 /// A mesma pessoa recarregando a pagina ve sempre a mesma ordem; pessoas diferentes veem ordens
-/// diferentes. Nao usamos Guid.GetHashCode(), que varia entre processos.
+/// diferentes. Não usamos Guid.GetHashCode(), que varia entre processos.
 /// </summary>
 public static class OptionShuffler
 {

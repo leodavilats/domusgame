@@ -76,7 +76,7 @@ public sealed class Question : Entity
 
     public AnswerOption CorrectOption =>
         _options.SingleOrDefault(o => o.IsCorrect)
-        ?? throw new DomainRuleException($"A pergunta {Order} nao tem exatamente uma alternativa correta.");
+        ?? throw new DomainRuleException($"A pergunta {Order} não tem exatamente uma alternativa correta.");
 
     internal static Question Create(
         Guid roundId,

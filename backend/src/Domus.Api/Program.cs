@@ -24,8 +24,7 @@ var configuration = builder.Configuration;
 
 // ---------------------------------------------------------------- servicos
 
-var connectionString = configuration.GetConnectionString("Postgres")
-    ?? throw new InvalidOperationException("Configure ConnectionStrings__Postgres.");
+var connectionString = DatabaseConnection.Resolve(configuration);
 
 builder.Services.AddDomusPersistence(connectionString);
 builder.Services.AddSingleton(TimeProvider.System);
@@ -103,13 +102,13 @@ builder.Services.ConfigureHttpJsonOptions(options =>
     options.SerializerOptions.Converters.Add(new JsonStringEnumConverter());
 });
 
-// Atras de proxy (Railway, Render, Fly, Caddy) a requisicao chega como HTTP.
-// Sem isto o cookie de sessao sairia sem a flag Secure mesmo com o site em HTTPS.
+// Atras de proxy (Railway, Render, Fly, Caddy) a requisição chega como HTTP.
+// Sem isto o cookie de sessão sairia sem a flag Secure mesmo com o site em HTTPS.
 builder.Services.Configure<ForwardedHeadersOptions>(options =>
 {
     options.ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto;
 
-    // Em PaaS o proxy nao tem IP fixo conhecido; a rede da plataforma e a fronteira de confianca.
+    // Em PaaS o proxy não tem IP fixo conhecido; a rede da plataforma e a fronteira de confianca.
     options.KnownIPNetworks.Clear();
     options.KnownProxies.Clear();
 });
@@ -136,7 +135,7 @@ var app = builder.Build();
 
 // ---------------------------------------------------------------- pipeline
 
-// Precisa vir antes de tudo: define esquema e IP reais da requisicao.
+// Precisa vir antes de tudo: define esquema e IP reais da requisição.
 app.UseForwardedHeaders();
 
 app.UseMiddleware<ExceptionHandlingMiddleware>();
@@ -160,7 +159,7 @@ admin.MapAdminManagementEndpoints();
 
 app.MapGet("/api/health", () => Results.Ok(new { status = "ok" }));
 
-// O SPA cuida das rotas que nao sao /api.
+// O SPA cuida das rotas que não sao /api.
 app.MapFallbackToFile("index.html");
 
 // ---------------------------------------------------------------- banco
@@ -174,8 +173,16 @@ static async Task InitializeDatabaseAsync(WebApplication app)
     var configuration = app.Configuration;
     var logger = app.Services.GetRequiredService<ILogger<Program>>();
 
+    logger.LogInformation(
+        "Conectando ao banco em {Target}",
+        DatabaseConnection.Describe(DatabaseConnection.Resolve(configuration)));
+
     await using var scope = app.Services.CreateAsyncScope();
     var db = scope.ServiceProvider.GetRequiredService<DomusDbContext>();
+
+    // Bancos gerenciados podem estar acordando quando o container sobe. Esperamos um pouco
+    // antes de desistir, em vez de entrar em crash loop.
+    await WaitForDatabaseAsync(db, logger);
 
     if (configuration.GetValue("Database:ApplyMigrationsOnStartup", app.Environment.IsDevelopment()))
     {
@@ -185,7 +192,7 @@ static async Task InitializeDatabaseAsync(WebApplication app)
         }
         else
         {
-            // Ainda nao ha migrations geradas: cria o esquema a partir do modelo para o
+            // Ainda não ha migrations geradas: cria o esquema a partir do modelo para o
             // projeto rodar de imediato. Em producao, gere as migrations (ver README).
             logger.LogWarning(
                 "Nenhuma migration encontrada. Criando o esquema com EnsureCreated. " +
@@ -206,6 +213,34 @@ static async Task InitializeDatabaseAsync(WebApplication app)
         AdminDisplayName = configuration["Admin:DisplayName"] ?? "Administrador",
         IncludeDemoData = configuration.GetValue("Seed:Demo", false)
     });
+}
+
+static async Task WaitForDatabaseAsync(DomusDbContext db, ILogger logger)
+{
+    const int maxAttempts = 12;
+
+    for (var attempt = 1; attempt <= maxAttempts; attempt++)
+    {
+        try
+        {
+            if (await db.Database.CanConnectAsync()) return;
+        }
+        catch (Exception exception) when (attempt < maxAttempts)
+        {
+            logger.LogWarning(
+                "Banco indisponivel (tentativa {Attempt}/{Max}): {Message}",
+                attempt, maxAttempts, exception.Message);
+        }
+
+        if (attempt == maxAttempts)
+        {
+            throw new InvalidOperationException(
+                "Não foi possivel conectar ao banco de dados. Verifique ConnectionStrings__Postgres " +
+                "(ou DATABASE_URL) e se o banco aceita conexoes deste servico.");
+        }
+
+        await Task.Delay(TimeSpan.FromSeconds(Math.Min(5, attempt)));
+    }
 }
 
 /// <summary>Exposto para os testes de integracao (WebApplicationFactory).</summary>

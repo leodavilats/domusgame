@@ -34,7 +34,7 @@ public sealed class RoundConfiguration : IEntityTypeConfiguration<Round>
         builder.Ignore(r => r.IsPublished);
         builder.Ignore(r => r.MaxPoints);
 
-        // Licao como owned type: colunas na propria tabela, sem join.
+        // Licao como owned type: colunas na própria tabela, sem join.
         builder.OwnsOne(r => r.Lesson, lesson =>
         {
             lesson.Property(l => l.Title).HasColumnName("Lesson_Title").HasMaxLength(160).IsRequired();

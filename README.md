@@ -119,7 +119,8 @@ Todas as chaves aceitam variáveis de ambiente no formato `Secao__Chave`.
 
 | Chave | Padrão | Para que serve |
 | --- | --- | --- |
-| `ConnectionStrings__Postgres` | — | conexão com o banco (obrigatória) |
+| `ConnectionStrings__Postgres` | — | conexão com o banco, formato ADO.NET |
+| `DATABASE_URL` | — | alternativa: URI `postgresql://usuario:senha@host:5432/banco` |
 | `Database__ApplyMigrationsOnStartup` | `true` em Dev | aplica o esquema no start |
 | `Gc__Name` | `GC Domus` | nome exibido no app |
 | `Gc__InviteCode` | gerado | código de convite inicial |
@@ -130,6 +131,27 @@ Todas as chaves aceitam variáveis de ambiente no formato `Secao__Chave`.
 
 O login com Google só é registrado quando as duas chaves estão preenchidas — o app funciona
 normalmente sem elas, com e-mail e senha.
+
+### Conexão com o banco
+
+**Não existe valor padrão em produção.** Sem `ConnectionStrings__Postgres` nem `DATABASE_URL`, a
+aplicação falha no start com uma mensagem explícita — de propósito: um padrão `localhost` faria o
+container tentar conectar a si mesmo e produzir um erro confuso de "Connection refused".
+
+Formatos aceitos, nesta ordem de prioridade:
+
+```
+ConnectionStrings__Postgres = Host=ep-xxx.neon.tech;Port=5432;Database=domus;Username=u;Password=p;SSL Mode=Require
+DATABASE_URL                = postgresql://usuario:senha@host:5432/banco?sslmode=require
+```
+
+`DATABASE_URL` é o formato que Railway, Render, Fly, Heroku e Neon expõem por padrão. Quando o
+`sslmode` não vem na URI, usamos `Prefer`: criptografa se o servidor oferecer TLS e continua
+funcionando em rede privada sem TLS (caso do Postgres interno de algumas plataformas).
+
+No start, a aplicação registra no log o destino da conexão (`host:porta/banco`, nunca a senha) e
+espera até ~40 s pelo banco antes de desistir — bancos gerenciados costumam estar acordando quando
+o container sobe.
 
 ---
 

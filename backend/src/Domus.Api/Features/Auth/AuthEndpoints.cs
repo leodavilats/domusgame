@@ -43,12 +43,12 @@ public static class AuthEndpoints
 
         if (!settings.MatchesInvite(request.InviteCode))
         {
-            throw new DomainValidationException("Codigo de convite invalido. Peca o codigo ao lider do GC.");
+            throw new DomainValidationException("Código de convite invalido. Peca o codigo ao lider do GC.");
         }
 
         var id = Guid.CreateVersion7();
 
-        // Valida o nome antes de criar credenciais, para nao deixar usuario orfao.
+        // Valida o nome antes de criar credenciais, para não deixar usuário orfao.
         var participant = Participant.Register(id, request.DisplayName, null, clock.GetUtcNow());
 
         await EnsureDisplayNameIsFreeAsync(db, participant.NormalizedDisplayName, null, ct);
@@ -237,7 +237,7 @@ public static class AuthEndpoints
 
         if (taken)
         {
-            throw new DomainValidationException("Ja existe alguem com esse nome de exibicao. Escolha outro.");
+            throw new DomainValidationException("Já existe alguém com esse nome de exibição. Escolha outro.");
         }
     }
 

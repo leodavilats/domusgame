@@ -43,7 +43,7 @@ GcSettings (linha única)        AuditLogEntry
 ## 3. Enumerações
 
 ```csharp
-enum SeasonStatus      { Draft, Active, Finished }  // Draft: criada, ainda nao e a corrente
+enum SeasonStatus      { Draft, Active, Finished }  // Draft: criada, ainda não e a corrente
 enum RoundStatus       { Draft, Published }          // persistido
 enum RoundAvailability { Scheduled, Open, Closed }    // derivado do relógio (RN-07)
 enum QuestionMediaType { None, Image, Audio }

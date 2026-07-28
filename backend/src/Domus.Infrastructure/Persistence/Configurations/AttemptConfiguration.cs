@@ -57,7 +57,7 @@ public sealed class AttemptConfiguration : IEntityTypeConfiguration<Attempt>
             .HasForeignKey(a => a.ParticipantId)
             .OnDelete(DeleteBehavior.Restrict);
 
-        // RN-14 / RNF-04: a garantia real da tentativa unica esta aqui, no banco.
+        // RN-14 / RNF-04: a garantia real da tentativa única esta aqui, no banco.
         builder.HasIndex(a => new { a.RoundId, a.ParticipantId })
             .IsUnique()
             .HasDatabaseName("UX_Attempts_RoundParticipant");

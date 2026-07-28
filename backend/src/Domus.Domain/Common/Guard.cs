@@ -2,7 +2,7 @@ namespace Domus.Domain.Common;
 
 /// <summary>
 /// Validacoes de entrada do dominio. Sempre lanca <see cref="DomainValidationException"/>
-/// com mensagem em portugues, pronta para ser exibida ao usuario.
+/// com mensagem em portugues, pronta para ser exibida ao usuário.
 /// </summary>
 public static class Guard
 {

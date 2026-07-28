@@ -13,7 +13,7 @@ public enum AnswerOutcome
     /// <summary>Enviada sem escolher alternativa (cronometro zerou no cliente).</summary>
     Blank = 3,
 
-    /// <summary>Prazo estourado: nao pontua (RN-18).</summary>
+    /// <summary>Prazo estourado: não pontua (RN-18).</summary>
     TimedOut = 4
 }
 
@@ -89,7 +89,7 @@ public sealed class AttemptAnswer : Entity
         }
 
         var option = question.Options.SingleOrDefault(o => o.Id == selectedOptionId.Value)
-            ?? throw new DomainValidationException("Alternativa nao pertence a esta pergunta.");
+            ?? throw new DomainValidationException("Alternativa não pertence a esta pergunta.");
 
         SelectedOptionId = option.Id;
         Outcome = option.IsCorrect ? AnswerOutcome.Correct : AnswerOutcome.Incorrect;
@@ -97,7 +97,7 @@ public sealed class AttemptAnswer : Entity
         SpeedBonus = ScoringPolicy.SpeedBonus(option.IsCorrect, elapsed, scoring);
     }
 
-    /// <summary>I-A7: tempo esgotado conta o limite cheio, para nao premiar quem abandona (RN-29).</summary>
+    /// <summary>I-A7: tempo esgotado conta o limite cheio, para não premiar quem abandona (RN-29).</summary>
     internal void MarkTimedOut(DateTimeOffset now, RoundScoringSettings scoring)
     {
         if (!IsPending) return;

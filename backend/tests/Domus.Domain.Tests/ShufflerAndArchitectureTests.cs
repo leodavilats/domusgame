@@ -55,8 +55,8 @@ public class OptionShufflerTests
 public class ArchitectureTests
 {
     /// <summary>
-    /// Doc 05, secao 4: a camada de dominio nao pode conhecer EF Core, ASP.NET nem Identity.
-    /// Se alguem adicionar a referencia por conveniencia, este teste falha.
+    /// Doc 05, secao 4: a camada de dominio não pode conhecer EF Core, ASP.NET nem Identity.
+    /// Se alguém adicionar a referencia por conveniencia, este teste falha.
     /// </summary>
     [Fact]
     public void Dominio_nao_depende_de_infraestrutura()

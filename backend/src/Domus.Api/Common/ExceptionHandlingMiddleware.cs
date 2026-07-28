@@ -21,11 +21,11 @@ public sealed class ExceptionHandlingMiddleware(RequestDelegate next, ILogger<Ex
 
             if (status == StatusCodes.Status500InternalServerError)
             {
-                logger.LogError(exception, "Erro nao tratado em {Path}", context.Request.Path);
+                logger.LogError(exception, "Erro não tratado em {Path}", context.Request.Path);
             }
             else
             {
-                logger.LogInformation("Requisicao recusada em {Path}: {Message}", context.Request.Path, exception.Message);
+                logger.LogInformation("Requisição recusada em {Path}: {Message}", context.Request.Path, exception.Message);
             }
 
             if (context.Response.HasStarted) throw;
@@ -49,10 +49,10 @@ public sealed class ExceptionHandlingMiddleware(RequestDelegate next, ILogger<Ex
     private static (int Status, string Title) Map(Exception exception) => exception switch
     {
         DomainValidationException => (StatusCodes.Status400BadRequest, "Dados invalidos"),
-        DomainRuleException => (StatusCodes.Status409Conflict, "Operacao nao permitida"),
-        NotFoundException => (StatusCodes.Status404NotFound, "Nao encontrado"),
-        UnauthorizedException => (StatusCodes.Status401Unauthorized, "Nao autenticado"),
-        ForbiddenException => (StatusCodes.Status403Forbidden, "Sem permissao"),
+        DomainRuleException => (StatusCodes.Status409Conflict, "Operação não permitida"),
+        NotFoundException => (StatusCodes.Status404NotFound, "Não encontrado"),
+        UnauthorizedException => (StatusCodes.Status401Unauthorized, "Não autenticado"),
+        ForbiddenException => (StatusCodes.Status403Forbidden, "Sem permissão"),
         _ => (StatusCodes.Status500InternalServerError, "Erro interno")
     };
 }

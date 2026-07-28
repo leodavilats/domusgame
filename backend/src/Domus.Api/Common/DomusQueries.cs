@@ -17,7 +17,7 @@ public sealed class DomusQueries(DomusDbContext db, TimeProvider clock)
 
     public async Task<GcSettings> GetSettingsAsync(CancellationToken ct = default) =>
         await db.GcSettings.AsNoTracking().SingleOrDefaultAsync(s => s.Id == GcSettings.SingletonId, ct)
-        ?? throw new NotFoundException("Configuracao do GC nao encontrada.");
+        ?? throw new NotFoundException("Configuracao do GC não encontrada.");
 
     public Task<Season?> GetActiveSeasonAsync(CancellationToken ct = default) =>
         db.Seasons.AsNoTracking().SingleOrDefaultAsync(s => s.Status == SeasonStatus.Active, ct);
@@ -151,7 +151,7 @@ public sealed class DomusQueries(DomusDbContext db, TimeProvider clock)
 
         var byParticipant = totals.ToDictionary(t => t.ParticipantId);
 
-        // RN-33: quem nao participou aparece com zero, nao some do ranking.
+        // RN-33: quem não participou aparece com zero, não some do ranking.
         var participants = await db.Participants.AsNoTracking()
             .Where(p => !p.IsRemoved)
             .Select(p => new { p.Id, p.DisplayName, p.AvatarUrl, p.ShowInRanking })
@@ -211,7 +211,7 @@ public sealed class DomusQueries(DomusDbContext db, TimeProvider clock)
 
         var me = entries.SingleOrDefault(e => e.IsMe);
 
-        // RN-22: quem optou por nao aparecer some da lista publica, mas continua vendo sua posicao.
+        // RN-22: quem optou por não aparecer some da lista publica, mas continua vendo sua posicao.
         var hidden = ordered.Where(r => !r.ShowInRanking).Select(r => r.ParticipantId).ToHashSet();
         var visible = entries.Where(e => e.IsMe || !hidden.Contains(e.ParticipantId)).ToList();
 

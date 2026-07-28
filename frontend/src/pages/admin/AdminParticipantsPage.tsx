@@ -29,7 +29,7 @@ export function AdminParticipantsPage() {
       <PageTitle subtitle="Convite do GC e papeis">Pessoas</PageTitle>
 
       <Card>
-        <h2 className="mb-3 text-sm font-semibold text-slate-700">Codigo de convite</h2>
+        <h2 className="mb-3 text-sm font-semibold text-slate-700">Código de convite</h2>
 
         {invite.loading && <Spinner />}
         {invite.error && <ErrorBox message={invite.error} onRetry={invite.reload} />}

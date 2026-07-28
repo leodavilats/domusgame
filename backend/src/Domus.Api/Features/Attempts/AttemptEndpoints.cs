@@ -22,7 +22,7 @@ public static class AttemptEndpoints
 
     /// <summary>
     /// UC-05. Idempotente: se ja existe tentativa, devolve o estado dela em vez de erro.
-    /// A tentativa unica e garantida pelo indice do banco (RNF-04), nao por este if.
+    /// A tentativa única e garantida pelo indice do banco (RNF-04), não por este if.
     /// </summary>
     private static async Task<IResult> StartAsync(
         Guid roundId,
@@ -55,7 +55,7 @@ public static class AttemptEndpoints
             db.ChangeTracker.Clear();
 
             var winner = await LoadAttemptAsync(db, roundId, meId, ct)
-                ?? throw new DomainRuleException("Nao foi possivel iniciar a tentativa. Tente novamente.");
+                ?? throw new DomainRuleException("Não foi possivel iniciar a tentativa. Tente novamente.");
 
             return Results.Ok(await AdvanceAsync(db, winner, round, now, ct));
         }
@@ -75,14 +75,14 @@ public static class AttemptEndpoints
         var now = queries.Now;
 
         var attempt = await LoadAttemptAsync(db, roundId, meId, ct)
-            ?? throw new NotFoundException("Voce ainda nao iniciou esta rodada.");
+            ?? throw new NotFoundException("Você ainda não iniciou esta rodada.");
 
         var round = await queries.GetRoundWithQuestionsAsync(roundId, tracking: false, ct);
 
         return Results.Ok(await AdvanceAsync(db, attempt, round, now, ct));
     }
 
-    /// <summary>UC-06: o unico lugar onde pontos sao atribuidos.</summary>
+    /// <summary>UC-06: o único lugar onde pontos sao atribuidos.</summary>
     private static async Task<IResult> SubmitAsync(
         Guid attemptId,
         SubmitAnswerRequest request,
@@ -206,8 +206,8 @@ public static class AttemptEndpoints
     }
 
     /// <summary>
-    /// RNF-02: este e o unico mapeamento de pergunta usado durante a tentativa e ele nao
-    /// tem como expor a alternativa correta - o DTO simplesmente nao tem esse campo.
+    /// RNF-02: este e o único mapeamento de pergunta usado durante a tentativa e ele não
+    /// tem como expor a alternativa correta - o DTO simplesmente não tem esse campo.
     /// </summary>
     private static AttemptQuestionDto ToQuestion(Attempt attempt, ServedQuestion served, DateTimeOffset now)
     {

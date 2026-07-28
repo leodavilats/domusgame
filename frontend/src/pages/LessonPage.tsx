@@ -17,7 +17,7 @@ export function LessonPage() {
   if (!data.lesson) {
     return (
       <EmptyState
-        title="A licao ainda nao esta disponivel"
+        title="A licao ainda não esta disponivel"
         description={`Ela e liberada quando a rodada abrir, em ${formatDateTime(data.round.opensAt)}.`}
       />
     )

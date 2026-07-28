@@ -25,12 +25,29 @@ public sealed class DatabaseSeeder(
     {
         var now = clock.GetUtcNow();
 
+        // Essencial: sem a configuracao do GC não ha codigo de convite nem cadastro.
         await SeedSettingsAsync(options, now, cancellationToken);
-        await SeedAdminAsync(options, now, cancellationToken);
+
+        // Conveniencia: uma falha aqui e registrada, mas não pode derrubar a aplicacao em
+        // producao - seria um crash loop permanente por causa de um dado de bootstrap.
+        await TryAsync("administrador inicial", () => SeedAdminAsync(options, now, cancellationToken));
 
         if (options.IncludeDemoData)
         {
-            await SeedDemoAsync(now, cancellationToken);
+            await TryAsync("dados de demonstracao", () => SeedDemoAsync(now, cancellationToken));
+        }
+    }
+
+    private async Task TryAsync(string step, Func<Task> action)
+    {
+        try
+        {
+            await action();
+        }
+        catch (Exception exception)
+        {
+            db.ChangeTracker.Clear();
+            logger.LogError(exception, "Falha ao preparar {Step}. A aplicacao continua no ar.", step);
         }
     }
 
@@ -47,11 +64,11 @@ public sealed class DatabaseSeeder(
             db.GcSettings.Add(GcSettings.Create(options.GcName, code, now));
             await db.SaveChangesAsync(ct);
 
-            logger.LogInformation("Configuracao do GC criada. Codigo de convite: {InviteCode}", code);
+            logger.LogInformation("Configuracao do GC criada. Código de convite: {InviteCode}", code);
             return;
         }
 
-        // O nome pode ser ajustado por configuracao; o codigo so muda por acao explicita do admin.
+        // O nome pode ser ajustado por configuracao; o codigo so muda por ação explicita do admin.
         if (settings.GcName != options.GcName && !string.IsNullOrWhiteSpace(options.GcName))
         {
             settings.Rename(options.GcName);
@@ -66,7 +83,7 @@ public sealed class DatabaseSeeder(
             if (!await db.Participants.AnyAsync(p => p.Role == ParticipantRole.Admin, ct))
             {
                 logger.LogWarning(
-                    "Nenhum administrador cadastrado e Admin__Email/Admin__Password nao foram configurados.");
+                    "Nenhum administrador cadastrado e Admin__Email/Admin__Password não foram configurados.");
             }
 
             return;
@@ -76,6 +93,18 @@ public sealed class DatabaseSeeder(
         if (existing is not null)
         {
             await EnsureAdminRoleAsync(existing.Id, options, now, ct);
+            return;
+        }
+
+        // O nome de exibição e único. Verificamos antes de criar credenciais para não deixar
+        // um usuário orfao nem quebrar o start por causa de um nome ja usado.
+        var normalized = Participant.Normalize(options.AdminDisplayName);
+        if (await db.Participants.AnyAsync(p => p.NormalizedDisplayName == normalized, ct))
+        {
+            logger.LogWarning(
+                "Já existe participante com o nome de exibição '{DisplayName}'. " +
+                "Ajuste Admin__DisplayName ou promova a conta existente pelo painel.",
+                options.AdminDisplayName);
             return;
         }
 

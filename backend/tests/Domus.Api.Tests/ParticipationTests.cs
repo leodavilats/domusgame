@@ -61,7 +61,7 @@ public class ParticipationTests(ApiFixture fixture)
         Assert.Equal(HttpStatusCode.Forbidden, ranking.StatusCode);
     }
 
-    /// <summary>RN-14 / RNF-04: duplo clique nao pode gerar duas tentativas.</summary>
+    /// <summary>RN-14 / RNF-04: duplo clique não pode gerar duas tentativas.</summary>
     [Fact]
     public async Task Tentativa_e_unica_mesmo_com_requisicoes_simultaneas()
     {
@@ -82,7 +82,7 @@ public class ParticipationTests(ApiFixture fixture)
         Assert.Equal(1, await db.Attempts.CountAsync(a => a.RoundId == round.RoundId));
     }
 
-    /// <summary>RNF-05: reenvio da mesma resposta nao repontua.</summary>
+    /// <summary>RNF-05: reenvio da mesma resposta não repontua.</summary>
     [Fact]
     public async Task Reenvio_da_mesma_resposta_e_idempotente()
     {

@@ -54,7 +54,7 @@ public sealed class ApiFixture : IAsyncLifetime
 
     public async Task DisposeAsync()
     {
-        // A inicializacao pode ter falhado antes de criar a factory; nao mascare o erro original.
+        // A inicializacao pode ter falhado antes de criar a factory; não mascare o erro original.
         if (Factory is not null) await Factory.DisposeAsync();
         await _postgres.DisposeAsync();
     }

@@ -7,9 +7,9 @@ import { useSession } from '../auth/SessionContext'
 import { Button, Card, ErrorBox, Field, Input, Spinner } from '../components/ui'
 
 const messages: Record<string, string> = {
-  google: 'Nao foi possivel entrar com o Google. Tente de novo.',
-  'google-indisponivel': 'O login com Google nao esta configurado neste ambiente.',
-  'google-sem-email': 'Sua conta Google nao liberou o e-mail. Use e-mail e senha.',
+  google: 'Não foi possivel entrar com o Google. Tente de novo.',
+  'google-indisponivel': 'O login com Google não esta configurado neste ambiente.',
+  'google-sem-email': 'Sua conta Google não liberou o e-mail. Use e-mail e senha.',
 }
 
 export function LoginPage() {

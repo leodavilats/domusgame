@@ -65,7 +65,7 @@ export function AdminRoundEditorPage() {
 
         {!editable && (
           <p className="mt-3 rounded-xl bg-amber-50 p-3 text-sm text-amber-900">
-            Rodada publicada nao pode ser editada. Corrija antes de publicar (RN-10).
+            Rodada publicada não pode ser editada. Corrija antes de publicar (RN-10).
           </p>
         )}
 
@@ -468,7 +468,7 @@ function PublishCard({ round, onPublished }: { round: AdminRound; onPublished: (
 
       {ready ? (
         <p className="rounded-xl bg-emerald-50 p-3 text-sm text-emerald-800">
-          Tudo certo. Depois de publicar, a rodada abre sozinha em {formatDateTime(round.round.opensAt)} e nao
+          Tudo certo. Depois de publicar, a rodada abre sozinha em {formatDateTime(round.round.opensAt)} e não
           podera mais ser editada.
         </p>
       ) : (
@@ -488,7 +488,7 @@ function PublishCard({ round, onPublished }: { round: AdminRound; onPublished: (
           disabled={!ready}
           loading={publish.loading}
           onClick={() => {
-            if (window.confirm('Publicar a rodada? Depois disso ela nao podera ser editada.')) void publish.run()
+            if (window.confirm('Publicar a rodada? Depois disso ela não podera ser editada.')) void publish.run()
           }}
         >
           Publicar

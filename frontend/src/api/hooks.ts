@@ -49,7 +49,7 @@ export function useApi<T>(path: string | null, deps: unknown[] = []): ApiState<T
   return { ...state, reload }
 }
 
-/** Executa uma acao de escrita, expondo estado de carregamento e erro para a tela. */
+/** Executa uma ação de escrita, expondo estado de carregamento e erro para a tela. */
 export function useMutation<TArgs extends unknown[], TResult>(
   action: (...args: TArgs) => Promise<TResult>,
 ) {

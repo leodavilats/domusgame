@@ -1,4 +1,4 @@
-# Imagem unica: o front-end compilado vira conteudo estatico servido pela propria API.
+# Imagem única: o front-end compilado vira conteúdo estático servido pela própria API.
 # Um deploy, um container, uma origem (doc 05, secao 2).
 
 FROM node:22-alpine AS frontend

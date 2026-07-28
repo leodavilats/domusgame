@@ -30,7 +30,7 @@ public sealed class ParticipantConfiguration : IEntityTypeConfiguration<Particip
 
         builder.Ignore(p => p.IsAdmin);
 
-        // I-P1: nome de exibicao unico (e o que aparece no ranking).
+        // I-P1: nome de exibição único (e o que aparece no ranking).
         builder.HasIndex(p => p.NormalizedDisplayName).IsUnique();
         builder.HasIndex(p => p.IsRemoved);
 

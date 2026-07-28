@@ -3,7 +3,7 @@ using Domus.Domain.Common;
 namespace Domus.Domain.Rounds;
 
 /// <summary>
-/// Conteudo estudado na semana. Owned type da rodada (colunas na propria tabela Rounds).
+/// Conteudo estudado na semana. Owned type da rodada (colunas na própria tabela Rounds).
 /// Pode estar vazio enquanto a rodada e rascunho; e obrigatorio para publicar (RN-08).
 /// </summary>
 public sealed class Lesson

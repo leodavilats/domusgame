@@ -4,7 +4,7 @@ namespace Domus.Domain.Attempts;
 
 /// <summary>
 /// Unico lugar do sistema que sabe transformar acerto + tempo em pontos (RN-23 a RN-27).
-/// Puro e estatico: coberto pela tabela de verdade em Domus.Domain.Tests/ScoringPolicyTests.
+/// Puro e estático: coberto pela tabela de verdade em Domus.Domain.Tests/ScoringPolicyTests.
 /// </summary>
 public static class ScoringPolicy
 {

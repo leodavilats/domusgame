@@ -7,7 +7,7 @@ internal sealed record PreparedRound(Guid SeasonId, Guid RoundId, int QuestionCo
 
 /// <summary>
 /// Monta cenarios usando apenas o contrato publico da API.
-/// Cada cenario cria a propria temporada: rodadas publicadas na mesma temporada nao podem
+/// Cada cenario cria a própria temporada: rodadas publicadas na mesma temporada não podem
 /// ter janelas sobrepostas (RN-12), e os testes desta colecao compartilham o mesmo banco.
 /// </summary>
 internal static class RoundBuilder
@@ -129,7 +129,7 @@ internal static class RoundBuilder
             }
         }
 
-        throw new InvalidOperationException("Alternativa correta nao encontrada.");
+        throw new InvalidOperationException("Alternativa correta não encontrada.");
     }
 
     public static async Task<IReadOnlyList<Guid>> AllCorrectOptionIdsAsync(HttpClient admin, Guid roundId)

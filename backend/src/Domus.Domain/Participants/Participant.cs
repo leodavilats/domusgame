@@ -42,7 +42,7 @@ public sealed class Participant : Entity
 
     public string? AvatarUrl { get; private set; }
 
-    /// <summary>Se falso, o participante nao aparece nas listas publicas de ranking (RN-22).</summary>
+    /// <summary>Se falso, o participante não aparece nas listas publicas de ranking (RN-22).</summary>
     public bool ShowInRanking { get; private set; }
 
     public ParticipantRole Role { get; private set; }
@@ -66,7 +66,7 @@ public sealed class Participant : Entity
 
     public void UpdateProfile(string displayName, string? avatarUrl, bool showInRanking)
     {
-        Guard.State(!IsRemoved, "Conta removida nao pode ser alterada.");
+        Guard.State(!IsRemoved, "Conta removida não pode ser alterada.");
 
         DisplayName = ValidateDisplayName(displayName);
         NormalizedDisplayName = Normalize(DisplayName);
@@ -76,13 +76,13 @@ public sealed class Participant : Entity
 
     public void ChangeRole(ParticipantRole role)
     {
-        // I-P3: participante removido nao pode ser promovido.
-        Guard.State(!IsRemoved, "Conta removida nao pode receber papel.");
+        // I-P3: participante removido não pode ser promovido.
+        Guard.State(!IsRemoved, "Conta removida não pode receber papel.");
         Role = role;
     }
 
     /// <summary>
-    /// RN-38: apaga a identidade pessoal mas preserva as tentativas, para nao furar o
+    /// RN-38: apaga a identidade pessoal mas preserva as tentativas, para não furar o
     /// historico agregado das rodadas.
     /// </summary>
     public void Anonymize()
@@ -101,11 +101,11 @@ public sealed class Participant : Entity
 
     private static string ValidateDisplayName(string displayName)
     {
-        var value = Guard.Text(displayName, "Nome de exibicao", DisplayNameMaxLength, DisplayNameMinLength);
+        var value = Guard.Text(displayName, "Nome de exibição", DisplayNameMaxLength, DisplayNameMinLength);
 
         if (value.Any(char.IsControl))
         {
-            throw new DomainValidationException("Nome de exibicao contem caracteres invalidos.");
+            throw new DomainValidationException("Nome de exibição contem caracteres invalidos.");
         }
 
         return value;

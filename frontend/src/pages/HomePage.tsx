@@ -84,7 +84,7 @@ export function HomePage() {
 
             {myAttempt?.status === 'Completed' && myAttempt.totalPoints != null && (
               <div className="rounded-xl bg-brand-50 p-3 text-sm text-brand-800">
-                Voce fez <strong>{myAttempt.totalPoints} pontos</strong>
+                Você fez <strong>{myAttempt.totalPoints} pontos</strong>
                 {myAttempt.correctCount != null && ` (${myAttempt.correctCount}/${myAttempt.questionCount} acertos)`}
                 {round.availability === 'Open' && '. O ranking sai quando a rodada encerrar.'}
                 {myAttempt.position ? ` · ${myAttempt.position}o lugar na semana` : ''}

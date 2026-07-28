@@ -3,7 +3,7 @@ import type { JSX } from 'react'
 /**
  * Renderizador de markdown minimo (titulos, listas, negrito, italico, links e paragrafos).
  * Cobre o que o administrador escreve na licao sem trazer uma dependencia inteira.
- * Nao interpreta HTML: o texto e sempre tratado como texto.
+ * Não interpreta HTML: o texto e sempre tratado como texto.
  */
 export function Markdown({ content }: { content: string }) {
   const blocks = content.replace(/\r\n/g, '\n').split(/\n{2,}/)

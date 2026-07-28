@@ -46,7 +46,7 @@ export function HistoryPage() {
               </p>
             ) : (
               <p className="text-sm text-slate-500">
-                {round.availability === 'Closed' ? 'Nao participou' : 'Ainda nao respondida'}
+                {round.availability === 'Closed' ? 'Não participou' : 'Ainda não respondida'}
               </p>
             )}
 

@@ -38,7 +38,7 @@ export function ProfilePage() {
 
   return (
     <div className="space-y-4">
-      <PageTitle subtitle="Como voce aparece para o restante do GC">Meu perfil</PageTitle>
+      <PageTitle subtitle="Como Você aparece para o restante do GC">Meu perfil</PageTitle>
 
       <Card>
         <form
@@ -52,7 +52,7 @@ export function ProfilePage() {
           {save.error ? <ErrorBox message={save.error} /> : null}
           {saved ? <p className="rounded-xl bg-emerald-50 p-3 text-sm text-emerald-800">Perfil atualizado.</p> : null}
 
-          <Field label="Nome de exibicao" hint="E o nome que aparece no ranking.">
+          <Field label="Nome de exibição" hint="E o nome que aparece no ranking.">
             <Input
               required
               minLength={2}
@@ -81,7 +81,7 @@ export function ProfilePage() {
             <span className="text-sm text-slate-700">
               Aparecer no ranking publico
               <span className="block text-xs text-slate-500">
-                Desmarcado, voce continua pontuando e vendo sua posicao, mas nao aparece na lista.
+                Desmarcado, Você continua pontuando e vendo sua posicao, mas não aparece na lista.
               </span>
             </span>
           </label>

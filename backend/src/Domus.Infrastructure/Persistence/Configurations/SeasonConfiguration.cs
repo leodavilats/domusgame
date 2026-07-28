@@ -21,7 +21,7 @@ public sealed class SeasonConfiguration : IEntityTypeConfiguration<Season>
 
         builder.Ignore(s => s.IsFinished);
 
-        // RN-02: no maximo uma temporada ativa, garantido pelo banco (indice unico parcial).
+        // RN-02: no maximo uma temporada ativa, garantido pelo banco (indice único parcial).
         builder.HasIndex(s => s.Status)
             .IsUnique()
             .HasFilter($"\"Status\" = {(int)SeasonStatus.Active}")

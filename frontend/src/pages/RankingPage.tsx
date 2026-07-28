@@ -72,7 +72,7 @@ export function RankingPage() {
 
 function RankingList({ ranking }: { ranking: Ranking }) {
   if (ranking.entries.length === 0) {
-    return <EmptyState title="Ainda nao ha pontuacao registrada" />
+    return <EmptyState title="Ainda não ha pontuacao registrada" />
   }
 
   const podium = ranking.entries.slice(0, 3)
@@ -129,7 +129,7 @@ function Row({ entry, highlightPodium = false }: { entry: RankingEntry; highligh
       <div className="min-w-0 flex-1">
         <p className="truncate text-sm font-semibold text-slate-900">
           {entry.displayName}
-          {entry.isMe ? ' (voce)' : ''}
+          {entry.isMe ? ' (Você)' : ''}
         </p>
         <p className="text-xs text-slate-500">
           {entry.roundsPlayed} rodada(s) · {formatDuration(entry.totalTimeMs)}

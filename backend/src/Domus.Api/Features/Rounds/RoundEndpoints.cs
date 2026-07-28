@@ -80,7 +80,7 @@ public static class RoundEndpoints
         var round = await queries.GetRoundWithQuestionsAsync(id, tracking: false, ct);
         var availability = round.AvailabilityAt(queries.Now);
 
-        // RN-09: rascunho nao existe para o participante.
+        // RN-09: rascunho não existe para o participante.
         if (availability == RoundAvailability.Draft && !currentUser.IsAdmin)
         {
             throw NotFoundException.For("Rodada");
@@ -144,7 +144,7 @@ public static class RoundEndpoints
                     .OrderBy(o => o.Order)
                     .Select(o => new ReviewOptionDto(o.Id, o.Text, o.IsCorrect))],
                 answer?.SelectedOptionId,
-                // Sem resposta registrada significa que a pessoa nao participou -
+                // Sem resposta registrada significa que a pessoa não participou -
                 // e diferente de ter estourado o tempo.
                 answer?.Outcome ?? AnswerOutcome.Pending,
                 answer?.Points ?? 0,

@@ -40,6 +40,8 @@ rankings semanal e de temporada, estatísticas por rodada, ativação de tempora
 | Revisão mostrava "tempo esgotado" para quem não participou | teste manual da rodada encerrada |
 | **`EnableRetryOnFailure` é incompatível com transação explícita — ativar temporada dava 500** | teste de integração `Apenas_uma_temporada_fica_ativa` |
 | Rate limit de produção (12/min) não era configurável, inviabilizando a suíte | 7 testes falhando com 429 |
+| **Connection string padrão `localhost` no `appsettings.json`** — em produção, sem a variável de ambiente, o container tentava conectar a si mesmo | primeiro deploy real |
+| Falha de seed derrubava a aplicação em *crash loop* permanente | teste do deploy contra banco já populado |
 
 O quinto item é o mais relevante: era um defeito de produção que só apareceria quando você
 trocasse de trimestre.

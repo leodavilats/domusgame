@@ -60,7 +60,7 @@ export function AdminRoundStatsPage() {
 
       <Card>
         <h2 className="mb-2 text-sm font-semibold text-slate-700">
-          Ainda nao responderam ({data.missing.length})
+          Ainda não responderam ({data.missing.length})
         </h2>
 
         {data.missing.length === 0 ? (

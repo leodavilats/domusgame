@@ -24,7 +24,7 @@ import { AdminParticipantsPage } from './pages/admin/AdminParticipantsPage'
 function Protected({ children, adminOnly = false }: { children: ReactElement; adminOnly?: boolean }) {
   const { me, loading } = useSession()
 
-  if (loading) return <Spinner label="Verificando sua sessao..." />
+  if (loading) return <Spinner label="Verificando sua sessão..." />
   if (!me) return <Navigate to="/entrar" replace />
   if (adminOnly && !me.isAdmin) return <Navigate to="/" replace />
 

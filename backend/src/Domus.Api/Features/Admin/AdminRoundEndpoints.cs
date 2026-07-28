@@ -130,7 +130,7 @@ public static class AdminRoundEndpoints
         var season = await db.Seasons.SingleOrDefaultAsync(s => s.Id == request.SeasonId, ct)
             ?? throw NotFoundException.For("Temporada");
 
-        Guard.State(!season.IsFinished, "Temporada encerrada nao recebe novas rodadas.");
+        Guard.State(!season.IsFinished, "Temporada encerrada não recebe novas rodadas.");
 
         var round = Round.CreateDraft(
             season.Id,
@@ -381,7 +381,7 @@ public static class AdminRoundEndpoints
 
         if (duplicated)
         {
-            throw new DomainRuleException($"Ja existe uma rodada para a semana {round.WeekNumber} nesta temporada.");
+            throw new DomainRuleException($"Já existe uma rodada para a semana {round.WeekNumber} nesta temporada.");
         }
     }
 

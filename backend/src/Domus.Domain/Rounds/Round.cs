@@ -201,7 +201,7 @@ public sealed class Round : Entity
         var problems = new List<string>();
 
         if (IsPublished) problems.Add("A rodada ja esta publicada.");
-        if (!Lesson.IsComplete) problems.Add("Preencha titulo, referencia biblica e conteudo da licao.");
+        if (!Lesson.IsComplete) problems.Add("Preencha titulo, referencia biblica e conteúdo da licao.");
         if (_questions.Count == 0) problems.Add("Cadastre ao menos uma pergunta.");
         if (ClosesAt <= OpensAt) problems.Add("O fechamento deve ser posterior a abertura.");
 
@@ -236,7 +236,7 @@ public sealed class Round : Entity
         var problems = ValidateForPublish();
         if (problems.Count > 0)
         {
-            throw new DomainRuleException($"Nao foi possivel publicar: {string.Join(" ", problems)}");
+            throw new DomainRuleException($"Não foi possivel publicar: {string.Join(" ", problems)}");
         }
 
         Status = RoundStatus.Published;
@@ -267,7 +267,7 @@ public sealed class Round : Entity
     public Question? QuestionAtOrder(int order) => _questions.SingleOrDefault(q => q.Order == order);
 
     private void EnsureDraft() =>
-        Guard.State(IsDraft, "Rodada publicada nao pode ser alterada.");
+        Guard.State(IsDraft, "Rodada publicada não pode ser alterada.");
 
     private void Renumber()
     {

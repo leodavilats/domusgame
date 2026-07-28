@@ -7,10 +7,10 @@ import { useSession } from '../auth/SessionContext'
 import { Button, Card, ErrorBox, Field, Input, Spinner } from '../components/ui'
 
 const messages: Record<string, string> = {
-  convite: 'Codigo de convite invalido. Peca o codigo ao lider do GC.',
-  nome: 'Nome de exibicao invalido. Use de 2 a 40 caracteres.',
-  'nome-em-uso': 'Ja existe alguem com esse nome de exibicao.',
-  conta: 'Nao foi possivel criar a conta com o Google.',
+  convite: 'Código de convite invalido. Peca o codigo ao lider do GC.',
+  nome: 'Nome de exibição invalido. Use de 2 a 40 caracteres.',
+  'nome-em-uso': 'Já existe alguém com esse nome de exibição.',
+  conta: 'Não foi possivel criar a conta com o Google.',
 }
 
 export function RegisterPage() {
@@ -38,7 +38,7 @@ export function RegisterPage() {
     <div className="mx-auto flex min-h-dvh w-full max-w-md flex-col justify-center gap-4 p-4">
       <div className="text-center">
         <h1 className="text-2xl font-bold text-slate-900">Criar conta</h1>
-        <p className="mt-1 text-sm text-slate-500">Voce precisa do codigo de convite do GC</p>
+        <p className="mt-1 text-sm text-slate-500">Você precisa do codigo de convite do GC</p>
       </div>
 
       <Card>
@@ -52,7 +52,7 @@ export function RegisterPage() {
           {externalError && messages[externalError] ? <ErrorBox message={messages[externalError]} /> : null}
           {register.error ? <ErrorBox message={register.error} /> : null}
 
-          <Field label="Codigo de convite">
+          <Field label="Código de convite">
             <Input
               required
               autoCapitalize="characters"
@@ -61,7 +61,7 @@ export function RegisterPage() {
             />
           </Field>
 
-          <Field label="Nome de exibicao" hint="E o nome que aparece no ranking.">
+          <Field label="Nome de exibição" hint="E o nome que aparece no ranking.">
             <Input
               required
               minLength={2}
@@ -81,7 +81,7 @@ export function RegisterPage() {
             />
           </Field>
 
-          <Field label="Senha" hint="Minimo de 8 caracteres.">
+          <Field label="Senha" hint="Mínimo de 8 caracteres.">
             <Input
               type="password"
               autoComplete="new-password"
@@ -116,7 +116,7 @@ export function RegisterPage() {
       </Card>
 
       <p className="text-center text-sm text-slate-600">
-        Ja tem conta?{' '}
+        Já tem conta?{' '}
         <Link to="/entrar" className="font-semibold text-brand-600">
           Entrar
         </Link>

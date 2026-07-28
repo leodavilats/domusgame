@@ -7,7 +7,7 @@ public sealed class DomainValidationException : Exception
 }
 
 /// <summary>
-/// Operacao invalida para o estado atual do agregado (rodada publicada, tentativa concluida,
+/// Operação invalida para o estado atual do agregado (rodada publicada, tentativa concluida,
 /// pergunta fora de ordem). Mapeada para HTTP 409.
 /// </summary>
 public sealed class DomainRuleException : Exception
@@ -20,5 +20,5 @@ public sealed class NotFoundException : Exception
 {
     public NotFoundException(string message) : base(message) { }
 
-    public static NotFoundException For(string resource) => new($"{resource} nao encontrado(a).");
+    public static NotFoundException For(string resource) => new($"{resource} não encontrado(a).");
 }

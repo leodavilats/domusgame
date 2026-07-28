@@ -29,7 +29,7 @@ export function ResultPage() {
     })
 
     setShareFeedback(
-      result === 'shared' ? null : result === 'copied' ? 'Texto copiado!' : 'Nao foi possivel compartilhar.',
+      result === 'shared' ? null : result === 'copied' ? 'Texto copiado!' : 'Não foi possivel compartilhar.',
     )
   }
 
@@ -54,7 +54,7 @@ export function ResultPage() {
       {!data.answersRevealed && (
         <Card className="bg-amber-50">
           <p className="text-sm text-amber-900">
-            O gabarito e o ranking da semana ficam disponiveis quando a rodada encerrar. Ate la, ninguem ve
+            O gabarito e o ranking da semana ficam disponiveis quando a rodada encerrar. Ate la, ninguém ve
             a pontuacao dos outros.
           </p>
         </Card>

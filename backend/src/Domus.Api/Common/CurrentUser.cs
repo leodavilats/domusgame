@@ -3,13 +3,13 @@ using Domus.Domain.Participants;
 
 namespace Domus.Api.Common;
 
-/// <summary>Lancada quando a rota exige sessao e nao ha usuario autenticado.</summary>
-public sealed class UnauthorizedException(string message = "Sessao expirada. Entre novamente.") : Exception(message);
+/// <summary>Lancada quando a rota exige sessão e não ha usuário autenticado.</summary>
+public sealed class UnauthorizedException(string message = "Sessão expirada. Entre novamente.") : Exception(message);
 
-/// <summary>Lancada quando o usuario esta autenticado mas nao tem permissao.</summary>
-public sealed class ForbiddenException(string message = "Voce nao tem permissao para esta acao.") : Exception(message);
+/// <summary>Lancada quando o usuário esta autenticado mas não tem permissão.</summary>
+public sealed class ForbiddenException(string message = "Você não tem permissão para esta ação.") : Exception(message);
 
-/// <summary>Acesso tipado ao usuario da requisicao.</summary>
+/// <summary>Acesso tipado ao usuário da requisição.</summary>
 public sealed class CurrentUser(IHttpContextAccessor accessor)
 {
     private ClaimsPrincipal? Principal => accessor.HttpContext?.User;

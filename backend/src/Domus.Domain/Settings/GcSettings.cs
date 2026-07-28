@@ -3,8 +3,8 @@ using Domus.Domain.Common;
 namespace Domus.Domain.Settings;
 
 /// <summary>
-/// Configuracao do GC: nome exibido e codigo de convite. Tabela de linha unica (Id = 1).
-/// Decisao consciente de nao criar a entidade GC na v1 (doc 01, secao 8).
+/// Configuracao do GC: nome exibido e codigo de convite. Tabela de linha única (Id = 1).
+/// Decisao consciente de não criar a entidade GC na v1 (doc 01, secao 8).
 /// </summary>
 public sealed class GcSettings
 {
@@ -68,7 +68,7 @@ public sealed class GcSettings
 
     private static string ValidateCode(string inviteCode)
     {
-        var value = Guard.Text(inviteCode, "Codigo de convite", InviteCodeMaxLength, InviteCodeMinLength);
+        var value = Guard.Text(inviteCode, "Código de convite", InviteCodeMaxLength, InviteCodeMinLength);
 
         Guard.Requires(
             value.All(char.IsLetterOrDigit),

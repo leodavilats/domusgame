@@ -22,7 +22,7 @@ public static class ProfileEndpoints
 
         group.MapPut("/", UpdateAsync);
 
-        // Exclusao exige corpo (confirmacao pelo nome) e Minimal API nao infere corpo em DELETE.
+        // Exclusao exige corpo (confirmacao pelo nome) e Minimal API não infere corpo em DELETE.
         group.MapPost("/delete", DeleteAsync);
     }
 
@@ -48,7 +48,7 @@ public static class ProfileEndpoints
         participant.UpdateProfile(displayName, request.AvatarUrl, request.ShowInRanking);
         await db.SaveChangesAsync(ct);
 
-        // O nome de exibicao vive no cookie: renova a sessao para refletir a mudanca.
+        // O nome de exibição vive no cookie: renova a sessão para refletir a mudanca.
         var user = await userManager.FindByIdAsync(meId.ToString());
         if (user is not null) await signInManager.RefreshSignInAsync(user);
 
@@ -76,19 +76,19 @@ public static class ProfileEndpoints
 
         if (!string.Equals(request.Confirmation?.Trim(), participant.DisplayName, StringComparison.OrdinalIgnoreCase))
         {
-            throw new DomainValidationException("Digite seu nome de exibicao para confirmar a exclusao.");
+            throw new DomainValidationException("Digite seu nome de exibição para confirmar a exclusao.");
         }
 
         if (participant.IsAdmin && await IsLastAdminAsync(db, meId, ct))
         {
-            throw new DomainRuleException("Voce e o unico administrador. Promova outra pessoa antes de excluir a conta.");
+            throw new DomainRuleException("Você e o único administrador. Promova outra pessoa antes de excluir a conta.");
         }
 
         var name = participant.DisplayName;
         participant.Anonymize();
 
         db.AuditLogs.Add(AuditLogEntry.Record(
-            meId, name, AuditLogEntry.Actions.AccountDeleted, "Conta excluida pelo proprio participante", clock.GetUtcNow()));
+            meId, name, AuditLogEntry.Actions.AccountDeleted, "Conta excluida pelo próprio participante", clock.GetUtcNow()));
 
         await db.SaveChangesAsync(ct);
 

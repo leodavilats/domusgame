@@ -4,10 +4,10 @@ namespace Domus.Domain.Seasons;
 
 public enum SeasonStatus
 {
-    /// <summary>Criada, ainda nao e a temporada corrente.</summary>
+    /// <summary>Criada, ainda não e a temporada corrente.</summary>
     Draft = 0,
 
-    /// <summary>Temporada corrente. No maximo uma por vez (RN-02, indice unico parcial).</summary>
+    /// <summary>Temporada corrente. No maximo uma por vez (RN-02, indice único parcial).</summary>
     Active = 1,
 
     /// <summary>Encerrada, com podio congelado (RN-04).</summary>
@@ -78,7 +78,7 @@ public sealed class Season : Entity
     public void Update(string name, DateOnly startsOn, DateOnly endsOn)
     {
         // I-S3: temporada encerrada e imutavel.
-        Guard.State(!IsFinished, "Temporada encerrada nao pode ser alterada.");
+        Guard.State(!IsFinished, "Temporada encerrada não pode ser alterada.");
 
         ValidatePeriod(startsOn, endsOn);
         Name = Guard.Text(name, "Nome da temporada", 80);
@@ -88,14 +88,14 @@ public sealed class Season : Entity
 
     public void Activate()
     {
-        Guard.State(!IsFinished, "Temporada encerrada nao pode ser reativada.");
+        Guard.State(!IsFinished, "Temporada encerrada não pode ser reativada.");
         Status = SeasonStatus.Active;
     }
 
     /// <summary>Volta para rascunho quando outra temporada assume o lugar de ativa.</summary>
     public void Deactivate()
     {
-        Guard.State(!IsFinished, "Temporada encerrada nao pode ser desativada.");
+        Guard.State(!IsFinished, "Temporada encerrada não pode ser desativada.");
         Status = SeasonStatus.Draft;
     }
 

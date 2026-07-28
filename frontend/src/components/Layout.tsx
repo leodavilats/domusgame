@@ -9,12 +9,12 @@ const items = [
   { to: '/perfil', label: 'Perfil', icon: '👤', end: false },
 ]
 
-/** Layout mobile-first: cabecalho enxuto e navegacao inferior ao alcance do polegar. */
+/** Layout mobile-first: cabecalho enxuto e navegação inferior ao alcance do polegar. */
 export function Layout() {
   const { me } = useSession()
   const location = useLocation()
 
-  // A tela do quiz ocupa a tela inteira: sem navegacao para nao tirar o foco.
+  // A tela do quiz ocupa a tela inteira: sem navegação para não tirar o foco.
   const immersive = location.pathname.includes('/quiz')
 
   return (

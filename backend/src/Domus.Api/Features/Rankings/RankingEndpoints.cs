@@ -25,7 +25,7 @@ public static class RankingEndpoints
         var meId = currentUser.RequireId();
         var round = await queries.GetRoundWithQuestionsAsync(roundId, tracking: false, ct);
 
-        // RN-32: durante a semana ninguem ve o ranking, so a propria pontuacao.
+        // RN-32: durante a semana ninguém ve o ranking, so a própria pontuacao.
         if (!round.IsClosedAt(queries.Now) && !currentUser.IsAdmin)
         {
             throw new ForbiddenException("O ranking da semana sai quando a rodada encerrar.");

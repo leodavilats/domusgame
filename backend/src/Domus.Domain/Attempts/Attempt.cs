@@ -61,7 +61,7 @@ public sealed class Attempt : Entity
     public int CorrectCount { get; private set; }
     public long TotalTimeMs { get; private set; }
 
-    /// <summary>Copia dos parametros da rodada (RN-28): o historico nao muda se a rodada mudar.</summary>
+    /// <summary>Copia dos parametros da rodada (RN-28): o historico não muda se a rodada mudar.</summary>
     public RoundScoringSettings Scoring { get; private set; }
 
     public IReadOnlyList<AttemptAnswer> Answers => _answers;
@@ -90,8 +90,8 @@ public sealed class Attempt : Entity
     public static Attempt Start(Round round, Guid participantId, DateTimeOffset now)
     {
         Guard.Requires(participantId != Guid.Empty, "Participante invalido.");
-        Guard.State(round.IsOpenAt(now), "Esta rodada nao esta aberta para respostas.");
-        Guard.State(round.Questions.Count > 0, "Esta rodada nao tem perguntas.");
+        Guard.State(round.IsOpenAt(now), "Esta rodada não esta aberta para respostas.");
+        Guard.State(round.Questions.Count > 0, "Esta rodada não tem perguntas.");
 
         return new Attempt(round, participantId, now);
     }
@@ -124,7 +124,7 @@ public sealed class Attempt : Entity
         }
 
         var question = round.QuestionAtOrder(nextOrder)
-            ?? throw new DomainRuleException("A rodada foi alterada e nao tem mais esta pergunta.");
+            ?? throw new DomainRuleException("A rodada foi alterada e não tem mais esta pergunta.");
 
         var answer = AttemptAnswer.Serve(Id, question, now);
         _answers.Add(answer);
@@ -134,14 +134,14 @@ public sealed class Attempt : Entity
 
     /// <summary>
     /// Registra a resposta. Idempotente por (tentativa, pergunta) (I-A4 / RNF-05) e recusa
-    /// perguntas que nao foram entregues, o que impede pular ou voltar (I-A3 / RN-15).
+    /// perguntas que não foram entregues, o que impede pular ou voltar (I-A3 / RN-15).
     /// </summary>
     public SubmitResult Submit(Round round, Guid questionId, Guid? selectedOptionId, DateTimeOffset now)
     {
         EnsureSameRound(round);
 
         var answer = _answers.SingleOrDefault(a => a.QuestionId == questionId)
-            ?? throw new DomainRuleException("Esta pergunta nao foi entregue para a sua tentativa.");
+            ?? throw new DomainRuleException("Esta pergunta não foi entregue para a sua tentativa.");
 
         // Reenvio (duplo clique, retry de rede): devolve o mesmo resultado sem repontuar.
         if (!answer.IsPending) return BuildResult(answer);
@@ -156,7 +156,7 @@ public sealed class Attempt : Entity
             return BuildResult(answer);
         }
 
-        Guard.State(round.IsOpenAt(now), "Esta rodada nao esta aberta para respostas.");
+        Guard.State(round.IsOpenAt(now), "Esta rodada não esta aberta para respostas.");
 
         var question = round.RequireQuestion(questionId);
         answer.Resolve(question, selectedOptionId, now, Scoring);
@@ -230,5 +230,5 @@ public sealed class Attempt : Entity
     }
 
     private void EnsureSameRound(Round round) =>
-        Guard.State(round.Id == RoundId, "Rodada nao corresponde a esta tentativa.");
+        Guard.State(round.Id == RoundId, "Rodada não corresponde a esta tentativa.");
 }

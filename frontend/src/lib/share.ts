@@ -13,7 +13,7 @@ export async function share(payload: SharePayload): Promise<'shared' | 'copied' 
       await navigator.share({ title: payload.title, text: payload.text, url })
       return 'shared'
     } catch {
-      // Usuario cancelou ou o navegador recusou: cai para a copia.
+      // Usuário cancelou ou o navegador recusou: cai para a copia.
     }
   }
 
