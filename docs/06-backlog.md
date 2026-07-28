@@ -21,14 +21,28 @@
 | 6–8 — Front-end | ✅ todas as telas; `npm run build` limpo |
 | 9 — Fechamento | ✅ README, CLAUDE.md, migration e verificação ponta a ponta em container |
 
+**Suíte automatizada: 88 testes, todos passando** — 72 de domínio e 16 de integração
+(Testcontainers + Postgres real).
+
 **Verificado com a aplicação em execução** (`docker compose up`):
 build limpo, migration aplicada em banco vazio, seed idempotente, cadastro com convite, quiz com
 cronômetro do servidor, ausência de gabarito no payload da rodada aberta, bloqueio de gabarito e
 ranking durante a semana, liberação após o encerramento, área administrativa negada a participante,
-rankings semanal e de temporada, estatísticas por rodada.
+rankings semanal e de temporada, estatísticas por rodada, ativação de temporada respeitando RN-02.
 
-**Pendência conhecida:** a suíte automatizada (`dotnet test`) ainda não foi executada — exige o
-.NET SDK 10 na máquina ou uma execução em container.
+### Defeitos encontrados pela verificação (todos corrigidos)
+
+| Defeito | Como apareceu |
+| --- | --- |
+| `AddIdentityCookies()` devolve `IdentityCookiesBuilder`, quebrando o encadeamento do Google | erro de compilação |
+| Minimal API não infere corpo em `DELETE` — a exclusão de conta derrubava a aplicação no start | app subia e morria |
+| `KnownNetworks` obsoleto no .NET 10 | erro de compilação (warnings-as-errors) |
+| Revisão mostrava "tempo esgotado" para quem não participou | teste manual da rodada encerrada |
+| **`EnableRetryOnFailure` é incompatível com transação explícita — ativar temporada dava 500** | teste de integração `Apenas_uma_temporada_fica_ativa` |
+| Rate limit de produção (12/min) não era configurável, inviabilizando a suíte | 7 testes falhando com 429 |
+
+O quinto item é o mais relevante: era um defeito de produção que só apareceria quando você
+trocasse de trimestre.
 
 ---
 

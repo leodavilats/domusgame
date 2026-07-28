@@ -60,9 +60,21 @@ Abra **http://localhost:5173**.
 
 ```bash
 cd backend
-dotnet test tests/Domus.Domain.Tests   # regras puras: pontuação, tempo, invariantes
-dotnet test tests/Domus.Api.Tests      # integração; exige Docker (Testcontainers)
+dotnet test tests/Domus.Domain.Tests   # 72 testes de regras puras: pontuação, tempo, invariantes
+dotnet test tests/Domus.Api.Tests      # 16 testes de integração; exige Docker (Testcontainers)
 ```
+
+Sem o SDK instalado, dá para rodar tudo em container:
+
+```powershell
+docker run --rm -v "${PWD}:/src" -v domus-nuget:/root/.nuget/packages `
+  -v "//var/run/docker.sock:/var/run/docker.sock" --add-host=host.docker.internal:host-gateway `
+  -e TESTCONTAINERS_RYUK_DISABLED=true -e TESTCONTAINERS_HOST_OVERRIDE=host.docker.internal `
+  -w /src/backend mcr.microsoft.com/dotnet/sdk:10.0 bash -lc "dotnet test"
+```
+
+As duas variáveis `TESTCONTAINERS_*` só são necessárias nesse cenário (Docker dentro de Docker).
+Em uma máquina com o SDK, ou no CI, `dotnet test` basta.
 
 Os testes cobrem, principalmente, o que dói se quebrar:
 

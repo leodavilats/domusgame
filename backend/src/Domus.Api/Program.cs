@@ -114,17 +114,22 @@ builder.Services.Configure<ForwardedHeadersOptions>(options =>
     options.KnownProxies.Clear();
 });
 
+// Limites configuraveis: os padroes servem a producao, e os testes de integracao (que batem
+// no login dezenas de vezes a partir do mesmo IP) sobem o teto por configuracao.
+var authPermitLimit = configuration.GetValue("RateLimiting:AuthPermitLimit", 12);
+var answersPermitLimit = configuration.GetValue("RateLimiting:AnswersPermitLimit", 60);
+
 builder.Services.AddRateLimiter(options =>
 {
     options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
 
     options.AddPolicy(RateLimitPolicies.Auth, context => RateLimitPartition.GetFixedWindowLimiter(
         context.Connection.RemoteIpAddress?.ToString() ?? "desconhecido",
-        _ => new FixedWindowRateLimiterOptions { PermitLimit = 12, Window = TimeSpan.FromMinutes(1) }));
+        _ => new FixedWindowRateLimiterOptions { PermitLimit = authPermitLimit, Window = TimeSpan.FromMinutes(1) }));
 
     options.AddPolicy(RateLimitPolicies.Answers, context => RateLimitPartition.GetFixedWindowLimiter(
         context.User.Identity?.Name ?? context.Connection.RemoteIpAddress?.ToString() ?? "desconhecido",
-        _ => new FixedWindowRateLimiterOptions { PermitLimit = 60, Window = TimeSpan.FromMinutes(1) }));
+        _ => new FixedWindowRateLimiterOptions { PermitLimit = answersPermitLimit, Window = TimeSpan.FromMinutes(1) }));
 });
 
 var app = builder.Build();

@@ -186,7 +186,7 @@ public class RoundTests
         Assert.True(copy.IsDraft);
         Assert.Equal(3, copy.Questions.Count);
         Assert.Equal(2, copy.WeekNumber);
-        Assert.All(copy.OrderedQuestions, q => Assert.Single(q.Options.Where(o => o.IsCorrect)));
+        Assert.All(copy.OrderedQuestions, q => Assert.Single(q.Options, o => o.IsCorrect));
         Assert.NotEqual(original.Id, copy.Id);
     }
 

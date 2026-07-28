@@ -1,5 +1,6 @@
 using System.Net.Http.Json;
 using System.Text.Json;
+using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Testcontainers.PostgreSql;
 using Xunit;
@@ -16,14 +17,13 @@ public sealed class ApiFixture : IAsyncLifetime
     public const string AdminEmail = "admin@teste.local";
     public const string AdminPassword = "Teste@12345";
 
-    private readonly PostgreSqlContainer _postgres = new PostgreSqlBuilder()
-        .WithImage("postgres:16-alpine")
+    private readonly PostgreSqlContainer _postgres = new PostgreSqlBuilder("postgres:16-alpine")
         .WithDatabase("domus_test")
         .WithUsername("domus")
         .WithPassword("domus")
         .Build();
 
-    public WebApplicationFactory<Program> Factory { get; private set; } = null!;
+    public WebApplicationFactory<Program> Factory { get; private set; } = default!;
 
     public async Task InitializeAsync()
     {
@@ -39,6 +39,11 @@ public sealed class ApiFixture : IAsyncLifetime
             builder.UseSetting("Admin:Email", AdminEmail);
             builder.UseSetting("Admin:Password", AdminPassword);
             builder.UseSetting("Admin:DisplayName", "Administrador");
+
+            // A suite faz dezenas de logins e cadastros a partir do mesmo IP; o rate limit
+            // de producao (12/min) derrubaria os testes sem indicar nenhum defeito real.
+            builder.UseSetting("RateLimiting:AuthPermitLimit", "10000");
+            builder.UseSetting("RateLimiting:AnswersPermitLimit", "10000");
         });
 
         // Forca o start da aplicacao (cria o esquema e roda o seed).
@@ -49,7 +54,8 @@ public sealed class ApiFixture : IAsyncLifetime
 
     public async Task DisposeAsync()
     {
-        await Factory.DisposeAsync();
+        // A inicializacao pode ter falhado antes de criar a factory; nao mascare o erro original.
+        if (Factory is not null) await Factory.DisposeAsync();
         await _postgres.DisposeAsync();
     }
 

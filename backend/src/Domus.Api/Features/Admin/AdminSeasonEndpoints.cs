@@ -105,22 +105,31 @@ public static class AdminSeasonEndpoints
         var season = await LoadAsync(db, id, ct);
         if (season.Status == SeasonStatus.Active) return Results.Ok(ToDto(season, 0, 0));
 
-        await using var transaction = await db.Database.BeginTransactionAsync(ct);
+        // Criada fora da estrategia para que uma retentativa nao gere duas linhas de auditoria.
+        var audit = AuditLogEntry.Record(
+            currentUser.Id, currentUser.DisplayName, AuditLogEntry.Actions.SeasonActivated, season.Name, clock.GetUtcNow());
 
-        var current = await db.Seasons.SingleOrDefaultAsync(s => s.Status == SeasonStatus.Active, ct);
-        if (current is not null)
+        // Com EnableRetryOnFailure, transacoes explicitas precisam rodar dentro da execution
+        // strategy - caso contrario o EF recusa a operacao inteira.
+        var strategy = db.Database.CreateExecutionStrategy();
+
+        await strategy.ExecuteAsync(async () =>
         {
-            current.Deactivate();
+            await using var transaction = await db.Database.BeginTransactionAsync(ct);
+
+            var current = await db.Seasons.SingleOrDefaultAsync(s => s.Status == SeasonStatus.Active, ct);
+            if (current is not null)
+            {
+                current.Deactivate();
+                await db.SaveChangesAsync(ct);
+            }
+
+            season.Activate();
+            db.AuditLogs.Add(audit);
+
             await db.SaveChangesAsync(ct);
-        }
-
-        season.Activate();
-
-        db.AuditLogs.Add(AuditLogEntry.Record(
-            currentUser.Id, currentUser.DisplayName, AuditLogEntry.Actions.SeasonActivated, season.Name, clock.GetUtcNow()));
-
-        await db.SaveChangesAsync(ct);
-        await transaction.CommitAsync(ct);
+            await transaction.CommitAsync(ct);
+        });
 
         return Results.Ok(ToDto(season, 0, 0));
     }
