@@ -22,7 +22,11 @@ um desenvolvedor. **Simplicidade é requisito**, não preguiça: ver `docs/05-ar
 - **Sem repositórios genéricos**: `DomusDbContext` direto nos handlers.
 - `TreatWarningsAsErrors=true`. Nullable habilitado.
 - Domínio **não** referencia EF Core, ASP.NET nem Identity — há teste de arquitetura garantindo.
-- Testes com xUnit puro (`Assert`), sem biblioteca de asserção.
+- Testes com xUnit puro (`Assert`), sem biblioteca de asserção. Front-end com vitest + jsdom.
+- **Nunca use `useCallback` com dependências vazias sobre um closure que lê estado de formulário.**
+  Já quebrou todos os formulários do app uma vez: `run` congelou a primeira renderização e cada
+  envio mandava os campos vazios. Se precisar de identidade estável, guarde a função numa ref
+  (ver `useMutation` em `frontend/src/api/hooks.ts`) e não silencie `react-hooks/exhaustive-deps`.
 
 ## Invariantes que não se negociam
 

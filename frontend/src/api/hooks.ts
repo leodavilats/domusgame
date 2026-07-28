@@ -56,23 +56,28 @@ export function useMutation<TArgs extends unknown[], TResult>(
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
-  const run = useCallback(
-    async (...args: TArgs): Promise<TResult | null> => {
-      setLoading(true)
-      setError(null)
+  // `action` e recriada a cada render e fecha sobre o estado atual do formulario.
+  // Guardamos sempre a versao mais recente numa ref: assim `run` mantem identidade estavel
+  // (nao invalida memos de quem o recebe) sem nunca executar um closure velho.
+  //
+  // Um useCallback com lista de dependencias vazia aqui congelaria a primeira renderizacao
+  // e enviaria os valores iniciais dos campos - vazios - em todo formulario do app.
+  const latestAction = useRef(action)
+  latestAction.current = action
 
-      try {
-        return await action(...args)
-      } catch (caught: unknown) {
-        setError(caught instanceof ApiError ? caught.message : 'Erro inesperado.')
-        return null
-      } finally {
-        setLoading(false)
-      }
-    },
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [],
-  )
+  const run = useCallback(async (...args: TArgs): Promise<TResult | null> => {
+    setLoading(true)
+    setError(null)
+
+    try {
+      return await latestAction.current(...args)
+    } catch (caught: unknown) {
+      setError(caught instanceof ApiError ? caught.message : 'Erro inesperado.')
+      return null
+    } finally {
+      setLoading(false)
+    }
+  }, [])
 
   return { run, loading, error, setError }
 }

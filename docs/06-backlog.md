@@ -42,6 +42,14 @@ rankings semanal e de temporada, estatísticas por rodada, ativação de tempora
 | Rate limit de produção (12/min) não era configurável, inviabilizando a suíte | 7 testes falhando com 429 |
 | **Connection string padrão `localhost` no `appsettings.json`** — em produção, sem a variável de ambiente, o container tentava conectar a si mesmo | primeiro deploy real |
 | Falha de seed derrubava a aplicação em *crash loop* permanente | teste do deploy contra banco já populado |
+| `Admin__Password` era ignorada em silêncio depois do primeiro deploy | investigação do login |
+| **`useMutation` com `useCallback([])` congelava o closure da primeira renderização — todo formulário do app enviava os campos vazios** | usuário inspecionando o corpo da requisição |
+
+O último é o mais grave e o mais instrutivo: **nenhuma das 88 verificações automatizadas podia
+pegá-lo**, porque todas exercitam a API por HTTP e o defeito estava no navegador. Login, cadastro,
+perfil, criação de temporada, de rodada, de pergunta — tudo enviava valores vazios. A cobertura
+existia; a *camada* certa não. Daí a suíte de front-end (`frontend/src/api/hooks.test.tsx`), cujo
+teste de regressão falha se o `useCallback` voltar a congelar o closure.
 
 O quinto item é o mais relevante: era um defeito de produção que só apareceria quando você
 trocasse de trimestre.

@@ -64,7 +64,14 @@ dotnet test tests/Domus.Domain.Tests   # 72 testes de regras puras: pontuação,
 dotnet test tests/Domus.Api.Tests      # 16 testes de integração; exige Docker (Testcontainers)
 ```
 
-Sem o SDK instalado, dá para rodar tudo em container:
+E no front-end:
+
+```bash
+cd frontend
+npm test        # vitest + jsdom
+```
+
+Sem o SDK instalado, dá para rodar o back-end em container:
 
 ```powershell
 docker run --rm -v "${PWD}:/src" -v domus-nuget:/root/.nuget/packages `
