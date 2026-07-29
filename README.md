@@ -28,8 +28,12 @@ Credenciais criadas pelo seed (definidas no `docker-compose.yml`):
 | Item | Valor |
 | --- | --- |
 | Administrador | `admin@domus.local` / `Domus@2026` |
-| Código de convite | `DOMUS2026` |
+| Código da sala | `DOMUS2026` |
 | Participantes de demonstração | `demo1@domus.local` … `demo6@domus.local` / `Demo@123` |
+
+O cadastro é aberto: cria-se a conta com e-mail e senha (ou com o Google) e, com o **código da
+sala**, entra-se na sala do GC — é ali que estão temporadas, rodadas, ranking e pessoas. Quem se
+cadastra e não entra em nenhuma sala vê o painel vazio com o convite para entrar.
 
 O seed de demonstração (`Seed__Demo=true`) cria uma temporada com três rodadas — uma encerrada
 (com gabarito e ranking), uma aberta e uma agendada — para você ver o app funcionando de imediato.
@@ -60,8 +64,8 @@ Abra **http://localhost:5173**.
 
 ```bash
 cd backend
-dotnet test tests/Domus.Domain.Tests   # 75 testes de regras puras: pontuação, tempo, invariantes
-dotnet test tests/Domus.Api.Tests      # 30 testes de integração; exige Docker (Testcontainers)
+dotnet test tests/Domus.Domain.Tests   # 76 testes de regras puras: pontuação, tempo, invariantes
+dotnet test tests/Domus.Api.Tests      # 32 testes de integração; exige Docker (Testcontainers)
 ```
 
 E no front-end:
@@ -129,12 +133,29 @@ Todas as chaves aceitam variáveis de ambiente no formato `Secao__Chave`.
 | `ConnectionStrings__Postgres` | — | conexão com o banco, formato ADO.NET |
 | `DATABASE_URL` | — | alternativa: URI `postgresql://usuario:senha@host:5432/banco` |
 | `Database__ApplyMigrationsOnStartup` | `true` em Dev | aplica o esquema no start |
-| `Gc__Name` | `GC Domus` | nome exibido no app |
-| `Gc__InviteCode` | gerado | código de convite inicial |
+| `Gc__Name` | `GC Domus` | nome da **primeira sala**, exibido no cabeçalho |
+| `Gc__InviteCode` | gerado | código da primeira sala; se vazio, é sorteado e aparece no log |
 | `Admin__Email` / `Admin__Password` / `Admin__DisplayName` | — | administrador de bootstrap (ver abaixo) |
+| `Authentication__Google__ClientId` / `__ClientSecret` | — | habilita o login com o Google (ver abaixo) |
 | `Seed__Demo` | `false` | cria dados de demonstração |
 | `DevTools__Enabled` | `false` | libera as ferramentas de teste do painel admin (ver abaixo) |
 | `App__PublicUrl` | `http://localhost:5080` | usado em links compartilhados |
+
+> `Gc__Name` e `Gc__InviteCode` só valem para **criar** a primeira sala. Depois disso, o código é
+> gerenciado no painel (**Pessoas → Código da sala**) e a variável deixa de ter efeito sobre ele.
+
+### Login com o Google
+
+1. No [Google Cloud Console](https://console.cloud.google.com/apis/credentials), crie uma credencial
+   **OAuth client ID** do tipo *Web application*.
+2. Em *Authorized redirect URIs*, informe `https://SEU-DOMINIO/signin-google` (e
+   `http://localhost:5080/signin-google` para desenvolvimento).
+3. Configure `Authentication__Google__ClientId` e `Authentication__Google__ClientSecret`.
+
+Sem essas duas variáveis o esquema **não é registrado**: o botão continua na tela, mas avisa que o
+login com o Google não está disponível naquele ambiente em vez de estourar um erro. Se o e-mail da
+conta do Google já existir no sistema, o login social é **vinculado** à conta existente — não nasce
+uma segunda conta com o mesmo e-mail.
 
 ### Administrador de bootstrap
 
@@ -156,10 +177,10 @@ Uma falha aqui **não derruba a aplicação**: é registrada no log e o serviço
 Regra única: **8 caracteres**. Sem exigência de maiúscula, dígito ou símbolo — a interface promete
 isso e nada mais, e exigir em silêncio produz erro que o usuário não entende.
 
-Não há recuperação por e-mail (não há serviço de e-mail na v1). Quando alguém perde o acesso, o
-administrador abre **Pessoas → Redefinir senha**: o sistema gera uma senha pronunciável
-(ex.: `tamu-4729`), mostra **uma única vez** e limpa qualquer bloqueio por tentativas. A senha
-antiga deixa de valer e a ação fica registrada na auditoria.
+Não há recuperação por e-mail (não há serviço de e-mail na v1). Quem perde a senha entra com o
+**Google** usando o mesmo e-mail: o login social é vinculado à conta que já existe, com o histórico
+intacto. O administrador **não** gera senha para ninguém — senha de terceiro circulando no grupo é
+pior do que a inconveniência que resolveria.
 
 ### Ferramentas de teste do painel admin
 
@@ -177,8 +198,12 @@ A aba **Ferramentas** do painel reúne atalhos para exercitar o fluxo sem espera
 
 **Ficam desligadas por padrão.** Sem `DevTools__Enabled=true`, as ações respondem 403 — só o
 diagnóstico e a auditoria continuam acessíveis, porque são leitura e explicam o estado do ambiente.
-As ações destrutivas ainda exigem digitar `LIMPAR` no corpo da requisição, e administradores, o
-código de convite e a configuração do GC nunca são apagados.
+As ações destrutivas ainda exigem digitar `LIMPAR` no corpo da requisição, e administradores, a sala
+e o seu código de convite nunca são apagados.
+
+> **Atenção:** *Limpar dados* age no **banco todo**, não só na sala de quem chamou — é uma ferramenta
+> de desenvolvimento, não uma operação de administração de sala. Quando existir uma segunda sala, ela
+> precisa ser escopada antes de ser usada com dados reais.
 
 O `docker-compose.yml` liga as ferramentas para desenvolvimento local. **Deixe desligado em
 produção** — ative só quando for testar e desative em seguida.
@@ -236,3 +261,7 @@ docs/                        requisitos → casos de uso → domínio → banco 
 5. **Abertura e encerramento não usam agendador**: são derivados da comparação com o relógio.
 6. **A pontuação é calculada e persistida no momento do envio**, com os parâmetros copiados para
    dentro da tentativa. Mudar a rodada depois não reescreve o histórico.
+7. **Conteúdo pertence a uma sala.** Conta e pertencimento são coisas separadas: o cadastro é aberto
+   e a filiação vem do código da sala. Toda leitura e escrita é filtrada pela sala de quem pede, e
+   id de outra sala responde 404 — se você adicionar um endpoint que recebe id de rodada ou
+   temporada, ele precisa passar por `RequireRoundInMyRoomAsync` (ou equivalente).

@@ -7,6 +7,7 @@ import { useSession } from './auth/SessionContext'
 import { LoginPage } from './pages/LoginPage'
 import { RegisterPage } from './pages/RegisterPage'
 import { HomePage } from './pages/HomePage'
+import { JoinRoomPage } from './pages/JoinRoomPage'
 import { LessonPage } from './pages/LessonPage'
 import { QuizPage } from './pages/QuizPage'
 import { ResultPage } from './pages/ResultPage'
@@ -48,6 +49,7 @@ export function App() {
         }
       >
         <Route path="/" element={<HomePage />} />
+        <Route path="/sala" element={<JoinRoomPage />} />
         <Route path="/rodadas/:roundId/licao" element={<LessonPage />} />
         <Route path="/rodadas/:roundId/quiz" element={<QuizPage />} />
         <Route path="/rodadas/:roundId/revisao" element={<ReviewPage />} />

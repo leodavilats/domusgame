@@ -92,11 +92,20 @@ public sealed class ApiFixture : IAsyncLifetime
 
     public async Task<HttpClient> RegisterParticipantAsync(string displayName, string email)
     {
+        var client = await RegisterWithoutRoomAsync(displayName, email);
+
+        var joined = await client.PostAsJsonAsync("/api/rooms/join", new { inviteCode = InviteCode });
+        joined.EnsureSuccessStatusCode();
+
+        return client;
+    }
+
+    public async Task<HttpClient> RegisterWithoutRoomAsync(string displayName, string email)
+    {
         var client = CreateClient();
 
         var response = await client.PostAsJsonAsync("/api/auth/register", new
         {
-            inviteCode = InviteCode,
             displayName,
             email,
             password = "Teste@12345"

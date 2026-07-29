@@ -3,13 +3,15 @@ using Domus.Domain.Rounds;
 
 namespace Domus.Api.Common;
 
+public sealed record MyRoomSummaryDto(Guid Id, string Name);
+
 public sealed record MeDto(
     Guid Id,
     string DisplayName,
     string? AvatarUrl,
     bool ShowInRanking,
     bool IsAdmin,
-    string GcName);
+    MyRoomSummaryDto? Room);
 
 public sealed record RoundSummaryDto(
     Guid Id,

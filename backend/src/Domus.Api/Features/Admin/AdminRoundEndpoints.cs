@@ -93,11 +93,13 @@ public static class AdminRoundEndpoints
 
     private static async Task<IResult> ListAsync(
         Guid? seasonId,
+        CurrentUser currentUser,
         DomusDbContext db,
         DomusQueries queries,
         CancellationToken ct)
     {
-        var targetSeasonId = seasonId ?? (await queries.GetActiveSeasonAsync(ct))?.Id;
+        var room = await queries.RequireMyRoomAsync(currentUser.RequireAdminId(), ct);
+        var targetSeasonId = seasonId ?? (await queries.GetActiveSeasonAsync(room.Id, ct))?.Id;
         if (targetSeasonId is null) return Results.Ok(Array.Empty<AdminRoundListItemDto>());
 
         var rounds = await db.Rounds.AsNoTracking()
@@ -127,12 +129,15 @@ public static class AdminRoundEndpoints
 
     private static async Task<IResult> CreateAsync(
         CreateRoundRequest request,
+        CurrentUser currentUser,
         DomusDbContext db,
         DomusQueries queries,
         TimeProvider clock,
         CancellationToken ct)
     {
-        var season = await db.Seasons.SingleOrDefaultAsync(s => s.Id == request.SeasonId, ct)
+        var room = await queries.RequireMyRoomAsync(currentUser.RequireAdminId(), ct);
+
+        var season = await db.Seasons.SingleOrDefaultAsync(s => s.Id == request.SeasonId && s.RoomId == room.Id, ct)
             ?? throw NotFoundException.For("Temporada");
 
         Guard.State(!season.IsFinished, "Temporada encerrada não recebe novas rodadas.");
@@ -157,20 +162,26 @@ public static class AdminRoundEndpoints
         return Results.Created($"/api/admin/rounds/{round.Id}", await ToDetailAsync(db, queries, round, ct));
     }
 
-    private static async Task<IResult> GetAsync(Guid id, DomusDbContext db, DomusQueries queries, CancellationToken ct)
+    private static async Task<IResult> GetAsync(
+        Guid id,
+        CurrentUser currentUser,
+        DomusDbContext db,
+        DomusQueries queries,
+        CancellationToken ct)
     {
-        var round = await queries.GetRoundWithQuestionsAsync(id, tracking: false, ct);
+        var round = await queries.RequireRoundInMyRoomAsync(id, currentUser.RequireAdminId(), tracking: false, ct);
         return Results.Ok(await ToDetailAsync(db, queries, round, ct));
     }
 
     private static async Task<IResult> UpdateAsync(
         Guid id,
         UpdateRoundRequest request,
+        CurrentUser currentUser,
         DomusDbContext db,
         DomusQueries queries,
         CancellationToken ct)
     {
-        var round = await queries.GetRoundWithQuestionsAsync(id, tracking: true, ct);
+        var round = await queries.RequireRoundInMyRoomAsync(id, currentUser.RequireAdminId(), tracking: true, ct);
 
         round.UpdateDetails(request.WeekNumber, request.Title, queries.Now);
         round.UpdateWindow(request.OpensAt.ToUniversalTime(), request.ClosesAt.ToUniversalTime(), queries.Now);
@@ -194,7 +205,7 @@ public static class AdminRoundEndpoints
         TimeProvider clock,
         CancellationToken ct)
     {
-        var round = await queries.GetRoundWithQuestionsAsync(id, tracking: true, ct);
+        var round = await queries.RequireRoundInMyRoomAsync(id, currentUser.RequireAdminId(), tracking: true, ct);
 
         Guard.State(
             round.IsEditableAt(queries.Now),
@@ -215,11 +226,12 @@ public static class AdminRoundEndpoints
     private static async Task<IResult> SetLessonAsync(
         Guid id,
         LessonRequest request,
+        CurrentUser currentUser,
         DomusDbContext db,
         DomusQueries queries,
         CancellationToken ct)
     {
-        var round = await queries.GetRoundWithQuestionsAsync(id, tracking: true, ct);
+        var round = await queries.RequireRoundInMyRoomAsync(id, currentUser.RequireAdminId(), tracking: true, ct);
 
         round.SetLesson(Lesson.Create(
             request.Title, request.ScriptureReference, request.Content, request.ExternalUrl), queries.Now);
@@ -228,9 +240,13 @@ public static class AdminRoundEndpoints
         return Results.Ok(await ToDetailAsync(db, queries, round, ct));
     }
 
-    private static async Task<IResult> ValidateAsync(Guid id, DomusQueries queries, CancellationToken ct)
+    private static async Task<IResult> ValidateAsync(
+        Guid id,
+        CurrentUser currentUser,
+        DomusQueries queries,
+        CancellationToken ct)
     {
-        var round = await queries.GetRoundWithQuestionsAsync(id, tracking: false, ct);
+        var round = await queries.RequireRoundInMyRoomAsync(id, currentUser.RequireAdminId(), tracking: false, ct);
         return Results.Ok(round.ValidateForPublish());
     }
 
@@ -242,7 +258,7 @@ public static class AdminRoundEndpoints
         TimeProvider clock,
         CancellationToken ct)
     {
-        var round = await queries.GetRoundWithQuestionsAsync(id, tracking: true, ct);
+        var round = await queries.RequireRoundInMyRoomAsync(id, currentUser.RequireAdminId(), tracking: true, ct);
         var now = clock.GetUtcNow();
 
         await EnsureWeekIsFreeAsync(db, round, ct);
@@ -262,12 +278,13 @@ public static class AdminRoundEndpoints
     private static async Task<IResult> DuplicateAsync(
         Guid id,
         DuplicateRoundRequest request,
+        CurrentUser currentUser,
         DomusDbContext db,
         DomusQueries queries,
         TimeProvider clock,
         CancellationToken ct)
     {
-        var source = await queries.GetRoundWithQuestionsAsync(id, tracking: false, ct);
+        var source = await queries.RequireRoundInMyRoomAsync(id, currentUser.RequireAdminId(), tracking: false, ct);
 
         var copy = source.DuplicateAsDraft(
             request.WeekNumber,
@@ -286,11 +303,12 @@ public static class AdminRoundEndpoints
     private static async Task<IResult> AddQuestionAsync(
         Guid id,
         QuestionRequest request,
+        CurrentUser currentUser,
         DomusDbContext db,
         DomusQueries queries,
         CancellationToken ct)
     {
-        var round = await queries.GetRoundWithQuestionsAsync(id, tracking: true, ct);
+        var round = await queries.RequireRoundInMyRoomAsync(id, currentUser.RequireAdminId(), tracking: true, ct);
 
         round.AddQuestion(
             request.Text, request.MediaType, request.MediaUrl, request.Explanation, ToDrafts(request.Options), queries.Now);
@@ -303,11 +321,12 @@ public static class AdminRoundEndpoints
         Guid id,
         Guid questionId,
         QuestionRequest request,
+        CurrentUser currentUser,
         DomusDbContext db,
         DomusQueries queries,
         CancellationToken ct)
     {
-        var round = await queries.GetRoundWithQuestionsAsync(id, tracking: true, ct);
+        var round = await queries.RequireRoundInMyRoomAsync(id, currentUser.RequireAdminId(), tracking: true, ct);
 
         round.UpdateQuestion(
             questionId, request.Text, request.MediaType, request.MediaUrl, request.Explanation,
@@ -320,11 +339,12 @@ public static class AdminRoundEndpoints
     private static async Task<IResult> RemoveQuestionAsync(
         Guid id,
         Guid questionId,
+        CurrentUser currentUser,
         DomusDbContext db,
         DomusQueries queries,
         CancellationToken ct)
     {
-        var round = await queries.GetRoundWithQuestionsAsync(id, tracking: true, ct);
+        var round = await queries.RequireRoundInMyRoomAsync(id, currentUser.RequireAdminId(), tracking: true, ct);
 
         round.RemoveQuestion(questionId, queries.Now);
 
@@ -336,11 +356,12 @@ public static class AdminRoundEndpoints
         Guid id,
         Guid questionId,
         MoveQuestionRequest request,
+        CurrentUser currentUser,
         DomusDbContext db,
         DomusQueries queries,
         CancellationToken ct)
     {
-        var round = await queries.GetRoundWithQuestionsAsync(id, tracking: true, ct);
+        var round = await queries.RequireRoundInMyRoomAsync(id, currentUser.RequireAdminId(), tracking: true, ct);
 
         round.MoveQuestion(questionId, request.Offset, queries.Now);
 

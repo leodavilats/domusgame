@@ -32,6 +32,10 @@ services:
       Admin__Password: 'Domus@2026'
       Admin__DisplayName: 'Administrador'
       Seed__Demo: 'true'
+      # Login com o Google: sem estas duas o esquema nao e registrado e o botao avisa que
+      # esta indisponivel. Callback a cadastrar no Google: http://localhost:5080/signin-google
+      # Authentication__Google__ClientId: ''
+      # Authentication__Google__ClientSecret: ''
       # Ferramentas de teste do painel admin. NUNCA deixe true em producao.
       DevTools__Enabled: 'true'
     ports:

@@ -44,7 +44,8 @@ public static class RoundEndpoints
     {
         var meId = currentUser.RequireId();
 
-        var targetSeasonId = seasonId ?? (await queries.GetActiveSeasonAsync(ct))?.Id;
+        var room = await queries.RequireMyRoomAsync(meId, ct);
+        var targetSeasonId = seasonId ?? (await queries.GetActiveSeasonAsync(room.Id, ct))?.Id;
         if (targetSeasonId is null) return Results.Ok(Array.Empty<RoundListItemDto>());
 
         var rounds = await db.Rounds.AsNoTracking()
@@ -77,7 +78,7 @@ public static class RoundEndpoints
         CancellationToken ct)
     {
         var meId = currentUser.RequireId();
-        var round = await queries.GetRoundWithQuestionsAsync(id, tracking: false, ct);
+        var round = await queries.RequireRoundInMyRoomAsync(id, meId, tracking: false, ct);
         var availability = round.AvailabilityAt(queries.Now);
 
         if (availability == RoundAvailability.Draft && !currentUser.IsAdmin)
@@ -114,7 +115,7 @@ public static class RoundEndpoints
         CancellationToken ct)
     {
         var meId = currentUser.RequireId();
-        var round = await queries.GetRoundWithQuestionsAsync(id, tracking: false, ct);
+        var round = await queries.RequireRoundInMyRoomAsync(id, meId, tracking: false, ct);
 
         if (!round.IsAnswerRevealedAt(queries.Now))
         {

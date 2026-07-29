@@ -8,6 +8,7 @@ using Domus.Api.Features.Auth;
 using Domus.Api.Features.Dashboard;
 using Domus.Api.Features.Profile;
 using Domus.Api.Features.Rankings;
+using Domus.Api.Features.Rooms;
 using Domus.Api.Features.Rounds;
 using Domus.Domain.Participants;
 using Domus.Infrastructure;
@@ -50,9 +51,21 @@ builder.Services
     .AddClaimsPrincipalFactory<AppUserClaimsPrincipalFactory>()
     .AddDefaultTokenProviders();
 
-builder.Services
-    .AddAuthentication(IdentityConstants.ApplicationScheme)
-    .AddIdentityCookies();
+var authentication = builder.Services.AddAuthentication(IdentityConstants.ApplicationScheme);
+authentication.AddIdentityCookies();
+
+var googleClientId = configuration["Authentication:Google:ClientId"];
+var googleClientSecret = configuration["Authentication:Google:ClientSecret"];
+
+if (!string.IsNullOrWhiteSpace(googleClientId) && !string.IsNullOrWhiteSpace(googleClientSecret))
+{
+    authentication.AddGoogle(AuthEndpoints.GoogleScheme, options =>
+    {
+        options.ClientId = googleClientId;
+        options.ClientSecret = googleClientSecret;
+        options.SignInScheme = IdentityConstants.ExternalScheme;
+    });
+}
 
 builder.Services.ConfigureApplicationCookie(options =>
 {
@@ -152,6 +165,7 @@ app.MapRoundEndpoints();
 app.MapAttemptEndpoints();
 app.MapRankingEndpoints();
 app.MapProfileEndpoints();
+app.MapRoomEndpoints();
 
 var admin = app.MapGroup("/api/admin").RequireAuthorization(AuthorizationPolicies.Admin);
 admin.MapAdminSeasonEndpoints();

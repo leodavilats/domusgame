@@ -1,7 +1,10 @@
 # Contexto do projeto — GC Domus
 
-Plataforma de desafios semanais das lições do GC Domus. Público de 10 a 30 pessoas, um único GC,
-um desenvolvedor. **Simplicidade é requisito**, não preguiça: ver `docs/05-arquitetura.md` §1.
+Plataforma de desafios semanais das lições do GC Domus. Público de 10 a 30 pessoas, um
+desenvolvedor. **Simplicidade é requisito**, não preguiça: ver `docs/05-arquitetura.md` §1.
+
+O conteúdo vive em **salas** (`Room`). Hoje existe uma só (`DOMUS2026`), mas o modelo e as consultas
+já são por sala: o cadastro é aberto e a pessoa entra na sala com o código de convite.
 
 ## Onde as coisas estão
 
@@ -10,7 +13,7 @@ um desenvolvedor. **Simplicidade é requisito**, não preguiça: ver `docs/05-ar
 | Regra de negócio (pontuação, tempo, invariante) | `backend/src/Domus.Domain/` |
 | Esquema, Identity, seed | `backend/src/Domus.Infrastructure/` |
 | Endpoint / DTO | `backend/src/Domus.Api/Features/<Assunto>/` |
-| Leitura compartilhada (ranking, rodada corrente) | `backend/src/Domus.Api/Common/DomusQueries.cs` |
+| Leitura compartilhada (ranking, rodada corrente, escopo de sala) | `backend/src/Domus.Api/Common/DomusQueries.cs` |
 | Tela | `frontend/src/pages/` (admin em `pages/admin/`) |
 | Ferramenta de teste (limpar banco, simular, abrir rodada) | `backend/src/Domus.Api/Features/Admin/AdminToolsEndpoints.cs` — exige `DevTools__Enabled=true` |
 | Contrato do front | `frontend/src/api/types.ts` (espelha `Common/Contracts.cs`) |
@@ -38,6 +41,9 @@ um desenvolvedor. **Simplicidade é requisito**, não preguiça: ver `docs/05-ar
 5. Pontuação calculada e persistida no envio, com parâmetros congelados na tentativa (`RN-28`).
 6. Rodada é imutável **a partir da abertura** (`RN-10`). Antes disso — rascunho ou publicada
    ainda agendada — o admin pode editar e excluir; a exclusão exige zero participações.
+7. Todo acesso a conteúdo é **filtrado pela sala de quem pede** (`RN-45`). Endpoint que recebe id de
+   rodada ou temporada passa por `RequireRoundInMyRoomAsync` / `LoadAsync` da sala e responde **404**
+   (não 403) quando o id é de outra sala. Endpoint novo sem esse filtro é um vazamento entre GCs.
 
 Ao mexer em qualquer uma delas, o teste correspondente em `tests/` deve ser atualizado junto —
 e provavelmente a regra em `docs/01-requisitos.md` também.

@@ -1,6 +1,7 @@
 using Domus.Domain.Attempts;
 using Domus.Domain.Participants;
 using Domus.Domain.Rounds;
+using Domus.Domain.Rooms;
 using Domus.Domain.Seasons;
 using Domus.Domain.Settings;
 using Domus.Infrastructure.Identity;
@@ -21,13 +22,13 @@ public sealed class DatabaseSeeder(
     {
         var now = clock.GetUtcNow();
 
-        await SeedSettingsAsync(options, now, cancellationToken);
+        var room = await SeedRoomAsync(options, now, cancellationToken);
 
-        await TryAsync("administrador inicial", () => SeedAdminAsync(options, now, cancellationToken));
+        await TryAsync("administrador inicial", () => SeedAdminAsync(options, room, now, cancellationToken));
 
         if (options.IncludeDemoData)
         {
-            await TryAsync("dados de demonstracao", () => SeedDemoAsync(now, cancellationToken));
+            await TryAsync("dados de demonstracao", () => SeedDemoAsync(room, now, cancellationToken));
         }
     }
 
@@ -44,31 +45,34 @@ public sealed class DatabaseSeeder(
         }
     }
 
-    private async Task SeedSettingsAsync(SeedOptions options, DateTimeOffset now, CancellationToken ct)
+    private async Task<Room> SeedRoomAsync(SeedOptions options, DateTimeOffset now, CancellationToken ct)
     {
-        var settings = await db.GcSettings.SingleOrDefaultAsync(s => s.Id == GcSettings.SingletonId, ct);
+        var room = await db.Rooms.OrderBy(r => r.CreatedAt).FirstOrDefaultAsync(ct);
 
-        if (settings is null)
+        if (room is null)
         {
             var code = string.IsNullOrWhiteSpace(options.InviteCode)
-                ? GcSettings.GenerateCode()
+                ? Room.GenerateCode()
                 : options.InviteCode;
 
-            db.GcSettings.Add(GcSettings.Create(options.GcName, code, now));
+            room = Room.Create(options.GcName, code, now);
+            db.Rooms.Add(room);
             await db.SaveChangesAsync(ct);
 
-            logger.LogInformation("Configuracao do GC criada. Código de convite: {InviteCode}", code);
-            return;
+            logger.LogInformation("Sala '{Room}' criada. Codigo de convite: {InviteCode}", room.Name, room.InviteCode);
+            return room;
         }
 
-        if (settings.GcName != options.GcName && !string.IsNullOrWhiteSpace(options.GcName))
+        if (room.Name != options.GcName && !string.IsNullOrWhiteSpace(options.GcName))
         {
-            settings.Rename(options.GcName);
+            room.Rename(options.GcName);
             await db.SaveChangesAsync(ct);
         }
+
+        return room;
     }
 
-    private async Task SeedAdminAsync(SeedOptions options, DateTimeOffset now, CancellationToken ct)
+    private async Task SeedAdminAsync(SeedOptions options, Room room, DateTimeOffset now, CancellationToken ct)
     {
         if (string.IsNullOrWhiteSpace(options.AdminEmail) || string.IsNullOrWhiteSpace(options.AdminPassword))
         {
@@ -84,7 +88,7 @@ public sealed class DatabaseSeeder(
         var existing = await userManager.FindByEmailAsync(options.AdminEmail);
         if (existing is not null)
         {
-            await EnsureAdminRoleAsync(existing.Id, options, now, ct);
+            await EnsureAdminRoleAsync(existing.Id, options, room, now, ct);
             await SyncAdminPasswordAsync(existing, options.AdminPassword);
             return;
         }
@@ -118,6 +122,8 @@ public sealed class DatabaseSeeder(
             ParticipantRole.Admin));
 
         await db.SaveChangesAsync(ct);
+        await EnsureMembershipAsync(room, user.Id, now, ct);
+
         logger.LogInformation("Administrador inicial criado: {Email}", options.AdminEmail);
     }
 
@@ -153,7 +159,7 @@ public sealed class DatabaseSeeder(
         await userManager.SetLockoutEndDateAsync(user, null);
     }
 
-    private async Task EnsureAdminRoleAsync(Guid userId, SeedOptions options, DateTimeOffset now, CancellationToken ct)
+    private async Task EnsureAdminRoleAsync(Guid userId, SeedOptions options, Room room, DateTimeOffset now, CancellationToken ct)
     {
         var participant = await db.Participants.SingleOrDefaultAsync(p => p.Id == userId, ct);
 
@@ -168,13 +174,26 @@ public sealed class DatabaseSeeder(
         }
         else
         {
+            await EnsureMembershipAsync(room, userId, now, ct);
             return;
         }
 
         await db.SaveChangesAsync(ct);
+        await EnsureMembershipAsync(room, userId, now, ct);
     }
 
-    private async Task SeedDemoAsync(DateTimeOffset now, CancellationToken ct)
+    private async Task EnsureMembershipAsync(Room room, Guid participantId, DateTimeOffset now, CancellationToken ct)
+    {
+        var joined = await db.RoomMemberships
+            .AnyAsync(m => m.RoomId == room.Id && m.ParticipantId == participantId, ct);
+
+        if (joined) return;
+
+        db.RoomMemberships.Add(RoomMembership.Join(room, participantId, now));
+        await db.SaveChangesAsync(ct);
+    }
+
+    private async Task SeedDemoAsync(Room room, DateTimeOffset now, CancellationToken ct)
     {
         if (await db.Seasons.AnyAsync(ct))
         {
@@ -184,6 +203,7 @@ public sealed class DatabaseSeeder(
         logger.LogInformation("Criando dados de demonstracao.");
 
         var season = Season.Create(
+            room.Id,
             "Temporada de demonstracao",
             DateOnly.FromDateTime(now.UtcDateTime.AddDays(-30)),
             DateOnly.FromDateTime(now.UtcDateTime.AddDays(60)),
@@ -201,7 +221,7 @@ public sealed class DatabaseSeeder(
         db.Rounds.AddRange(closed, open, scheduled);
         await db.SaveChangesAsync(ct);
 
-        var participants = await CreateDemoParticipantsAsync(now, ct);
+        var participants = await CreateDemoParticipantsAsync(room, now, ct);
 
         var profiles = new[] { (0.9, 4), (1.0, 8), (0.6, 12), (0.75, 20), (0.4, 30), (1.0, 25) };
 
@@ -258,7 +278,7 @@ public sealed class DatabaseSeeder(
         return round;
     }
 
-    private async Task<List<Participant>> CreateDemoParticipantsAsync(DateTimeOffset now, CancellationToken ct)
+    private async Task<List<Participant>> CreateDemoParticipantsAsync(Room room, DateTimeOffset now, CancellationToken ct)
     {
         string[] names = ["Ana Clara", "Bruno Reis", "Carla Menezes", "Diego Alves", "Elis Prado", "Felipe Nunes"];
         var created = new List<Participant>();
@@ -288,6 +308,9 @@ public sealed class DatabaseSeeder(
 
             var participant = Participant.Register(user.Id, names[i], null, now.AddDays(-20 + i));
             db.Participants.Add(participant);
+            await db.SaveChangesAsync(ct);
+
+            await EnsureMembershipAsync(room, participant.Id, now, ct);
             created.Add(participant);
         }
 

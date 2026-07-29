@@ -49,11 +49,7 @@ public static class ProfileEndpoints
         var user = await userManager.FindByIdAsync(meId.ToString());
         if (user is not null) await signInManager.RefreshSignInAsync(user);
 
-        var settings = await queries.GetSettingsAsync(ct);
-
-        return Results.Ok(new MeDto(
-            participant.Id, participant.DisplayName, participant.AvatarUrl,
-            participant.ShowInRanking, participant.IsAdmin, settings.GcName));
+        return Results.Ok(await MeMapper.BuildAsync(participant, queries, ct));
     }
 
     private static async Task<IResult> DeleteAsync(

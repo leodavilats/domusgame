@@ -1,3 +1,4 @@
+using Domus.Domain.Rooms;
 using Domus.Domain.Seasons;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
@@ -13,6 +14,7 @@ public sealed class SeasonConfiguration : IEntityTypeConfiguration<Season>
         builder.HasKey(s => s.Id);
         builder.Property(s => s.Id).ValueGeneratedNever();
 
+        builder.Property(s => s.RoomId).IsRequired();
         builder.Property(s => s.Name).HasMaxLength(80).IsRequired();
         builder.Property(s => s.StartsOn).IsRequired();
         builder.Property(s => s.EndsOn).IsRequired();
@@ -21,10 +23,15 @@ public sealed class SeasonConfiguration : IEntityTypeConfiguration<Season>
 
         builder.Ignore(s => s.IsFinished);
 
-        builder.HasIndex(s => s.Status)
+        builder.HasOne<Room>()
+            .WithMany()
+            .HasForeignKey(s => s.RoomId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        builder.HasIndex(s => new { s.RoomId, s.Status })
             .IsUnique()
             .HasFilter($"\"Status\" = {(int)SeasonStatus.Active}")
-            .HasDatabaseName("UX_Seasons_SingleActive");
+            .HasDatabaseName("UX_Seasons_SingleActivePerRoom");
 
         builder.HasMany(s => s.Podium)
             .WithOne()

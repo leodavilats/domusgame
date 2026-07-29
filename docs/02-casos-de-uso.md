@@ -8,8 +8,9 @@
 
 | ID | Caso de uso | Ator |
 | --- | --- | --- |
-| UC-01 | Cadastrar-se com código de convite | Visitante |
+| UC-01 | Cadastrar-se | Visitante |
 | UC-02 | Autenticar-se | Visitante |
+| UC-14 | Entrar em uma sala com o código de convite | Cadastrado sem sala |
 | UC-03 | Ver painel inicial | Participante |
 | UC-04 | Ler a lição da semana | Participante |
 | UC-05 | Iniciar tentativa | Participante |
@@ -27,46 +28,70 @@
 | UC-23 | Gerenciar perguntas e alternativas | Administrador |
 | UC-24 | Pré-visualizar e publicar rodada | Administrador |
 | UC-25 | Duplicar rodada anterior | Administrador |
-| UC-26 | Gerenciar código de convite | Administrador |
+| UC-26 | Gerenciar o código de convite da sala | Administrador |
 | UC-27 | Gerenciar participantes e papéis | Administrador |
 | UC-28 | Consultar estatísticas | Administrador |
 | UC-29 | Encerrar temporada e registrar pódio | Administrador |
 | UC-30 | Exportar ranking em CSV | Administrador |
-| UC-31 | Gerar senha temporária para um participante | Administrador |
-| UC-31 | Gerar senha temporária para um participante | Administrador |
 
 ---
 
-## UC-01 — Cadastrar-se com código de convite
+## UC-01 — Cadastrar-se
 
-**Ator:** Visitante · **Pré-condição:** possui um código de convite válido (RN-34)
+**Ator:** Visitante · **Pré-condição:** nenhuma. O cadastro é aberto (RN-34); o código de convite
+só aparece depois, para entrar na sala (UC-14).
 
 **Fluxo principal**
 1. Visitante acessa `/cadastro`.
-2. Informa código de convite, nome de exibição, e-mail e senha.
-3. Sistema valida o código contra o convite ativo.
-4. Sistema cria a conta com papel `Participant` e `ShowInRanking = true`.
-5. Sistema autentica e redireciona para o painel inicial.
+2. Informa nome de exibição, e-mail e senha — ou escolhe "Criar conta com o Google".
+3. Sistema cria a conta com papel `Participant` e `ShowInRanking = true`, **sem sala**.
+4. Sistema autentica e redireciona para o painel inicial, que oferece entrar em uma sala.
 
 **Exceções**
-- **E1** Código inválido/expirado → "Código de convite inválido. Peça o código ao líder do GC." Nenhuma conta é criada.
-- **E2** E-mail já cadastrado → oferece ir para o login.
-- **E3** Nome de exibição já em uso → pede outro (nome é a identidade no ranking).
-- **E4** Senha fraca (< 8 caracteres) → mensagem de validação.
-- **E5** Muitas tentativas do mesmo IP → bloqueio temporário (RNF-07).
+- **E1** E-mail já cadastrado → oferece ir para o login.
+- **E2** Nome de exibição já em uso → pede outro (nome é a identidade no ranking).
+- **E3** Senha fraca (< 8 caracteres) → mensagem de validação.
+- **E4** Muitas tentativas do mesmo IP → bloqueio temporário (RNF-07).
+- **E5** No fluxo do Google, a conta não libera o e-mail → volta ao login pedindo e-mail e senha.
 
 ---
 
 ## UC-02 — Autenticar-se
 
 **Fluxo principal**
-1. Visitante acessa `/entrar` e informa e-mail + senha.
-2. Sistema valida credenciais e emite **cookie de sessão `httpOnly`** de longa duação.
+1. Visitante acessa `/entrar` e informa e-mail + senha, ou escolhe "Entrar com o Google".
+2. Sistema valida credenciais e emite **cookie de sessão `httpOnly`** de longa duração.
 3. Redireciona para o painel inicial.
 
 **Exceções**
 - **E1** Credenciais inválidas → mensagem genérica ("E-mail ou senha inválidos"), sem revelar se o e-mail existe.
+- **E2** Google não configurado no ambiente → botão redireciona com aviso, sem tela de erro.
 - **E3** Excesso de tentativas → bloqueio temporário.
+
+**Observações**
+- Um e-mail já cadastrado com senha que entra pelo Google tem o login social **vinculado** à conta
+  existente — não nasce uma segunda conta com o mesmo e-mail.
+
+---
+
+## UC-14 — Entrar em uma sala com o código de convite
+
+**Ator:** Cadastrado sem sala · **Pré-condição:** autenticado e fora de qualquer sala
+
+**Fluxo principal**
+1. No painel inicial vazio, escolhe "Tenho um código" e chega em `/sala`.
+2. Informa o código divulgado pelo líder do GC.
+3. Sistema localiza a sala pelo código normalizado (sem diferenciar maiúsculas) e cria a filiação.
+4. Sistema recarrega a sessão e leva ao painel inicial, agora com temporada, rodada e ranking.
+
+**Exceções**
+- **E1** Código inexistente → "Código inválido. Peça o código ao líder do GC." Não revela se a sala existe (RN-42).
+- **E2** Já é membro daquela sala → devolve a mesma sala, sem duplicar a filiação (RN-43).
+- **E3** Excesso de tentativas → bloqueio temporário (o endpoint usa a mesma política de `auth`).
+
+**Observações**
+- Rotacionar o código (UC-26) **não** expulsa ninguém: o código controla a entrada, não a
+  permanência (RN-35).
 
 ---
 
@@ -269,16 +294,18 @@ rodada em rascunho ou agendada **não** é exibida (RN-09).
 
 ---
 
-## UC-26 — Gerenciar código de convite
+## UC-26 — Gerenciar o código de convite da sala
 
-1. Admin visualiza o código ativo e o total de cadastros feitos com ele.
+1. Admin visualiza o código ativo da sua sala e quantas pessoas já entraram com ele.
 2. Pode gerar um novo, invalidando o anterior (RN-35), com confirmação.
+3. Quem já está na sala **permanece**: o código é a porta de entrada, não a permanência.
 
 ---
 
 ## UC-27 — Gerenciar participantes e papéis
 
-1. Admin lista participantes com data de entrada, pontos na temporada e última participação.
+1. Admin lista os participantes **da sua sala** com data de entrada, pontos na temporada e última
+   participação. Contas cadastradas que não entraram na sala não aparecem (RN-41).
 2. Pode promover a `Admin` ou rebaixar a `Participant`.
 
 **Exceção:** não é possível remover o próprio papel de administrador se for o último admin.
@@ -310,40 +337,9 @@ rodada em rascunho ou agendada **não** é exibida (RN-09).
 
 ---
 
-## UC-31 — Gerar senha temporária para um participante
-
-**Ator:** Administrador · **Motivação:** não há recuperação por e-mail na v1 (RN-40)
-
-**Fluxo principal**
-1. Admin abre **Pessoas** e escolhe *Redefinir senha* na linha do participante.
-2. Sistema pede confirmação, avisando que a senha atual deixará de valer.
-3. Sistema gera uma senha pronunciável (ex.: `tamu-4729`), aplica na conta, limpa bloqueio por
-   tentativas e registra a ação na auditoria.
-4. Sistema exibe a senha **uma única vez**; o admin a repassa pelo grupo.
-
-**Exceções**
-- **E1** Conta removida → 409, não é possível redefinir.
-- **E2** Participante tentando usar a rota → 403.
-
----
-
-## UC-31 — Gerar senha temporária para um participante
-
-**Ator:** Administrador · **Motivação:** sem serviço de e-mail, não existe "esqueci minha senha"
-
-1. Admin abre **Pessoas** e escolhe *Redefinir senha* no participante.
-2. Sistema confirma a ação (a senha atual deixa de valer).
-3. Sistema gera uma senha pronunciável (ex.: `tamu-4729`), grava o hash, limpa bloqueio por
-   tentativas e registra na auditoria.
-4. A senha é exibida **uma única vez**, com botão de compartilhar.
-5. O participante entra com ela e pode seguir usando ou trocá-la depois.
-
-**Exceções**
-- **E1** Conta removida → 409.
-- **E2** Participante tentando usar a rota → 403.
-
-> A senha não é armazenada em texto claro em lugar nenhum: se o admin fechar a tela sem
-> anotar, o caminho é gerar outra.
+> **Removido:** *UC-31 — Gerar senha temporária para um participante.* O admin gerava uma senha e a
+> repassava pelo grupo. Com o login do Google (UC-02) o caso de uso perdeu a razão de existir, e
+> senha de terceiro circulando em conversa é um risco que não se justifica para poupar um clique.
 
 ---
 
@@ -371,14 +367,20 @@ Fim do trimestre
 
 ## Matriz de autorização
 
-| Rota / operação | Visitante | Participante | Admin |
-| --- | :---: | :---: | :---: |
-| Cadastro, login | ✅ | — | — |
-| Painel, lição, rodadas publicadas | ❌ | ✅ | ✅ |
-| Iniciar tentativa / responder | ❌ | ✅ | ✅ |
-| Gabarito de rodada **aberta** | ❌ | ❌ | ✅ (só na pré-visualização/admin) |
-| Gabarito de rodada **encerrada** | ❌ | ✅ | ✅ |
-| Rankings | ❌ | ✅ | ✅ |
-| Rodadas em rascunho | ❌ | ❌ | ✅ |
-| CRUD de temporada/rodada/lição/pergunta | ❌ | ❌ | ✅ |
-| Convite, papéis, estatísticas, CSV | ❌ | ❌ | ✅ |
+| Rota / operação | Visitante | Sem sala | Participante | Admin |
+| --- | :---: | :---: | :---: | :---: |
+| Cadastro, login | ✅ | — | — | — |
+| Entrar em uma sala | ❌ | ✅ | ✅ (já está) | ✅ (já está) |
+| Perfil e exclusão de conta | ❌ | ✅ | ✅ | ✅ |
+| Painel, lição, rodadas publicadas | ❌ | painel vazio | ✅ | ✅ |
+| Iniciar tentativa / responder | ❌ | ❌ | ✅ | ✅ |
+| Gabarito de rodada **aberta** | ❌ | ❌ | ❌ | ✅ (só na pré-visualização/admin) |
+| Gabarito de rodada **encerrada** | ❌ | ❌ | ✅ | ✅ |
+| Rankings | ❌ | ❌ | ✅ | ✅ |
+| Rodadas em rascunho | ❌ | ❌ | ❌ | ✅ |
+| CRUD de temporada/rodada/lição/pergunta | ❌ | ❌ | ❌ | ✅ |
+| Convite, papéis, estatísticas, CSV | ❌ | ❌ | ❌ | ✅ |
+
+Tudo o que é conteúdo (painel, rodadas, rankings, administração) é lido **na sala de quem pede**.
+Pedido com id de outra sala responde 404 (RN-45); pedido de quem não tem sala responde 403 com
+"Entre em uma sala com o código de convite para continuar".

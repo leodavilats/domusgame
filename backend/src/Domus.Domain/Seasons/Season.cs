@@ -42,9 +42,12 @@ public sealed class Season : Entity
 
     private Season() : base() => Name = string.Empty;
 
-    private Season(string name, DateOnly startsOn, DateOnly endsOn, DateTimeOffset now)
+    private Season(Guid roomId, string name, DateOnly startsOn, DateOnly endsOn, DateTimeOffset now)
         : base(NewId())
     {
+        Guard.Requires(roomId != Guid.Empty, "Sala invalida.");
+
+        RoomId = roomId;
         Name = Guard.Text(name, "Nome da temporada", 80);
         ValidatePeriod(startsOn, endsOn);
         StartsOn = startsOn;
@@ -53,6 +56,7 @@ public sealed class Season : Entity
         CreatedAt = now;
     }
 
+    public Guid RoomId { get; private set; }
     public string Name { get; private set; }
     public DateOnly StartsOn { get; private set; }
     public DateOnly EndsOn { get; private set; }
@@ -64,8 +68,8 @@ public sealed class Season : Entity
 
     public bool IsFinished => Status == SeasonStatus.Finished;
 
-    public static Season Create(string name, DateOnly startsOn, DateOnly endsOn, DateTimeOffset now) =>
-        new(name, startsOn, endsOn, now);
+    public static Season Create(Guid roomId, string name, DateOnly startsOn, DateOnly endsOn, DateTimeOffset now) =>
+        new(roomId, name, startsOn, endsOn, now);
 
     public void Update(string name, DateOnly startsOn, DateOnly endsOn)
     {

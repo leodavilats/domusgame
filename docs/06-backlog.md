@@ -15,17 +15,18 @@
 | 0 — Fundação | ✅ estrutura, solution, Dockerfile, compose e CI criados |
 | 1 — Domínio | ✅ entidades, `ScoringPolicy`, `Attempt` e testes escritos |
 | 2 — Persistência | ✅ contexto, configurações, Identity, seed e migration `InitialCreate` aplicada em banco limpo |
-| 3 — Auth e perfil | ✅ cadastro com convite, login, perfil e exclusão |
+| 3 — Auth e perfil | ✅ cadastro aberto, login com senha ou Google, entrada em sala, perfil e exclusão |
 | 4 — Participação | ✅ painel, tentativa, respostas, resultado, revisão, rankings |
-| 5 — Administração | ✅ temporadas, rodadas, lição, perguntas, publicação, estatísticas, convite, CSV |
+| 5 — Administração | ✅ temporadas, rodadas, lição, perguntas, publicação, estatísticas, convite da sala, CSV |
+| 10 — Salas | ✅ `Room`/`RoomMembership`, cadastro aberto, login Google, escopo por sala em toda leitura e escrita |
 | 6–8 — Front-end | ✅ todas as telas; `npm run build` limpo |
 | 9 — Fechamento | ✅ README, CLAUDE.md, migration e verificação ponta a ponta em container |
 
-**Suíte automatizada: 88 testes, todos passando** — 72 de domínio e 16 de integração
-(Testcontainers + Postgres real).
+**Suíte automatizada: 112 testes, todos passando** — 76 de domínio, 32 de integração
+(Testcontainers + Postgres real) e 4 de front-end (vitest + jsdom).
 
 **Verificado com a aplicação em execução** (`docker compose up`):
-build limpo, migration aplicada em banco vazio, seed idempotente, cadastro com convite, quiz com
+build limpo, migration aplicada em banco vazio, seed idempotente, cadastro e entrada na sala, quiz com
 cronômetro do servidor, ausência de gabarito no payload da rodada aberta, bloqueio de gabarito e
 ranking durante a semana, liberação após o encerramento, área administrativa negada a participante,
 rankings semanal e de temporada, estatísticas por rodada, ativação de temporada respeitando RN-02.
@@ -44,6 +45,8 @@ rankings semanal e de temporada, estatísticas por rodada, ativação de tempora
 | Falha de seed derrubava a aplicação em *crash loop* permanente | teste do deploy contra banco já populado |
 | `Admin__Password` era ignorada em silêncio depois do primeiro deploy | investigação do login |
 | **`useMutation` com `useCallback([])` congelava o closure da primeira renderização — todo formulário do app enviava os campos vazios** | usuário inspecionando o corpo da requisição |
+| **Migration `AddRooms` do scaffold dropava `GcSettings` antes de criar a sala a partir dele e tornava `Seasons.RoomId` obrigatório sem preencher** | leitura do arquivo gerado, antes de aplicar (o EF avisou "may result in the loss of data") |
+| Rodada, temporada e gabarito eram endereçáveis **por id sem verificar a sala** — com a segunda sala, o admin de uma editaria o conteúdo da outra | revisão do escopo ao implementar salas |
 
 O último é o mais grave e o mais instrutivo: **nenhuma das 88 verificações automatizadas podia
 pegá-lo**, porque todas exercitam a API por HTTP e o defeito estava no navegador. Login, cadastro,
@@ -79,7 +82,7 @@ trocasse de trimestre.
 | 1.8 | `ScoringPolicy` | **tabela de verdade completa** da seção 5 do doc 03 |
 | 1.9 | `OptionShuffler` determinístico | mesma tentativa → mesma ordem; tentativas diferentes → ordens diferentes |
 | 1.10 | `Attempt.Start` / `ServeCurrentQuestion` / `Submit` / `ExpirePendingIfNeeded` / `Complete` | testes I-A1..I-A9 e da máquina de estados |
-| 1.11 | `GcSettings` + `AuditLogEntry` | testes de rotação de convite |
+| 1.11 | `Room` + `RoomMembership` + `AuditLogEntry` | testes de código de convite e rotação |
 | 1.12 | Teste de arquitetura: domínio sem EF/ASP.NET/Identity | falha se alguém adicionar a referência |
 
 ## Épico 2 — Persistência
@@ -89,7 +92,7 @@ trocasse de trimestre.
 | 2.1 | `DomusDbContext` + configurações (owned types, índices, checks) | modelo compila e `dotnet ef dbcontext info` responde |
 | 2.2 | Identity (`AppUser`, chave compartilhada com `Participant`, claims factory) | login emite claim `role` |
 | 2.3 | Migration `InitialCreate` + índice único parcial da temporada ativa | `database update` cria o esquema |
-| 2.4 | Seed idempotente: `GcSettings`, admin inicial | subir duas vezes não duplica nada |
+| 2.4 | Seed idempotente: primeira sala, admin inicial e sua filiação | subir duas vezes não duplica nada |
 | 2.5 | Seed de demonstração (temporada + 3 rodadas + 6 participantes + tentativas) | rankings e estatísticas com dados reais |
 
 ## Épico 3 — API: autenticação e perfil
@@ -97,8 +100,9 @@ trocasse de trimestre.
 | # | Tarefa | DoD |
 | --- | --- | --- |
 | 3.1 | Middleware de erros → `ProblemDetails`; `CurrentUser`; JSON camelCase + enums string | erro de domínio devolve o status correto |
-| 3.2 | `POST /auth/register` com código de convite | conta criada; código inválido = 400 |
+| 3.2 | `POST /auth/register` **sem** código de convite | conta criada sem sala; nome repetido = 400 |
 | 3.3 | `POST /auth/login`, `/logout`, `GET /auth/me` | cookie de 60 dias |
+| 3.4 | `GET /auth/google/start` + `/callback` | e-mail existente vincula em vez de duplicar a conta |
 | 3.5 | Rate limiting em `/auth/*` | 6ª tentativa em 1 min = 429 |
 | 3.6 | `PUT /profile`, `DELETE /profile` | anonimização preserva tentativas |
 
@@ -141,7 +145,8 @@ trocasse de trimestre.
 | 6.2 | Cliente de API, tratamento de erro, `useApi`/`useMutation` | erro de rede exibe mensagem amigável |
 | 6.3 | Contexto de sessão + rotas protegidas + rota de admin | sem sessão → `/entrar` |
 | 6.4 | Layout mobile-first, navegação inferior, tema | usável em 360 px |
-| 6.5 | Telas de login e cadastro (com convite) | fluxo completo com o back |
+| 6.5 | Telas de login e cadastro (com botão do Google) | fluxo completo com o back |
+| 6.7 | Painel vazio para quem não tem sala + tela `/sala` | código válido leva ao desafio; inválido mostra o erro |
 | 6.6 | PWA (manifest + ícones) + formatação de data/hora em Brasília | instalável no celular |
 
 ## Épico 7 — Front-end: participante
@@ -170,7 +175,19 @@ trocasse de trimestre.
 | 8.5 | Editor de perguntas (alternativas, correta, mídia, explicação, reordenar) | validação em tempo real |
 | 8.6 | Pré-visualização + publicação com lista de problemas | publica só quando válido |
 | 8.7 | Estatísticas | participação, médias, perguntas difíceis, quem falta responder |
-| 8.8 | Participantes e convite | rotação com confirmação |
+| 8.8 | Participantes e convite da sala | rotação com confirmação |
+
+## Épico 10 — Salas (upgrade posterior à v1)
+
+| # | Tarefa | DoD |
+| --- | --- | --- |
+| 10.1 | `Room` + `RoomMembership` no domínio; `Season.RoomId`; `GcSettings` aposentado | teste de arquitetura e domínio verdes |
+| 10.2 | Migration `AddRooms` **escrita à mão**: cria a sala do `GcSettings`, religa as temporadas, filia todos os participantes, só então dropa a tabela antiga | banco populado migra sem perder acesso; banco vazio migra sem inserir nada |
+| 10.3 | Cadastro aberto (`register` sem convite) + login com Google | conta nasce sem sala; e-mail já existente vincula em vez de duplicar |
+| 10.4 | `GET /rooms/mine`, `POST /rooms/join` | entrar duas vezes não duplica a filiação |
+| 10.5 | Escopo por sala em **toda** leitura e escrita, inclusive por id | rodada/temporada de outra sala = 404 |
+| 10.6 | Remoção da senha temporária (rota, tela e regra) | nenhuma senha de terceiro trafega |
+| 10.7 | Front: cadastro sem código, `/sala`, painel vazio, nome da sala no cabeçalho | fluxo cadastro → entrar na sala → desafio |
 
 ## Épico 9 — Fechamento
 

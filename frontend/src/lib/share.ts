@@ -23,6 +23,6 @@ export async function share(payload: SharePayload): Promise<'shared' | 'copied' 
   }
 }
 
-export function buildScoreMessage(gcName: string, weekNumber: number, points: number): string {
-  return `Fiz ${points} pontos no desafio da semana ${weekNumber} do ${gcName}!`
+export function buildScoreMessage(roomName: string, weekNumber: number, points: number): string {
+  return `Fiz ${points} pontos no desafio da semana ${weekNumber} do ${roomName}!`
 }

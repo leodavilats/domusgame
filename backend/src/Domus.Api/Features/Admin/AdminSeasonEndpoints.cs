@@ -37,10 +37,17 @@ public static class AdminSeasonEndpoints
         group.MapGet("/{id:guid}/export", ExportAsync);
     }
 
-    private static async Task<IResult> ListAsync(DomusDbContext db, CancellationToken ct)
+    private static async Task<IResult> ListAsync(
+        CurrentUser currentUser,
+        DomusDbContext db,
+        DomusQueries queries,
+        CancellationToken ct)
     {
+        var room = await queries.RequireMyRoomAsync(currentUser.RequireAdminId(), ct);
+
         var seasons = await db.Seasons.AsNoTracking()
             .Include(s => s.Podium)
+            .Where(s => s.RoomId == room.Id)
             .OrderByDescending(s => s.StartsOn)
             .ToListAsync(ct);
 
@@ -65,11 +72,15 @@ public static class AdminSeasonEndpoints
 
     private static async Task<IResult> CreateAsync(
         SeasonRequest request,
+        CurrentUser currentUser,
         DomusDbContext db,
+        DomusQueries queries,
         TimeProvider clock,
         CancellationToken ct)
     {
-        var season = Season.Create(request.Name, request.StartsOn, request.EndsOn, clock.GetUtcNow());
+        var room = await queries.RequireMyRoomAsync(currentUser.RequireAdminId(), ct);
+
+        var season = Season.Create(room.Id, request.Name, request.StartsOn, request.EndsOn, clock.GetUtcNow());
 
         db.Seasons.Add(season);
         await db.SaveChangesAsync(ct);
@@ -80,10 +91,12 @@ public static class AdminSeasonEndpoints
     private static async Task<IResult> UpdateAsync(
         Guid id,
         SeasonRequest request,
+        CurrentUser currentUser,
         DomusDbContext db,
+        DomusQueries queries,
         CancellationToken ct)
     {
-        var season = await LoadAsync(db, id, ct);
+        var season = await LoadAsync(db, queries, currentUser, id, ct);
 
         season.Update(request.Name, request.StartsOn, request.EndsOn);
         await db.SaveChangesAsync(ct);
@@ -95,10 +108,11 @@ public static class AdminSeasonEndpoints
         Guid id,
         CurrentUser currentUser,
         DomusDbContext db,
+        DomusQueries queries,
         TimeProvider clock,
         CancellationToken ct)
     {
-        var season = await LoadAsync(db, id, ct);
+        var season = await LoadAsync(db, queries, currentUser, id, ct);
         if (season.Status == SeasonStatus.Active) return Results.Ok(ToDto(season, 0, 0));
 
         var audit = AuditLogEntry.Record(
@@ -110,7 +124,8 @@ public static class AdminSeasonEndpoints
         {
             await using var transaction = await db.Database.BeginTransactionAsync(ct);
 
-            var current = await db.Seasons.SingleOrDefaultAsync(s => s.Status == SeasonStatus.Active, ct);
+                var current = await db.Seasons.SingleOrDefaultAsync(
+                s => s.RoomId == season.RoomId && s.Status == SeasonStatus.Active, ct);
             if (current is not null)
             {
                 current.Deactivate();
@@ -135,7 +150,7 @@ public static class AdminSeasonEndpoints
         TimeProvider clock,
         CancellationToken ct)
     {
-        var season = await LoadAsync(db, id, ct);
+        var season = await LoadAsync(db, queries, currentUser, id, ct);
         var now = clock.GetUtcNow();
 
         var ranking = await queries.GetSeasonRankingAsync(season, currentUser.RequireAdminId(), ct);
@@ -164,7 +179,7 @@ public static class AdminSeasonEndpoints
         DomusQueries queries,
         CancellationToken ct)
     {
-        var season = await LoadAsync(db, id, ct);
+        var season = await LoadAsync(db, queries, currentUser, id, ct);
         var ranking = await queries.GetSeasonRankingAsync(season, currentUser.RequireAdminId(), ct);
 
         var csv = new StringBuilder();
@@ -186,9 +201,19 @@ public static class AdminSeasonEndpoints
         return Results.File(bytes, "text/csv", fileName);
     }
 
-    private static async Task<Season> LoadAsync(DomusDbContext db, Guid id, CancellationToken ct) =>
-        await db.Seasons.Include(s => s.Podium).SingleOrDefaultAsync(s => s.Id == id, ct)
-        ?? throw NotFoundException.For("Temporada");
+    private static async Task<Season> LoadAsync(
+        DomusDbContext db,
+        DomusQueries queries,
+        CurrentUser currentUser,
+        Guid id,
+        CancellationToken ct)
+    {
+        var room = await queries.RequireMyRoomAsync(currentUser.RequireAdminId(), ct);
+
+        return await db.Seasons.Include(s => s.Podium)
+            .SingleOrDefaultAsync(s => s.Id == id && s.RoomId == room.Id, ct)
+            ?? throw NotFoundException.For("Temporada");
+    }
 
     private static AdminSeasonDto ToDto(Season season, int rounds, int published) => new(
         season.Id,

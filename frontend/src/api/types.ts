@@ -6,13 +6,25 @@ export type QuestionMediaType = 'None' | 'Image' | 'Audio'
 export type ParticipantRole = 'Participant' | 'Admin'
 export type SeasonStatus = 'Draft' | 'Active' | 'Finished'
 
+export interface MyRoomSummary {
+  id: string
+  name: string
+}
+
+export interface MyRoom {
+  id: string
+  name: string
+  joinedAt: string
+  memberCount: number
+}
+
 export interface Me {
   id: string
   displayName: string
   avatarUrl?: string | null
   showInRanking: boolean
   isAdmin: boolean
-  gcName: string
+  room?: MyRoomSummary | null
 }
 
 export interface RoundSummary {
@@ -167,7 +179,7 @@ export interface MyStats {
 }
 
 export interface Dashboard {
-  gcName: string
+  room?: MyRoomSummary | null
   season?: SeasonInfo | null
   round?: RoundSummary | null
   lessonTitle?: string | null
@@ -259,13 +271,8 @@ export interface AdminParticipant {
   lastAttemptAt?: string | null
 }
 
-export interface ResetPasswordResult {
-  displayName: string
-  temporaryPassword: string
-}
-
 export interface Invite {
-  gcName: string
+  roomName: string
   inviteCode: string
   rotatedAt: string
   memberCount: number

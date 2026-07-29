@@ -1,5 +1,6 @@
 using System.Net;
 using System.Net.Http.Json;
+using System.Text.Json;
 using Xunit;
 
 namespace Domus.Api.Tests;
@@ -32,19 +33,64 @@ public class AuthorizationTests(ApiFixture fixture)
     }
 
     [Fact]
-    public async Task Cadastro_exige_codigo_de_convite_valido()
+    public async Task Cadastro_nao_exige_codigo_de_convite()
     {
         var client = fixture.CreateClient();
 
         var response = await client.PostAsJsonAsync("/api/auth/register", new
         {
-            inviteCode = "ERRADO",
-            displayName = "Intruso",
-            email = "intruso@teste.local",
+            displayName = "Recem Chegado",
+            email = "recemchegado@teste.local",
             password = "Teste@12345"
         });
 
+        var me = await response.ReadJsonAsync();
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        Assert.False(HasValue(me, "room"));
+    }
+
+    [Fact]
+    public async Task Sala_recusa_codigo_invalido()
+    {
+        var client = await fixture.RegisterWithoutRoomAsync("Codigo Errado", "codigoerrado@teste.local");
+
+        var response = await client.PostAsJsonAsync("/api/rooms/join", new { inviteCode = "ERRADO" });
+
         Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+    }
+
+    [Fact]
+    public async Task Sem_sala_o_participante_nao_ve_conteudo_do_gc()
+    {
+        var client = await fixture.RegisterWithoutRoomAsync("Sem Sala", "semsala@teste.local");
+
+        var dashboard = await (await client.GetAsync("/api/dashboard")).ReadJsonAsync();
+        var ranking = await client.GetAsync("/api/rankings/season");
+        var rounds = await client.GetAsync("/api/rounds");
+
+        Assert.False(HasValue(dashboard, "room"));
+        Assert.False(HasValue(dashboard, "season"));
+        Assert.Equal(HttpStatusCode.Forbidden, ranking.StatusCode);
+        Assert.Equal(HttpStatusCode.Forbidden, rounds.StatusCode);
+    }
+
+    [Fact]
+    public async Task Entrar_na_sala_e_idempotente()
+    {
+        var client = await fixture.RegisterWithoutRoomAsync("Entrou Duas Vezes", "duasvezes@teste.local");
+
+        var first = await (await client.PostAsJsonAsync(
+            "/api/rooms/join", new { inviteCode = ApiFixture.InviteCode })).ReadJsonAsync();
+
+        var second = await (await client.PostAsJsonAsync(
+            "/api/rooms/join", new { inviteCode = ApiFixture.InviteCode.ToLowerInvariant() })).ReadJsonAsync();
+
+        Assert.Equal(first.GetProperty("id").GetGuid(), second.GetProperty("id").GetGuid());
+        Assert.Equal(first.GetProperty("memberCount").GetInt32(), second.GetProperty("memberCount").GetInt32());
+
+        var me = await (await client.GetAsync("/api/auth/me")).ReadJsonAsync();
+        Assert.Equal(first.GetProperty("id").GetGuid(), me.GetProperty("room").GetProperty("id").GetGuid());
     }
 
     [Fact]
@@ -55,7 +101,6 @@ public class AuthorizationTests(ApiFixture fixture)
         var client = fixture.CreateClient();
         var response = await client.PostAsJsonAsync("/api/auth/register", new
         {
-            inviteCode = ApiFixture.InviteCode,
             displayName = "nome repetido",
             email = "repetido2@teste.local",
             password = "Teste@12345"
@@ -234,50 +279,22 @@ public class AuthorizationTests(ApiFixture fixture)
     }
 
     [Fact]
-    public async Task Admin_redefine_senha_e_a_antiga_deixa_de_valer()
+    public async Task Quem_nao_esta_na_sala_fica_fora_da_lista_de_pessoas()
     {
         var admin = await fixture.LoginAsAdminAsync();
-        await fixture.RegisterParticipantAsync("Esqueci Senha", "esqueci@teste.local");
+        await fixture.RegisterWithoutRoomAsync("Fora Da Sala", "foradasala@teste.local");
+        await fixture.RegisterParticipantAsync("Dentro Da Sala", "dentrodasala@teste.local");
 
         var participants = await (await admin.GetAsync("/api/admin/participants")).ReadJsonAsync();
 
-        var id = participants.EnumerateArray()
-            .First(p => p.GetProperty("displayName").GetString() == "Esqueci Senha")
-            .GetProperty("id").GetGuid();
+        var names = participants.EnumerateArray()
+            .Select(p => p.GetProperty("displayName").GetString())
+            .ToList();
 
-        var reset = await (await admin.PostAsync($"/api/admin/participants/{id}/reset-password", null)).ReadJsonAsync();
-        var temporary = reset.GetProperty("temporaryPassword").GetString();
-
-        Assert.Equal("Esqueci Senha", reset.GetProperty("displayName").GetString());
-        Assert.False(string.IsNullOrWhiteSpace(temporary));
-
-        var comNova = await fixture.CreateClient().PostAsJsonAsync("/api/auth/login", new
-        {
-            email = "esqueci@teste.local",
-            password = temporary
-        });
-
-        var comAntiga = await fixture.CreateClient().PostAsJsonAsync("/api/auth/login", new
-        {
-            email = "esqueci@teste.local",
-            password = "Teste@12345"
-        });
-
-        Assert.Equal(HttpStatusCode.OK, comNova.StatusCode);
-        Assert.Equal(HttpStatusCode.BadRequest, comAntiga.StatusCode);
+        Assert.Contains("Dentro Da Sala", names);
+        Assert.DoesNotContain("Fora Da Sala", names);
     }
 
-    [Fact]
-    public async Task Participante_nao_redefine_senha_de_ninguem()
-    {
-        var admin = await fixture.LoginAsAdminAsync();
-        var participant = await fixture.RegisterParticipantAsync("Sem Poder Senha", "sempodersenha@teste.local");
-
-        var participants = await (await admin.GetAsync("/api/admin/participants")).ReadJsonAsync();
-        var alvo = participants.EnumerateArray().First().GetProperty("id").GetGuid();
-
-        var response = await participant.PostAsync($"/api/admin/participants/{alvo}/reset-password", null);
-
-        Assert.Equal(HttpStatusCode.Forbidden, response.StatusCode);
-    }
+    private static bool HasValue(JsonElement element, string property) =>
+        element.TryGetProperty(property, out var value) && value.ValueKind != JsonValueKind.Null;
 }

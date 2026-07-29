@@ -8,11 +8,12 @@
 
 | Agregado | Raiz | Filhos | Responsabilidade |
 | --- | --- | --- | --- |
-| **Season** | `Season` | `SeasonPodiumEntry` | Período de competição e pódio congelado |
+| **Room** | `Room` | — | A sala do GC: nome e código de convite. Dona de todo o conteúdo |
+| **RoomMembership** | `RoomMembership` | — | Filiação de um participante a uma sala |
+| **Season** | `Season` | `SeasonPodiumEntry` | Período de competição e pódio congelado, **dentro de uma sala** |
 | **Round** | `Round` | `Lesson` (owned), `Question`, `AnswerOption` | Conteúdo da semana, janela e parâmetros de pontuação |
 | **Attempt** | `Attempt` | `AttemptAnswer` | Participação de uma pessoa em uma rodada: tempo e pontos |
-| **Participant** | `Participant` | — | Identidade pública e preferências |
-| **GcSettings** | `GcSettings` | — | Nome do GC e código de convite (linha única) |
+| **Participant** | `Participant` | — | Identidade pública e preferências. Existe **sem** sala |
 | **AuditLog** | `AuditLogEntry` | — | Rastro das ações administrativas |
 
 **Fronteiras:** `Attempt` referencia `Round` e `Participant` **por id**, nunca por navegação entre
@@ -24,19 +25,25 @@ valor (`RoundScoringSettings`), o que mantém o histórico imutável (RN-28).
 ## 2. Diagrama
 
 ```
-Season ──1:N── Round ──1:1(owned)── Lesson
-   │              │
-   │              └──1:N── Question ──1:N── AnswerOption
-   │
-   └──1:N── SeasonPodiumEntry ─────┐
-                                   │ (referência por id)
+Room ──1:N── Season ──1:N── Round ──1:1(owned)── Lesson
+  │             │              │
+  │             │              └──1:N── Question ──1:N── AnswerOption
+  │             │
+  │             └──1:N── SeasonPodiumEntry ─────┐
+  │                                             │ (referência por id)
+  └──1:N── RoomMembership ──── ParticipantId ───┤
+                                                │
 Participant ──1:N── Attempt ──1:N── AttemptAnswer
                        │                 │
                        │ RoundId         │ QuestionId / SelectedOptionId
                        └─────────────────┘  (referências por id)
 
-GcSettings (linha única)        AuditLogEntry
+AuditLogEntry
 ```
+
+`Participant` **não** aponta para `Room`: a filiação é uma entidade própria (`RoomMembership`), o
+que deixa a mesma conta pertencer a várias salas quando isso for necessário (RN-44) sem alterar o
+cadastro.
 
 ---
 
@@ -122,20 +129,22 @@ public static class ScoringPolicy
 ### `Season`
 
 ```
-Id, Name, StartsOn: DateOnly, EndsOn: DateOnly, Status, FinishedAt?
+Id, RoomId, Name, StartsOn: DateOnly, EndsOn: DateOnly, Status, FinishedAt?
 Podium: List<SeasonPodiumEntry>
 ```
 
 | Invariante | Regra |
 | --- | --- |
+| I-S0 | `RoomId` obrigatório: toda temporada nasce dentro de uma sala (RN-41) |
 | I-S1 | `Name` obrigatório (≤ 80 caracteres) |
 | I-S2 | `StartsOn < EndsOn` |
 | I-S3 | Temporada `Finished` não aceita novas rodadas nem alteração de datas (RN-04) |
 | I-S4 | `Finish(podium)` só pode ser chamado uma vez; grava até 3 posições com nome e pontos congelados |
 | I-S5 | A temporada nasce em `Draft`; `Activate()` a torna corrente e `Deactivate()` a devolve para `Draft` quando outra assume |
 
-> A unicidade da temporada ativa (RN-02) é garantida por índice único parcial no banco + verificação
-> no serviço de aplicação (não é invariante de um único agregado).
+> A unicidade da temporada ativa (RN-02) é **por sala** (RN-46): índice único parcial
+> `(RoomId, Status) WHERE Status = 1` no banco + verificação no serviço de aplicação (não é
+> invariante de um único agregado).
 
 ### `Round`
 
@@ -253,17 +262,42 @@ bool IsFinished { get; }
 `{ AnswerId, Outcome ∈ {Resolved, TimedOut}, NextQuestionOrder?, AttemptFinished }`.
 O front-end só descobre acertos após o encerramento da rodada.
 
-### `GcSettings` (linha única)
+### `Room`
 
 ```
-Id = 1 (fixo), GcName, InviteCode, InviteRotatedAt
+Id, Name, InviteCode, NormalizedInviteCode, InviteRotatedAt, CreatedAt
+```
+
+```csharp
+static Room Create(string name, string inviteCode, DateTimeOffset now);
+void Rename(string name);
+void RotateInvite(string inviteCode, DateTimeOffset now);
+bool MatchesInvite(string? candidate);
+static string GenerateCode(int length = 8);
 ```
 
 | Invariante | Regra |
 | --- | --- |
-| I-G1 | Existe exatamente uma linha (`Id = 1`), criada no seed |
-| I-G2 | `InviteCode` com 6–20 caracteres, comparação case-insensitive (RN-34) |
-| I-G3 | `RotateInvite(code, now)` substitui o código e registra a data (RN-35) |
+| I-R1 | `Name` com até 80 caracteres, obrigatório |
+| I-R2 | `InviteCode` com 6–20 caracteres, apenas letras e números, guardado em maiúsculas |
+| I-R3 | `NormalizedInviteCode` é único no banco: dois GCs não compartilham código (RN-42) |
+| I-R4 | `RotateInvite(code, now)` substitui o código e registra a data; ninguém é expulso (RN-35) |
+
+> Substituiu `GcSettings`, que era uma linha única com nome do GC e convite. A migração `AddRooms`
+> converte aquela linha na primeira sala e filia todos os participantes existentes — sem isso o GC
+> publicado perderia o acesso ao próprio conteúdo.
+
+### `RoomMembership`
+
+```
+Id, RoomId, ParticipantId, JoinedAt
+```
+
+| Invariante | Regra |
+| --- | --- |
+| I-M1 | `(RoomId, ParticipantId)` é único: entrar duas vezes não duplica (RN-43) |
+| I-M2 | `Join(room, participantId, now)` é a única forma de criar a filiação |
+| I-M3 | Excluir a sala ou o participante remove a filiação em cascata |
 
 ### `AuditLogEntry`
 

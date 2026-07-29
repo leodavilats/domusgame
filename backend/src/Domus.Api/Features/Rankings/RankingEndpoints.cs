@@ -23,7 +23,7 @@ public static class RankingEndpoints
         CancellationToken ct)
     {
         var meId = currentUser.RequireId();
-        var round = await queries.GetRoundWithQuestionsAsync(roundId, tracking: false, ct);
+        var round = await queries.RequireRoundInMyRoomAsync(roundId, meId, tracking: false, ct);
 
         if (!round.IsClosedAt(queries.Now) && !currentUser.IsAdmin)
         {
@@ -42,9 +42,11 @@ public static class RankingEndpoints
     {
         var meId = currentUser.RequireId();
 
+        var room = await queries.RequireMyRoomAsync(meId, ct);
+
         var season = seasonId is null
-            ? await queries.GetActiveSeasonAsync(ct)
-            : await db.Seasons.AsNoTracking().SingleOrDefaultAsync(s => s.Id == seasonId, ct);
+            ? await queries.GetActiveSeasonAsync(room.Id, ct)
+            : await db.Seasons.AsNoTracking().SingleOrDefaultAsync(s => s.Id == seasonId && s.RoomId == room.Id, ct);
 
         if (season is null) throw new NotFoundException("Nenhuma temporada encontrada.");
 

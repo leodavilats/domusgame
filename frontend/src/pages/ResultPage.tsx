@@ -25,7 +25,7 @@ export function ResultPage() {
 
     const result = await share({
       title: 'Desafio do GC',
-      text: buildScoreMessage(me?.gcName ?? 'GC Domus', data.round.weekNumber, data.totalPoints),
+      text: buildScoreMessage(me?.room?.name ?? 'GC Domus', data.round.weekNumber, data.totalPoints),
     })
 
     setShareFeedback(

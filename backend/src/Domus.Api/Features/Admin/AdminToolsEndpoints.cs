@@ -3,6 +3,7 @@ using Domus.Domain.Attempts;
 using Domus.Domain.Common;
 using Domus.Domain.Participants;
 using Domus.Domain.Rounds;
+using Domus.Domain.Rooms;
 using Domus.Domain.Seasons;
 using Domus.Domain.Settings;
 using Domus.Infrastructure.Identity;
@@ -58,11 +59,13 @@ public static class AdminToolsEndpoints
     private static async Task<IResult> DiagnosticsAsync(
         IConfiguration configuration,
         IHostEnvironment environment,
+        CurrentUser currentUser,
         DomusDbContext db,
         DomusQueries queries,
         CancellationToken ct)
     {
-        var season = await queries.GetActiveSeasonAsync(ct);
+        var room = await queries.GetMyRoomAsync(currentUser.RequireAdminId(), ct);
+        var season = room is null ? null : await queries.GetActiveSeasonAsync(room.Id, ct);
         var applied = (await db.Database.GetAppliedMigrationsAsync(ct)).LastOrDefault();
 
         return Results.Ok(new ToolsDiagnosticsDto(
@@ -96,6 +99,7 @@ public static class AdminToolsEndpoints
         IConfiguration configuration,
         CurrentUser currentUser,
         DomusDbContext db,
+        DomusQueries queries,
         TimeProvider clock,
         CancellationToken ct)
     {
@@ -104,7 +108,10 @@ public static class AdminToolsEndpoints
         var now = clock.GetUtcNow();
         var baseUrl = $"{http.Request.Scheme}://{http.Request.Host}";
 
+        var room = await queries.RequireMyRoomAsync(currentUser.RequireAdminId(), ct);
+
         var season = Season.Create(
+            room.Id,
             $"Teste {now:dd/MM HH:mm}",
             DateOnly.FromDateTime(now.UtcDateTime.AddDays(-3)),
             DateOnly.FromDateTime(now.UtcDateTime.AddDays(3)),

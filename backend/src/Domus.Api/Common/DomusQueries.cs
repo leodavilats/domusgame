@@ -1,7 +1,7 @@
 using Domus.Domain.Common;
 using Domus.Domain.Rounds;
+using Domus.Domain.Rooms;
 using Domus.Domain.Seasons;
-using Domus.Domain.Settings;
 using Domus.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 
@@ -11,12 +11,30 @@ public sealed class DomusQueries(DomusDbContext db, TimeProvider clock)
 {
     public DateTimeOffset Now => clock.GetUtcNow();
 
-    public async Task<GcSettings> GetSettingsAsync(CancellationToken ct = default) =>
-        await db.GcSettings.AsNoTracking().SingleOrDefaultAsync(s => s.Id == GcSettings.SingletonId, ct)
-        ?? throw new NotFoundException("Configuracao do GC não encontrada.");
+    public async Task<Room?> GetMyRoomAsync(Guid participantId, CancellationToken ct = default)
+    {
+        var roomId = await db.RoomMemberships.AsNoTracking()
+            .Where(m => m.ParticipantId == participantId)
+            .OrderBy(m => m.JoinedAt)
+            .Select(m => m.RoomId)
+            .FirstOrDefaultAsync(ct);
 
-    public Task<Season?> GetActiveSeasonAsync(CancellationToken ct = default) =>
-        db.Seasons.AsNoTracking().SingleOrDefaultAsync(s => s.Status == SeasonStatus.Active, ct);
+        if (roomId == Guid.Empty) return null;
+
+        return await db.Rooms.AsNoTracking().SingleOrDefaultAsync(r => r.Id == roomId, ct);
+    }
+
+    public async Task<Room> RequireMyRoomAsync(Guid participantId, CancellationToken ct = default) =>
+        await GetMyRoomAsync(participantId, ct)
+        ?? throw new ForbiddenException("Entre em uma sala com o codigo de convite para continuar.");
+
+    public Task<bool> IsMemberAsync(Guid roomId, Guid participantId, CancellationToken ct = default) =>
+        db.RoomMemberships.AsNoTracking()
+            .AnyAsync(m => m.RoomId == roomId && m.ParticipantId == participantId, ct);
+
+    public Task<Season?> GetActiveSeasonAsync(Guid roomId, CancellationToken ct = default) =>
+        db.Seasons.AsNoTracking()
+            .SingleOrDefaultAsync(s => s.RoomId == roomId && s.Status == SeasonStatus.Active, ct);
 
     public async Task<Round> GetRoundWithQuestionsAsync(Guid roundId, bool tracking, CancellationToken ct = default)
     {
@@ -29,6 +47,29 @@ public sealed class DomusQueries(DomusDbContext db, TimeProvider clock)
 
         return await query.SingleOrDefaultAsync(r => r.Id == roundId, ct)
             ?? throw NotFoundException.For("Rodada");
+    }
+
+    public async Task<Round> RequireRoundInMyRoomAsync(
+        Guid roundId,
+        Guid participantId,
+        bool tracking,
+        CancellationToken ct = default)
+    {
+        var round = await GetRoundWithQuestionsAsync(roundId, tracking, ct);
+        await EnsureRoundIsInRoomAsync(round, participantId, ct);
+        return round;
+    }
+
+    public async Task EnsureRoundIsInRoomAsync(Round round, Guid participantId, CancellationToken ct = default)
+    {
+        var room = await RequireMyRoomAsync(participantId, ct);
+
+        var roomId = await db.Seasons.AsNoTracking()
+            .Where(s => s.Id == round.SeasonId)
+            .Select(s => s.RoomId)
+            .FirstOrDefaultAsync(ct);
+
+        if (roomId != room.Id) throw NotFoundException.For("Rodada");
     }
 
     public RoundSummaryDto ToSummary(Round round) => new(
@@ -118,6 +159,11 @@ public sealed class DomusQueries(DomusDbContext db, TimeProvider clock)
 
     public async Task<RankingDto> GetSeasonRankingAsync(Season season, Guid meId, CancellationToken ct = default)
     {
+        var memberIds = await db.RoomMemberships.AsNoTracking()
+            .Where(m => m.RoomId == season.RoomId)
+            .Select(m => m.ParticipantId)
+            .ToListAsync(ct);
+
         var now = Now;
 
         var closedRoundIds = await db.Rounds.AsNoTracking()
@@ -140,7 +186,7 @@ public sealed class DomusQueries(DomusDbContext db, TimeProvider clock)
         var byParticipant = totals.ToDictionary(t => t.ParticipantId);
 
         var participants = await db.Participants.AsNoTracking()
-            .Where(p => !p.IsRemoved)
+            .Where(p => !p.IsRemoved && memberIds.Contains(p.Id))
             .Select(p => new { p.Id, p.DisplayName, p.AvatarUrl, p.ShowInRanking })
             .ToListAsync(ct);
 

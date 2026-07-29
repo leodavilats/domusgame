@@ -1,14 +1,17 @@
 import { useState } from 'react'
-import { Link, Navigate } from 'react-router-dom'
+import { Link, Navigate, useSearchParams } from 'react-router-dom'
 import { api } from '../api/client'
 import type { Me } from '../api/types'
 import { useMutation } from '../api/hooks'
 import { useSession } from '../auth/SessionContext'
+import { GoogleButton } from '../components/GoogleButton'
 import { Logo } from '../components/Logo'
 import { Button, Card, ErrorBox, Field, Input, Spinner } from '../components/ui'
+import { describeAuthError } from '../lib/authErrors'
 
 export function LoginPage() {
   const { me, loading, setMe } = useSession()
+  const [params] = useSearchParams()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
 
@@ -20,6 +23,8 @@ export function LoginPage() {
 
   if (loading) return <Spinner label="Carregando..." />
   if (me) return <Navigate to="/" replace />
+
+  const redirectError = describeAuthError(params.get('erro'))
 
   return (
     <div className="mx-auto flex min-h-dvh w-full max-w-md flex-col justify-center gap-5 p-4">
@@ -36,6 +41,7 @@ export function LoginPage() {
             void login.run()
           }}
         >
+          {redirectError ? <ErrorBox message={redirectError} /> : null}
           {login.error ? <ErrorBox message={login.error} /> : null}
 
           <Field label="E-mail">
@@ -62,12 +68,20 @@ export function LoginPage() {
             Entrar
           </Button>
         </form>
+
+        <div className="my-4 flex items-center gap-3 text-xs text-slate-400">
+          <span className="h-px flex-1 bg-slate-200" />
+          ou
+          <span className="h-px flex-1 bg-slate-200" />
+        </div>
+
+        <GoogleButton label="Entrar com o Google" />
       </Card>
 
       <p className="text-center text-sm text-slate-600">
         Primeira vez aqui?{' '}
         <Link to="/cadastro" className="font-semibold text-brand-600">
-          Criar conta com código de convite
+          Criar conta
         </Link>
       </p>
     </div>

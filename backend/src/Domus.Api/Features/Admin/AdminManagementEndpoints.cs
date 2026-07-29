@@ -4,10 +4,9 @@ using Domus.Domain.Attempts;
 using Domus.Domain.Common;
 using Domus.Domain.Participants;
 using Domus.Domain.Rounds;
+using Domus.Domain.Rooms;
 using Domus.Domain.Settings;
-using Domus.Infrastructure.Identity;
 using Domus.Infrastructure.Persistence;
-using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 
 namespace Domus.Api.Features.Admin;
@@ -26,9 +25,7 @@ public sealed record AdminParticipantDto(
 
 public sealed record ChangeRoleRequest(ParticipantRole Role);
 
-public sealed record ResetPasswordResult(string DisplayName, string TemporaryPassword);
-
-public sealed record InviteDto(string GcName, string InviteCode, DateTimeOffset RotatedAt, int MemberCount);
+public sealed record InviteDto(string RoomName, string InviteCode, DateTimeOffset RotatedAt, int MemberCount);
 
 public sealed record RotateInviteRequest(string? Code);
 
@@ -74,7 +71,6 @@ public static class AdminManagementEndpoints
     {
         admin.MapGet("/participants", ListParticipantsAsync);
         admin.MapPut("/participants/{id:guid}/role", ChangeRoleAsync);
-        admin.MapPost("/participants/{id:guid}/reset-password", ResetPasswordAsync);
 
         admin.MapGet("/invite", GetInviteAsync);
         admin.MapPost("/invite", RotateInviteAsync);
@@ -84,11 +80,19 @@ public static class AdminManagementEndpoints
     }
 
     private static async Task<IResult> ListParticipantsAsync(
+        CurrentUser currentUser,
         DomusDbContext db,
         DomusQueries queries,
         CancellationToken ct)
     {
-        var season = await queries.GetActiveSeasonAsync(ct);
+        var room = await queries.RequireMyRoomAsync(currentUser.RequireAdminId(), ct);
+
+        var memberIds = await db.RoomMemberships.AsNoTracking()
+            .Where(m => m.RoomId == room.Id)
+            .Select(m => m.ParticipantId)
+            .ToListAsync(ct);
+
+        var season = await queries.GetActiveSeasonAsync(room.Id, ct);
 
         List<Guid> seasonRoundIds = season is null
             ? []
@@ -98,6 +102,7 @@ public static class AdminManagementEndpoints
                 .ToListAsync(ct);
 
         var participants = await db.Participants.AsNoTracking()
+            .Where(p => memberIds.Contains(p.Id))
             .OrderBy(p => p.DisplayName)
             .ToListAsync(ct);
 
@@ -152,102 +157,58 @@ public static class AdminManagementEndpoints
         return Results.NoContent();
     }
 
-    private static async Task<IResult> ResetPasswordAsync(
-        Guid id,
+    private static async Task<IResult> GetInviteAsync(
         CurrentUser currentUser,
         DomusDbContext db,
-        UserManager<AppUser> userManager,
-        TimeProvider clock,
+        DomusQueries queries,
         CancellationToken ct)
     {
-        var participant = await db.Participants.AsNoTracking().SingleOrDefaultAsync(p => p.Id == id, ct)
-            ?? throw NotFoundException.For("Participante");
+        var room = await queries.RequireMyRoomAsync(currentUser.RequireAdminId(), ct);
+        var members = await db.RoomMemberships.AsNoTracking().CountAsync(m => m.RoomId == room.Id, ct);
 
-        Guard.State(!participant.IsRemoved, "Conta removida nao pode ter a senha redefinida.");
-
-        var user = await userManager.FindByIdAsync(id.ToString())
-            ?? throw NotFoundException.For("Credenciais do participante");
-
-        var temporary = GenerateTemporaryPassword();
-
-        var token = await userManager.GeneratePasswordResetTokenAsync(user);
-        var result = await userManager.ResetPasswordAsync(user, token, temporary);
-
-        if (!result.Succeeded)
-        {
-            throw new DomainRuleException(
-                $"Nao foi possivel redefinir a senha: {string.Join("; ", result.Errors.Select(e => e.Description))}");
-        }
-
-        await userManager.ResetAccessFailedCountAsync(user);
-        await userManager.SetLockoutEndDateAsync(user, null);
-
-        db.AuditLogs.Add(AuditLogEntry.Record(
-            currentUser.Id, currentUser.DisplayName, AuditLogEntry.Actions.PasswordReset,
-            participant.DisplayName, clock.GetUtcNow()));
-
-        await db.SaveChangesAsync(ct);
-
-        return Results.Ok(new ResetPasswordResult(participant.DisplayName, temporary));
-    }
-
-    private static string GenerateTemporaryPassword()
-    {
-        const string consonants = "bcdfgjklmnprstvz";
-        const string vowels = "aeiou";
-
-        var letters = new char[4];
-        for (var i = 0; i < 4; i++)
-        {
-            letters[i] = i % 2 == 0
-                ? consonants[Random.Shared.Next(consonants.Length)]
-                : vowels[Random.Shared.Next(vowels.Length)];
-        }
-
-        var digits = Random.Shared.Next(1000, 10000);
-
-        return $"{new string(letters)}-{digits}";
-    }
-
-    private static async Task<IResult> GetInviteAsync(DomusDbContext db, DomusQueries queries, CancellationToken ct)
-    {
-        var settings = await queries.GetSettingsAsync(ct);
-        var members = await db.Participants.AsNoTracking().CountAsync(p => !p.IsRemoved, ct);
-
-        return Results.Ok(new InviteDto(settings.GcName, settings.InviteCode, settings.InviteRotatedAt, members));
+        return Results.Ok(new InviteDto(room.Name, room.InviteCode, room.InviteRotatedAt, members));
     }
 
     private static async Task<IResult> RotateInviteAsync(
         RotateInviteRequest request,
         CurrentUser currentUser,
         DomusDbContext db,
+        DomusQueries queries,
         TimeProvider clock,
         CancellationToken ct)
     {
-        var settings = await db.GcSettings.SingleOrDefaultAsync(s => s.Id == GcSettings.SingletonId, ct)
-            ?? throw new NotFoundException("Configuracao do GC não encontrada.");
+        var roomId = (await queries.RequireMyRoomAsync(currentUser.RequireAdminId(), ct)).Id;
+        var room = await db.Rooms.SingleAsync(r => r.Id == roomId, ct);
 
         var now = clock.GetUtcNow();
-        var code = string.IsNullOrWhiteSpace(request.Code) ? GcSettings.GenerateCode() : request.Code;
+        var code = string.IsNullOrWhiteSpace(request.Code) ? Room.GenerateCode() : request.Code;
 
-        settings.RotateInvite(code, now);
+        room.RotateInvite(code, now);
 
         db.AuditLogs.Add(AuditLogEntry.Record(
             currentUser.Id, currentUser.DisplayName, AuditLogEntry.Actions.InviteRotated, null, now));
 
         await db.SaveChangesAsync(ct);
 
-        var members = await db.Participants.AsNoTracking().CountAsync(p => !p.IsRemoved, ct);
-        return Results.Ok(new InviteDto(settings.GcName, settings.InviteCode, settings.InviteRotatedAt, members));
+        var members = await db.RoomMemberships.AsNoTracking().CountAsync(m => m.RoomId == room.Id, ct);
+        return Results.Ok(new InviteDto(room.Name, room.InviteCode, room.InviteRotatedAt, members));
     }
 
     private static async Task<IResult> RoundStatsAsync(
         Guid id,
+        CurrentUser currentUser,
         DomusDbContext db,
         DomusQueries queries,
         CancellationToken ct)
     {
-        var round = await queries.GetRoundWithQuestionsAsync(id, tracking: false, ct);
+        var meId = currentUser.RequireAdminId();
+        var room = await queries.RequireMyRoomAsync(meId, ct);
+        var round = await queries.RequireRoundInMyRoomAsync(id, meId, tracking: false, ct);
+
+        var memberIds = await db.RoomMemberships.AsNoTracking()
+            .Where(m => m.RoomId == room.Id)
+            .Select(m => m.ParticipantId)
+            .ToListAsync(ct);
 
         var attempts = await db.Attempts.AsNoTracking()
             .Where(a => a.RoundId == round.Id)
@@ -260,7 +221,7 @@ public static class AdminManagementEndpoints
             .ToListAsync(ct);
 
         var activeParticipants = await db.Participants.AsNoTracking()
-            .Where(p => !p.IsRemoved)
+            .Where(p => !p.IsRemoved && memberIds.Contains(p.Id))
             .Select(p => new { p.Id, p.DisplayName })
             .ToListAsync(ct);
 
@@ -301,17 +262,28 @@ public static class AdminManagementEndpoints
 
     private static async Task<IResult> OverviewAsync(
         Guid? seasonId,
+        CurrentUser currentUser,
         DomusDbContext db,
         DomusQueries queries,
         CancellationToken ct)
     {
-        var season = seasonId is null
-            ? await queries.GetActiveSeasonAsync(ct)
-            : await db.Seasons.AsNoTracking().SingleOrDefaultAsync(s => s.Id == seasonId, ct);
+        var room = await queries.RequireMyRoomAsync(currentUser.RequireAdminId(), ct);
 
-        var participantCount = await db.Participants.AsNoTracking().CountAsync(p => !p.IsRemoved, ct);
+        var season = seasonId is null
+            ? await queries.GetActiveSeasonAsync(room.Id, ct)
+            : await db.Seasons.AsNoTracking()
+                .SingleOrDefaultAsync(s => s.Id == seasonId && s.RoomId == room.Id, ct);
+
+        var memberIds = await db.RoomMemberships.AsNoTracking()
+            .Where(m => m.RoomId == room.Id)
+            .Select(m => m.ParticipantId)
+            .ToListAsync(ct);
+
+        var participantCount = await db.Participants.AsNoTracking()
+            .CountAsync(p => !p.IsRemoved && memberIds.Contains(p.Id), ct);
+
         var adminCount = await db.Participants.AsNoTracking()
-            .CountAsync(p => !p.IsRemoved && p.Role == ParticipantRole.Admin, ct);
+            .CountAsync(p => !p.IsRemoved && p.Role == ParticipantRole.Admin && memberIds.Contains(p.Id), ct);
 
         if (season is null)
         {

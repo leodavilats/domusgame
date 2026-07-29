@@ -1,7 +1,7 @@
 using Domus.Domain.Common;
 using Domus.Domain.Participants;
 using Domus.Domain.Seasons;
-using Domus.Domain.Settings;
+using Domus.Domain.Rooms;
 using Xunit;
 
 namespace Domus.Domain.Tests;
@@ -56,9 +56,10 @@ public class ParticipantTests
 public class SeasonTests
 {
     private static readonly DateTimeOffset Now = new(2026, 7, 1, 12, 0, 0, TimeSpan.Zero);
+    private static readonly Guid RoomId = Guid.CreateVersion7();
 
     private static Season NewSeason() =>
-        Season.Create("3o trimestre de 2026", new DateOnly(2026, 7, 1), new DateOnly(2026, 9, 30), Now);
+        Season.Create(RoomId, "3o trimestre de 2026", new DateOnly(2026, 7, 1), new DateOnly(2026, 9, 30), Now);
 
     [Fact]
     public void Temporada_nasce_como_rascunho()
@@ -70,7 +71,7 @@ public class SeasonTests
     public void Periodo_invertido_e_recusado()
     {
         Assert.Throws<DomainValidationException>(() =>
-            Season.Create("Invalida", new DateOnly(2026, 9, 30), new DateOnly(2026, 7, 1), Now));
+            Season.Create(RoomId, "Invalida", new DateOnly(2026, 9, 30), new DateOnly(2026, 7, 1), Now));
     }
 
     [Fact]
@@ -105,40 +106,40 @@ public class SeasonTests
     }
 }
 
-public class GcSettingsTests
+public class RoomTests
 {
     private static readonly DateTimeOffset Now = new(2026, 7, 1, 12, 0, 0, TimeSpan.Zero);
 
     [Fact]
     public void Convite_e_comparado_sem_diferenciar_caixa_ou_espacos()
     {
-        var settings = GcSettings.Create("GC Domus", "domus26", Now);
+        var room = Room.Create("GC Domus", "domus26", Now);
 
-        Assert.True(settings.MatchesInvite("DOMUS26"));
-        Assert.True(settings.MatchesInvite("  domus26 "));
-        Assert.False(settings.MatchesInvite("outro"));
-        Assert.False(settings.MatchesInvite(null));
+        Assert.True(room.MatchesInvite("DOMUS26"));
+        Assert.True(room.MatchesInvite("  domus26 "));
+        Assert.False(room.MatchesInvite("outro"));
+        Assert.False(room.MatchesInvite(null));
     }
 
     [Fact]
     public void Rotacao_invalida_o_codigo_anterior()
     {
-        var settings = GcSettings.Create("GC Domus", "domus26", Now);
+        var room = Room.Create("GC Domus", "domus26", Now);
 
-        settings.RotateInvite("novo2026", Now.AddDays(30));
+        room.RotateInvite("novo2026", Now.AddDays(30));
 
-        Assert.False(settings.MatchesInvite("domus26"));
-        Assert.True(settings.MatchesInvite("novo2026"));
-        Assert.Equal(Now.AddDays(30), settings.InviteRotatedAt);
+        Assert.False(room.MatchesInvite("domus26"));
+        Assert.True(room.MatchesInvite("novo2026"));
+        Assert.Equal(Now.AddDays(30), room.InviteRotatedAt);
     }
 
     [Fact]
     public void Codigo_gerado_e_valido()
     {
-        var code = GcSettings.GenerateCode();
-        var settings = GcSettings.Create("GC Domus", code, Now);
+        var code = Room.GenerateCode();
+        var room = Room.Create("GC Domus", code, Now);
 
-        Assert.True(settings.MatchesInvite(code));
+        Assert.True(room.MatchesInvite(code));
         Assert.DoesNotContain('0', code);
         Assert.DoesNotContain('O', code);
     }
@@ -149,6 +150,19 @@ public class GcSettingsTests
     [InlineData("com-hifen")]
     public void Codigo_invalido_e_recusado(string code)
     {
-        Assert.Throws<DomainValidationException>(() => GcSettings.Create("GC Domus", code, Now));
+        Assert.Throws<DomainValidationException>(() => Room.Create("GC Domus", code, Now));
+    }
+
+    [Fact]
+    public void Filiacao_registra_sala_e_participante()
+    {
+        var room = Room.Create("GC Domus", "domus26", Now);
+        var participantId = Guid.CreateVersion7();
+
+        var membership = RoomMembership.Join(room, participantId, Now);
+
+        Assert.Equal(room.Id, membership.RoomId);
+        Assert.Equal(participantId, membership.ParticipantId);
+        Assert.Equal(Now, membership.JoinedAt);
     }
 }

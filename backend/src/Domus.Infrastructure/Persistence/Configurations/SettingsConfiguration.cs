@@ -4,23 +4,6 @@ using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
 namespace Domus.Infrastructure.Persistence.Configurations;
 
-public sealed class GcSettingsConfiguration : IEntityTypeConfiguration<GcSettings>
-{
-    public void Configure(EntityTypeBuilder<GcSettings> builder)
-    {
-        builder.ToTable("GcSettings", table =>
-            table.HasCheckConstraint("CK_GcSettings_Singleton", $"\"Id\" = {GcSettings.SingletonId}"));
-
-        builder.HasKey(s => s.Id);
-        builder.Property(s => s.Id).ValueGeneratedNever();
-
-        builder.Property(s => s.GcName).HasMaxLength(80).IsRequired();
-        builder.Property(s => s.InviteCode).HasMaxLength(GcSettings.InviteCodeMaxLength).IsRequired();
-        builder.Property(s => s.NormalizedInviteCode).HasMaxLength(GcSettings.InviteCodeMaxLength).IsRequired();
-        builder.Property(s => s.InviteRotatedAt).IsRequired();
-    }
-}
-
 public sealed class AuditLogEntryConfiguration : IEntityTypeConfiguration<AuditLogEntry>
 {
     public void Configure(EntityTypeBuilder<AuditLogEntry> builder)

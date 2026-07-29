@@ -13,7 +13,7 @@ public sealed record DashboardActionsDto(bool CanStart, bool CanResume, bool Can
 public sealed record MyStatsDto(int SeasonPoints, int? Position, int ParticipantsCount, int Streak, int RoundsPlayed);
 
 public sealed record DashboardDto(
-    string GcName,
+    MyRoomSummaryDto? Room,
     SeasonInfoDto? Season,
     RoundSummaryDto? Round,
     string? LessonTitle,
@@ -39,13 +39,24 @@ public static class DashboardEndpoints
     {
         var meId = currentUser.RequireId();
         var now = queries.Now;
-        var settings = await queries.GetSettingsAsync(ct);
-        var season = await queries.GetActiveSeasonAsync(ct);
+        var room = await queries.GetMyRoomAsync(meId, ct);
+
+        if (room is null)
+        {
+            return Results.Ok(new DashboardDto(
+                null, null, null, null, null, null,
+                new DashboardActionsDto(false, false, false, false),
+                new MyStatsDto(0, null, 0, 0, 0),
+                null, now));
+        }
+
+        var roomSummary = new MyRoomSummaryDto(room.Id, room.Name);
+        var season = await queries.GetActiveSeasonAsync(room.Id, ct);
 
         if (season is null)
         {
             return Results.Ok(new DashboardDto(
-                settings.GcName, null, null, null, null, null,
+                roomSummary, null, null, null, null, null,
                 new DashboardActionsDto(false, false, false, false),
                 new MyStatsDto(0, null, 0, 0, 0),
                 null, now));
@@ -68,7 +79,7 @@ public static class DashboardEndpoints
         if (round is null)
         {
             return Results.Ok(new DashboardDto(
-                settings.GcName, seasonInfo, null, null, null, null,
+                roomSummary, seasonInfo, null, null, null, null,
                 new DashboardActionsDto(false, false, false, false),
                 stats, null, now));
         }
@@ -112,7 +123,7 @@ public static class DashboardEndpoints
             .FirstOrDefaultAsync(ct);
 
         return Results.Ok(new DashboardDto(
-            settings.GcName,
+            roomSummary,
             seasonInfo,
             queries.ToSummary(round),
             lessonVisible ? round.Lesson.Title : null,

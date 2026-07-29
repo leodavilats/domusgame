@@ -9,6 +9,10 @@
 
 ```
              ┌──────────────┐
+             │    Rooms     │───1:N──► RoomMemberships ──N:1──► Participants
+             └──────┬───────┘
+                    │ 1:N
+             ┌──────▼───────┐
              │   Seasons    │
              └──────┬───────┘
                     │ 1:N
@@ -27,7 +31,7 @@
              │ Participants │◄──────►│   AspNetUsers│  (Identity: credenciais)
              └──────────────┘  PK    └──────────────┘
 
-  SeasonPodiumEntries → Seasons        GcSettings (1 linha)     AuditLogs
+  SeasonPodiumEntries → Seasons        AuditLogs
 ```
 
 `Lesson` e `RoundScoringSettings` são **owned types** — colunas dentro de `Rounds`, sem tabela
@@ -37,11 +41,36 @@ extra e sem join.
 
 ## 2. Tabelas
 
+### `Rooms`
+
+| Coluna | Tipo | Nulo | Notas |
+| --- | --- | --- | --- |
+| `Id` | `uuid` | não | PK |
+| `Name` | `varchar(80)` | não | nome do GC exibido no cabeçalho |
+| `InviteCode` | `varchar(20)` | não | como o admin vê (maiúsculas) |
+| `NormalizedInviteCode` | `varchar(20)` | não | **único** — usado na comparação (RN-42) |
+| `InviteRotatedAt` | `timestamptz` | não | |
+| `CreatedAt` | `timestamptz` | não | a sala mais antiga é a "primeira" para o seed |
+
+### `RoomMemberships`
+
+| Coluna | Tipo | Nulo | Notas |
+| --- | --- | --- | --- |
+| `Id` | `uuid` | não | PK |
+| `RoomId` | `uuid` | não | FK → `Rooms` · **cascade** |
+| `ParticipantId` | `uuid` | não | FK → `Participants` · **cascade** |
+| `JoinedAt` | `timestamptz` | não | |
+
+Índices: `UX_RoomMemberships_RoomParticipant` único em `(RoomId, ParticipantId)` — é o que torna
+entrar na sala idempotente (RN-43); `IX_RoomMemberships_ParticipantId` para responder "qual é a
+minha sala?" em uma busca.
+
 ### `Seasons`
 
 | Coluna | Tipo | Nulo | Notas |
 | --- | --- | --- | --- |
 | `Id` | `uuid` | não | PK |
+| `RoomId` | `uuid` | não | FK → `Rooms` · **cascade** |
 | `Name` | `varchar(80)` | não | |
 | `StartsOn` | `date` | não | |
 | `EndsOn` | `date` | não | `> StartsOn` (I-S2) |
@@ -49,8 +78,9 @@ extra e sem join.
 | `FinishedAt` | `timestamptz` | sim | |
 | `CreatedAt` | `timestamptz` | não | |
 
-Índices: `UX_Seasons_SingleActive` — único **parcial** sobre `Status` com filtro `WHERE "Status" = 1`
-→ garante **uma única temporada ativa** (RN-02) no banco, não só na aplicação.
+Índices: `UX_Seasons_SingleActivePerRoom` — único **parcial** sobre `(RoomId, Status)` com filtro
+`WHERE "Status" = 1` → garante **uma única temporada ativa por sala** (RN-02, RN-46) no banco, não
+só na aplicação. Substituiu `UX_Seasons_SingleActive`, que era único no sistema todo.
 
 > Consequência prática: ativar outra temporada exige **duas gravações** (desativa a anterior,
 > depois ativa a nova) dentro da mesma transação — o índice não tolera duas ativas nem por um
@@ -186,16 +216,6 @@ Checks: `CK_Rounds_Window` (`ClosesAt > OpensAt`), `CK_Rounds_Scoring`
 Índices: único `(AttemptId, QuestionId)` → RNF-05; `(AttemptId, QuestionOrder)`;
 `(QuestionId, Outcome)` → estatística de acerto por pergunta.
 
-### `GcSettings`
-
-| Coluna | Tipo | Nulo | Notas |
-| --- | --- | --- | --- |
-| `Id` | `int` | não | PK, sempre `1` (check `Id = 1`) |
-| `GcName` | `varchar(80)` | não | default `'GC Domus'` |
-| `InviteCode` | `varchar(20)` | não | |
-| `NormalizedInviteCode` | `varchar(20)` | não | `UPPER`, usado na comparação |
-| `InviteRotatedAt` | `timestamptz` | não | |
-
 ### `AuditLogs`
 
 | Coluna | Tipo | Nulo |
@@ -287,11 +307,31 @@ ORDER  BY accuracy ASC NULLS LAST;
   no log. Isso permite rodar o projeto imediatamente sem abrir mão de migrations em produção.
 - A migration inicial é gerada com um comando (ver README) e passa a ser o caminho oficial.
 - **Seed idempotente** no start:
-  1. `GcSettings` (linha 1) com código de convite de `Gc__InviteCode` ou gerado aleatoriamente;
-  2. usuário administrador de `Admin__Email` / `Admin__Password` / `Admin__DisplayName`;
+  1. a **primeira sala** (`Rooms`), com nome de `Gc__Name` e código de `Gc__InviteCode` ou gerado
+     aleatoriamente. Se já existir sala, o seed apenas ajusta o nome — nunca cria uma segunda;
+  2. usuário administrador de `Admin__Email` / `Admin__Password` / `Admin__DisplayName`, **filiado**
+     à primeira sala;
   3. em ambiente de desenvolvimento com `Seed__Demo=true`: uma temporada, 3 rodadas
      (encerrada, aberta, agendada), 8 perguntas cada e 6 participantes fictícios com tentativas —
-     o suficiente para ver rankings, gabarito e estatísticas funcionando.
+     todos dentro da sala, o suficiente para ver rankings, gabarito e estatísticas funcionando.
+
+### Migration `AddRooms` (migração de dados, não só de esquema)
+
+O scaffold do EF gerou a ordem errada para um banco com dados: dropava `GcSettings` **antes** de
+criar a sala a partir dele e tornava `Seasons.RoomId` obrigatório sem preencher. A migration foi
+reescrita à mão na ordem que preserva o GC já publicado:
+
+1. cria `Rooms` e `RoomMemberships` com seus índices;
+2. insere **uma** sala a partir da linha de `GcSettings`, preservando nome e código (`DOMUS2026`);
+3. adiciona `Seasons.RoomId` **nulo**, aponta todas as temporadas para essa sala e só então torna a
+   coluna obrigatória e cria a FK — se sobrar nulo, o deploy falha em vez de perder o vínculo;
+4. cria `UX_Seasons_SingleActivePerRoom`;
+5. insere uma filiação para **cada participante existente** — antes o cadastro exigia o convite,
+   logo todo participante já cadastrado é membro do GC;
+6. por último, remove `UX_Seasons_SingleActive` e a tabela `GcSettings`.
+
+Banco vazio (primeiro deploy) passa por todos os passos sem inserir nada e a sala é criada pelo
+seed, já com o `Gc__InviteCode` do ambiente.
 
 **Convenção de nomes:** identificadores em `PascalCase` (padrão do EF Core, sempre entre aspas nas
 consultas). Optamos por **não** adicionar o pacote de snake_case: uma dependência a menos, e o SQL

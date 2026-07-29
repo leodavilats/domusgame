@@ -56,9 +56,10 @@ mensurável.
 
 | Papel | Descrição |
 | --- | --- |
-| **Visitante** | Não autenticado. Só acessa login e cadastro (com código de convite). |
-| **Participante** | Responde rodadas, vê sua pontuação, histórico e rankings. |
-| **Administrador** | Tudo do participante, mais: gerencia temporadas, rodadas, lições, perguntas e vê estatísticas. |
+| **Visitante** | Não autenticado. Só acessa login e cadastro. |
+| **Cadastrado sem sala** | Autenticado, mas fora de qualquer sala. Só vê o convite para entrar em uma sala e o próprio perfil. |
+| **Participante** | Membro de uma sala. Responde rodadas, vê sua pontuação, histórico e rankings **da sua sala**. |
+| **Administrador** | Tudo do participante, mais: gerencia temporadas, rodadas, lições, perguntas e vê estatísticas **da sua sala**. |
 
 Decisão: o administrador **também pode participar**, mas sua pontuação é sinalizada e ele pode
 optar por ficar fora do ranking (ele conhece o gabarito). Ver RN-22.
@@ -194,26 +195,40 @@ optar por ficar fora do ranking (ele conhece o gabarito). Ver RN-22.
 
 ### 5.6 Cadastro e acesso
 
-- **RN-34** — O cadastro exige um **código de convite** válido do GC, fornecido pelo administrador.
-  Sem código não há autocadastro.
-- **RN-35** — O administrador pode gerar um novo código, invalidando o anterior.
+- **RN-34** — O cadastro é **aberto**: qualquer pessoa cria conta com e-mail e senha, ou com o
+  Google. O código de convite não é mais um pré-requisito do cadastro (ver RN-41).
+- **RN-35** — O administrador pode gerar um novo código da sala, invalidando o anterior. Quem já
+  entrou **continua dentro**: o código controla a entrada, não a permanência.
 - **RN-36** — O participante tem um **nome de exibição** obrigatório (é o que aparece no ranking).
   Foto é opcional (informada por URL).
 - **RN-37** — Não coletamos data de nascimento, telefone nem endereço. O único dado pessoal
   obrigatório é nome de exibição + e-mail (identidade da conta).
-- **RN-39** — Senha exige apenas 8 caracteres, sem regra de maiúscula, dígito ou símbolo — é o
-  que a interface promete, e inventar regras não anunciadas gera erro que o usuário não entende.
-- **RN-40** — Não há recuperação de senha por e-mail (sem SMTP na v1). O administrador gera uma
-  senha temporária, exibida **uma única vez**, e a repassa pelo grupo. A senha anterior deixa de
-  valer e eventual bloqueio por tentativas é limpo. A ação é auditada.
-- **RN-39** — Não há recuperação de senha por e-mail (não há serviço de e-mail na v1). O
-  administrador gera uma **senha temporária**, exibida uma única vez, e a repassa pelo grupo.
-  A senha anterior deixa de valer e eventual bloqueio por tentativas é limpo. A ação é auditada.
+- **RN-38** — O participante pode excluir sua conta. Suas tentativas são anonimizadas (o histórico
+  agregado da rodada permanece; o nome é substituído por "Participante removido").
+- **RN-39** — Não há recuperação de senha por e-mail (sem SMTP na v1). Quem perde a senha e havia
+  entrado com o Google usa o Google; nos outros casos o acesso é recriado com outro e-mail. O
+  administrador **não** gera senha para ninguém: senha de terceiro trafegando pelo grupo é pior do
+  que a inconveniência que resolve.
 - **RN-40** — Senha exige apenas **8 caracteres**. Nenhuma outra regra: exigir maiúscula ou
   dígito sem avisar produz erro que o participante não entende, e o público é um grupo de 30
   pessoas, não um alvo de ataque em massa.
-- **RN-38** — O participante pode excluir sua conta. Suas tentativas são anonimizadas (o histórico
-  agregado da rodada permanece; o nome é substituído por "Participante removido").
+
+### 5.7 Salas
+
+- **RN-41** — Conteúdo (temporadas, rodadas, lições, ranking, pessoas) pertence a uma **sala**.
+  Quem está cadastrado mas fora de qualquer sala vê a plataforma vazia e apenas o convite para
+  entrar em uma.
+- **RN-42** — Entrar na sala exige o **código de convite** dela, comparado sem diferenciar
+  maiúsculas de minúsculas. Código errado não revela se a sala existe.
+- **RN-43** — Entrar duas vezes na mesma sala não duplica a filiação (idempotente por
+  `(RoomId, ParticipantId)`, garantido por índice único).
+- **RN-44** — Na v1 o participante pertence a **uma** sala. O modelo (`RoomMemberships`) já suporta
+  várias; a interface e as consultas assumem a primeira filiação por data de entrada.
+- **RN-45** — Toda leitura e escrita de conteúdo é filtrada pela sala de quem pede. Rodada ou
+  temporada de outra sala responde **404**, não 403 — quem não é da sala não deve nem saber que ela
+  existe.
+- **RN-46** — Uma temporada ativa **por sala** (não uma no sistema todo). O índice único que
+  garantia isso passou a ser `(RoomId, Status)`.
 
 ---
 
@@ -223,7 +238,8 @@ optar por ficar fora do ranking (ele conhece o gabarito). Ver RN-22.
 
 | ID | Requisito |
 | --- | --- |
-| RF-01 | Cadastrar-se com código de convite, usando e-mail + senha. |
+| RF-01 | Cadastrar-se com e-mail + senha ou com a conta do Google, sem código de convite (RN-34). |
+| RF-16 | Entrar em uma sala com o código de convite e ver a partir daí o conteúdo do GC (RN-41, RN-42). |
 | RF-02 | Autenticar-se e manter sessão em sessões longas no celular. |
 | RF-03 | Editar perfil: nome de exibição, foto (URL), preferência de aparecer no ranking. |
 | RF-04 | Ver a home com: rodada da semana (estado e contagem regressiva), sua pontuação na temporada, sua posição no ranking e seu streak de participação. |
@@ -252,10 +268,8 @@ optar por ficar fora do ranking (ele conhece o gabarito). Ver RN-22.
 | RF-26 | Pré-visualizar a rodada como o participante a verá. |
 | RF-27 | Publicar a rodada (com validação de RN-08, RN-11, RN-12) e ver o resultado do agendamento. |
 | RF-28 | Duplicar uma rodada anterior como base para a próxima. |
-| RF-29 | Gerenciar o código de convite do GC. |
-| RF-30 | Listar participantes e promover/rebaixar administradores. |
-| RF-33 | Gerar senha temporária para um participante que perdeu o acesso (RN-39). |
-| RF-33 | Gerar senha temporária para um participante que perdeu o acesso, exibida uma única vez. |
+| RF-29 | Gerenciar o código de convite da sala (ver e rotacionar). |
+| RF-30 | Listar os participantes **da sala** e promover/rebaixar administradores. |
 | RF-31 | Dashboard de estatísticas: taxa de participação por rodada, média e distribuição de pontos, perguntas com menor índice de acerto, tempo médio por pergunta, quem ainda não respondeu a rodada aberta, evolução da participação por semana. |
 | RF-32 | Exportar o ranking da temporada em CSV (para a premiação). |
 
@@ -287,8 +301,8 @@ optar por ficar fora do ranking (ele conhece o gabarito). Ver RN-22.
 
 | # | Tema | Decisão | Motivo |
 | --- | --- | --- | --- |
-| 24 | Cadastro | Código de convite do GC, sem fila de aprovação | Barra estranhos com 1 campo, sem trabalho manual recorrente |
-| 25 | Login | **E-mail/senha** (ASP.NET Core Identity) | Sem infraestrutura de e-mail (magic link exigiria SMTP), sem custo, sem lock-in. O login social foi retirado da v1 por decisão do dono do produto |
+| 24 | Cadastro | Cadastro aberto; o código de convite passou a ser a porta da **sala**, não do cadastro | Conta e pertencimento são coisas diferentes: separá-las abre caminho para vários GCs sem mudar o login |
+| 25 | Login | **E-mail/senha** (ASP.NET Core Identity) **+ Google** | Sem infraestrutura de e-mail (magic link exigiria SMTP). O Google entrou depois, a pedido do dono do produto: elimina a senha esquecida, que era o suporte manual mais frequente |
 | 26–27 | Faixa etária / menores | Não coletar data de nascimento; sem ranking por idade | Menos dado pessoal, menos risco LGPD, menos tela |
 | 28 | Identidade pública | Nome de exibição obrigatório, foto opcional, opt-out do ranking | Simples e respeitoso |
 | 29 | Notificações | Nenhuma automática na v1; divulgação pelo grupo de WhatsApp + contagem regressiva na home | Push/e-mail/WhatsApp custam infraestrutura para 30 pessoas que já têm grupo |

@@ -29,7 +29,7 @@ public static class AttemptEndpoints
     {
         var meId = currentUser.RequireId();
         var now = queries.Now;
-        var round = await queries.GetRoundWithQuestionsAsync(roundId, tracking: false, ct);
+        var round = await queries.RequireRoundInMyRoomAsync(roundId, meId, tracking: false, ct);
 
         var existing = await LoadAttemptAsync(db, roundId, meId, ct);
         if (existing is not null)

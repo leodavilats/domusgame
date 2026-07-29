@@ -1,5 +1,6 @@
 using Domus.Domain.Attempts;
 using Domus.Domain.Participants;
+using Domus.Domain.Rooms;
 using Domus.Domain.Rounds;
 using Domus.Domain.Seasons;
 using Domus.Domain.Settings;
@@ -20,7 +21,8 @@ public sealed class DomusDbContext(DbContextOptions<DomusDbContext> options)
     public DbSet<AnswerOption> AnswerOptions => Set<AnswerOption>();
     public DbSet<Attempt> Attempts => Set<Attempt>();
     public DbSet<AttemptAnswer> AttemptAnswers => Set<AttemptAnswer>();
-    public DbSet<GcSettings> GcSettings => Set<GcSettings>();
+    public DbSet<Room> Rooms => Set<Room>();
+    public DbSet<RoomMembership> RoomMemberships => Set<RoomMembership>();
     public DbSet<AuditLogEntry> AuditLogs => Set<AuditLogEntry>();
 
     protected override void OnModelCreating(ModelBuilder builder)

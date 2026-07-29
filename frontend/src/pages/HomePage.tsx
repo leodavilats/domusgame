@@ -23,6 +23,22 @@ export function HomePage() {
 
   const { round, myAttempt, actions, stats } = data
 
+  if (!data.room) {
+    return (
+      <div className="space-y-4">
+        <PageTitle subtitle="Falta um passo para você começar">
+          Olá, {me?.displayName.split(' ')[0]}!
+        </PageTitle>
+
+        <EmptyState
+          title="Você ainda não está em uma sala"
+          description="Os desafios, o ranking e as pessoas ficam dentro da sala do seu GC. Use o código que o líder compartilhou para entrar."
+          action={<Button onClick={() => navigate('/sala')}>Tenho um código</Button>}
+        />
+      </div>
+    )
+  }
+
   return (
     <div className="space-y-4">
       <PageTitle subtitle={data.season ? data.season.name : 'Nenhuma temporada em andamento'}>

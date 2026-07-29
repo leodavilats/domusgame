@@ -1,39 +1,40 @@
 using Domus.Domain.Common;
 
-namespace Domus.Domain.Settings;
+namespace Domus.Domain.Rooms;
 
-public sealed class GcSettings
+public sealed class Room : Entity
 {
-    public const int SingletonId = 1;
     public const int InviteCodeMinLength = 6;
     public const int InviteCodeMaxLength = 20;
+    public const int NameMaxLength = 80;
 
-    private GcSettings()
+    private Room() : base()
     {
-        GcName = string.Empty;
+        Name = string.Empty;
         InviteCode = string.Empty;
         NormalizedInviteCode = string.Empty;
     }
 
-    private GcSettings(string gcName, string inviteCode, DateTimeOffset now)
+    private Room(string name, string inviteCode, DateTimeOffset now)
+        : base(NewId())
     {
-        Id = SingletonId;
-        GcName = Guard.Text(gcName, "Nome do GC", 80);
+        Name = Guard.Text(name, "Nome da sala", NameMaxLength);
         InviteCode = ValidateCode(inviteCode);
         NormalizedInviteCode = Normalize(InviteCode);
+        CreatedAt = now;
         InviteRotatedAt = now;
     }
 
-    public int Id { get; private set; }
-    public string GcName { get; private set; }
+    public string Name { get; private set; }
     public string InviteCode { get; private set; }
     public string NormalizedInviteCode { get; private set; }
     public DateTimeOffset InviteRotatedAt { get; private set; }
+    public DateTimeOffset CreatedAt { get; private set; }
 
-    public static GcSettings Create(string gcName, string inviteCode, DateTimeOffset now) =>
-        new(gcName, inviteCode, now);
+    public static Room Create(string name, string inviteCode, DateTimeOffset now) =>
+        new(name, inviteCode, now);
 
-    public void Rename(string gcName) => GcName = Guard.Text(gcName, "Nome do GC", 80);
+    public void Rename(string name) => Name = Guard.Text(name, "Nome da sala", NameMaxLength);
 
     public void RotateInvite(string inviteCode, DateTimeOffset now)
     {
@@ -62,7 +63,7 @@ public sealed class GcSettings
 
     private static string ValidateCode(string inviteCode)
     {
-        var value = Guard.Text(inviteCode, "Código de convite", InviteCodeMaxLength, InviteCodeMinLength);
+        var value = Guard.Text(inviteCode, "Codigo de convite", InviteCodeMaxLength, InviteCodeMinLength);
 
         Guard.Requires(
             value.All(char.IsLetterOrDigit),

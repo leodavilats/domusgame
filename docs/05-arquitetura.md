@@ -67,7 +67,8 @@ domusgame/
 │  │  │  ├─ Rounds/                 # Round, Lesson, Question, AnswerOption, RoundScoringSettings
 │  │  │  ├─ Attempts/               # Attempt, AttemptAnswer, ScoringPolicy, OptionShuffler
 │  │  │  ├─ Participants/           # Participant, ParticipantRole
-│  │  │  └─ Settings/               # GcSettings, AuditLogEntry
+│  │  │  ├─ Rooms/                  # Room, RoomMembership
+│  │  │  └─ Settings/               # AuditLogEntry
 │  │  ├─ Domus.Infrastructure/
 │  │  │  ├─ Persistence/            # DomusDbContext + Configurations/
 │  │  │  ├─ Migrations/
@@ -77,7 +78,8 @@ domusgame/
 │  │     ├─ Program.cs
 │  │     ├─ Common/                 # ErrorHandling, CurrentUser, Results, Validation
 │  │     ├─ Features/
-│  │     │  ├─ Auth/                # Register, Login, Logout, Me
+│  │     │  ├─ Auth/                # Register, Login, Logout, Me, Google
+│  │     │  ├─ Rooms/               # GetMyRoom, JoinRoom
 │  │     │  ├─ Dashboard/           # GetDashboard
 │  │     │  ├─ Rounds/              # ListRounds, GetRound, GetReview
 │  │     │  ├─ Attempts/            # StartAttempt, GetAttemptState, SubmitAnswer, GetResult
@@ -130,7 +132,10 @@ arquitetura simples (assembly do domínio sem referências proibidas).
 | Tempo | `TimeProvider` (BCL) injetado; domínio recebe `DateTimeOffset now` | Testável sem abstração própria (`FakeTimeProvider`) |
 | Identidade | ASP.NET Core Identity + cookie `httpOnly`, `SameSite=Lax`, 60 dias | Login persistente no celular, sem token exposto a XSS |
 | Papéis | `Participants.Role` → claim no login (sem tabelas de role) | Duas tabelas e um join a menos |
-| Login social | Fora da v1 | Retirado por decisão do dono do produto; o histórico do Git guarda a implementação |
+| Login social | **Google** (`AddGoogle`), opcional por configuração | Elimina a senha esquecida, que era o suporte manual mais frequente. Sem `ClientId`/`ClientSecret` o esquema não é registrado e o botão avisa em vez de estourar |
+| Vínculo do Google | E-mail já cadastrado → `AddLoginAsync` na conta existente | Evita duas contas com o mesmo e-mail, que é o modo clássico de o participante "perder" o histórico |
+| Sala | `Room` + `RoomMembership`, conteúdo pendurado em `Season.RoomId` | Conta e pertencimento separados: dá para ter várias salas sem tocar no cadastro nem no login (RN-41 a RN-46) |
+| Salas por pessoa | Uma na v1; o modelo suporta várias | `RoomMemberships` já é N:N; a interface assume a primeira filiação (RN-44) |
 | Erros | Middleware único → `ProblemDetails` (400/401/403/404/409/500) | Contrato de erro consistente |
 | Serialização | `System.Text.Json`, camelCase, enums como string | Contrato legível no front |
 | Logs | `ILogger` + console estruturado | Suficiente para a escala |
@@ -155,16 +160,20 @@ Todas as rotas sob `/api`. Autenticação por cookie. Erros em `ProblemDetails`.
 
 | Método | Rota | Descrição |
 | --- | --- | --- |
-| `POST` | `/api/auth/register` | `{ inviteCode, displayName, email, password }` |
+| `POST` | `/api/auth/register` | `{ displayName, email, password }` — sem convite (RN-34) |
 | `POST` | `/api/auth/login` | `{ email, password }` |
 | `POST` | `/api/auth/logout` | |
-| `GET` | `/api/auth/me` | sessão atual ou 401 |
+| `GET` | `/api/auth/me` | sessão atual (com a sala, quando houver) ou 401 |
+| `GET` | `/api/auth/google/start` | `?displayName=` → redireciona ao Google (UC-02) |
+| `GET` | `/api/auth/google/callback` | vincula por e-mail ou cria a conta e autentica |
 
 ### Participante
 
 | Método | Rota | Descrição |
 | --- | --- | --- |
-| `GET` | `/api/dashboard` | rodada corrente + estado + pontuação + streak (UC-03) |
+| `GET` | `/api/rooms/mine` | minhas salas (0 ou 1 na v1) |
+| `POST` | `/api/rooms/join` | `{ inviteCode }` — idempotente (UC-14, RN-43) |
+| `GET` | `/api/dashboard` | rodada corrente + estado + pontuação + streak (UC-03). Sem sala: devolve tudo vazio, não erro |
 | `GET` | `/api/rounds` | histórico de rodadas publicadas com meu resultado (UC-11) |
 | `GET` | `/api/rounds/{id}` | lição + metadados + meu resumo (UC-04) |
 | `GET` | `/api/rounds/{id}/review` | gabarito — **403 se aberta** (UC-09, RN-21) |
@@ -196,12 +205,15 @@ Todas as rotas sob `/api`. Autenticação por cookie. Erros em `ProblemDetails`.
 | `POST` | `/rounds/{id}/publish` | publicar (UC-24) |
 | `POST` | `/rounds/{id}/duplicate` | duplicar como rascunho (UC-25) |
 | `GET` | `/rounds/{id}/stats` | estatísticas da rodada (UC-28) |
-| `GET` | `/participants` | listar (UC-27) |
+| `GET` | `/participants` | listar os membros da sala (UC-27) |
 | `PUT` | `/participants/{id}/role` | promover/rebaixar |
-| `POST` | `/participants/{id}/reset-password` | senha temporária, devolvida uma única vez (UC-31) |
-| `POST` | `/participants/{id}/reset-password` | gera senha temporária, devolvida uma única vez (UC-31) |
-| `GET`/`POST` | `/invite` | ver / rotacionar código (UC-26) |
+| `GET`/`POST` | `/invite` | ver / rotacionar o código da sala (UC-26) |
 | `GET` | `/stats/overview` | participação por semana (UC-28) |
+
+Toda rota administrativa resolve primeiro **a sala do admin** e filtra por ela. Id de temporada ou
+rodada de outra sala responde **404** (RN-45) — o único lugar onde essa decisão aparece é
+`DomusQueries.RequireRoundInMyRoomAsync` / `AdminSeasonEndpoints.LoadAsync`, e é de propósito: um
+único ponto para revisar quando surgir a segunda sala.
 
 ### Ferramentas de teste (`/api/admin/tools/*`, exige `DevTools__Enabled=true`)
 

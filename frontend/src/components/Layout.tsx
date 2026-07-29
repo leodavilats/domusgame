@@ -39,7 +39,7 @@ export function Layout() {
                 <p className="text-xs font-medium uppercase tracking-wide text-slate-500">
                   Desafio semanal
                 </p>
-                <p className="text-base font-bold text-slate-900">{me?.gcName ?? 'GC Domus'}</p>
+                <p className="text-base font-bold text-slate-900">{me?.room?.name ?? 'GC Domus'}</p>
               </div>
             </div>
 
