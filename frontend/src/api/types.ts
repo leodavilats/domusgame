@@ -316,3 +316,32 @@ export interface Overview {
   adminCount: number
   weeks: WeekParticipation[]
 }
+
+// ---------------------------------------------------------------- ferramentas de teste
+
+export interface ToolsDiagnostics {
+  /** Falso quando DevTools__Enabled não está ligado: as ações ficam bloqueadas. */
+  enabled: boolean
+  environment: string
+  serverNowUtc: string
+  timeZoneHint: string
+  activeSeasonName?: string | null
+  appliedMigration?: string | null
+  seasons: number
+  rounds: number
+  questions: number
+  participants: number
+  attempts: number
+  answers: number
+}
+
+export interface AuditEntry {
+  occurredAt: string
+  actorName: string
+  action: string
+  details?: string | null
+}
+
+export interface ToolActionResult {
+  message: string
+}

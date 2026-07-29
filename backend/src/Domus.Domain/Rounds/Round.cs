@@ -272,6 +272,21 @@ public sealed class Round : Entity
         return copy;
     }
 
+    /// <summary>
+    /// ESCAPE HATCH DE TESTE. Desloca a janela ignorando RN-10, para que o painel de
+    /// ferramentas possa abrir ou encerrar uma rodada na hora sem esperar o relogio.
+    ///
+    /// Nenhum fluxo de produto chama isto: o unico caminho e o grupo /api/admin/tools, que
+    /// so existe quando DevTools__Enabled esta ligado. O nome e deliberadamente feio para
+    /// que apareca em qualquer revisao e nao seja confundido com UpdateWindow.
+    /// </summary>
+    public void OverrideWindowForTesting(DateTimeOffset opensAt, DateTimeOffset closesAt)
+    {
+        ValidateWindow(opensAt, closesAt);
+        OpensAt = opensAt;
+        ClosesAt = closesAt;
+    }
+
     public Question RequireQuestion(Guid questionId) =>
         _questions.SingleOrDefault(q => q.Id == questionId) ?? throw NotFoundException.For("Pergunta");
 

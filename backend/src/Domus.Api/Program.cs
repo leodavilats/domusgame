@@ -174,6 +174,7 @@ var admin = app.MapGroup("/api/admin").RequireAuthorization(AuthorizationPolicie
 admin.MapAdminSeasonEndpoints();
 admin.MapAdminRoundEndpoints();
 admin.MapAdminManagementEndpoints();
+admin.MapAdminToolsEndpoints();
 
 app.MapGet("/api/health", () => Results.Ok(new { status = "ok" }));
 

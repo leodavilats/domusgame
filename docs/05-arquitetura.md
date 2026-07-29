@@ -203,6 +203,22 @@ Todas as rotas sob `/api`. Autenticação por cookie. Erros em `ProblemDetails`.
 | `GET`/`POST` | `/invite` | ver / rotacionar código (UC-26) |
 | `GET` | `/stats/overview` | participação por semana (UC-28) |
 
+### Ferramentas de teste (`/api/admin/tools/*`, exige `DevTools__Enabled=true`)
+
+| Método | Rota | Descrição |
+| --- | --- | --- |
+| `GET` | `/tools/diagnostics` | estado do ambiente e contagem de registros — liberado mesmo com as ferramentas desligadas |
+| `GET` | `/tools/audit` | últimas 30 ações auditadas — idem |
+| `POST` | `/tools/demo-season` | temporada de teste com rodadas de um dia e variações de pergunta |
+| `POST` | `/tools/rounds/{id}/open-now` · `/close-now` | desloca a janela da rodada |
+| `POST` | `/tools/rounds/{id}/simulate` | `{ count }` participações fictícias |
+| `DELETE` | `/tools/rounds/{id}/my-attempt` | apaga a própria tentativa |
+| `POST` | `/tools/reset` | `{ scope, confirmation }` — `attempts` \| `content` \| `all`, com frase `LIMPAR` |
+
+> `open-now` e `close-now` são o único caminho que chama `Round.OverrideWindowForTesting`, que
+> ignora RN-10 de propósito. O nome é feio para aparecer em qualquer revisão, e o método é
+> inalcançável sem as ferramentas ligadas.
+
 ### Contrato anti-vazamento (RNF-02)
 
 Os DTOs de participante **não possuem** campo `isCorrect` durante a rodada aberta:

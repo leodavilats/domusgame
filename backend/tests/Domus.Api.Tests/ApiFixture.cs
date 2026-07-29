@@ -25,11 +25,28 @@ public sealed class ApiFixture : IAsyncLifetime
 
     public WebApplicationFactory<Program> Factory { get; private set; } = default!;
 
+    /// <summary>
+    /// Segunda instancia da aplicacao, sobre o mesmo banco, com DevTools__Enabled=true.
+    /// Precisamos das duas para provar que o portao funciona nos dois estados.
+    /// </summary>
+    public WebApplicationFactory<Program> ToolsFactory { get; private set; } = default!;
+
     public async Task InitializeAsync()
     {
         await _postgres.StartAsync();
 
-        Factory = new WebApplicationFactory<Program>().WithWebHostBuilder(builder =>
+        Factory = Configure(new WebApplicationFactory<Program>(), toolsEnabled: false);
+
+        ToolsFactory = Configure(new WebApplicationFactory<Program>(), toolsEnabled: true);
+
+        // Forca o start da aplicacao (cria o esquema e roda o seed).
+        using var client = Factory.CreateClient();
+        var health = await client.GetAsync("/api/health");
+        health.EnsureSuccessStatusCode();
+    }
+
+    private WebApplicationFactory<Program> Configure(WebApplicationFactory<Program> factory, bool toolsEnabled) =>
+        factory.WithWebHostBuilder(builder =>
         {
             builder.UseEnvironment("Development");
             builder.UseSetting("ConnectionStrings:Postgres", _postgres.GetConnectionString());
@@ -39,6 +56,7 @@ public sealed class ApiFixture : IAsyncLifetime
             builder.UseSetting("Admin:Email", AdminEmail);
             builder.UseSetting("Admin:Password", AdminPassword);
             builder.UseSetting("Admin:DisplayName", "Administrador");
+            builder.UseSetting("DevTools:Enabled", toolsEnabled ? "true" : "false");
 
             // A suite faz dezenas de logins e cadastros a partir do mesmo IP; o rate limit
             // de producao (12/min) derrubaria os testes sem indicar nenhum defeito real.
@@ -46,20 +64,30 @@ public sealed class ApiFixture : IAsyncLifetime
             builder.UseSetting("RateLimiting:AnswersPermitLimit", "10000");
         });
 
-        // Forca o start da aplicacao (cria o esquema e roda o seed).
-        using var client = Factory.CreateClient();
-        var health = await client.GetAsync("/api/health");
-        health.EnsureSuccessStatusCode();
-    }
-
     public async Task DisposeAsync()
     {
         // A inicializacao pode ter falhado antes de criar a factory; não mascare o erro original.
         if (Factory is not null) await Factory.DisposeAsync();
+        if (ToolsFactory is not null) await ToolsFactory.DisposeAsync();
         await _postgres.DisposeAsync();
     }
 
     public HttpClient CreateClient() => Factory.CreateClient();
+
+    /// <summary>Administrador logado na instancia com as ferramentas de teste ligadas.</summary>
+    public async Task<HttpClient> LoginAsToolsAdminAsync()
+    {
+        var client = ToolsFactory.CreateClient();
+
+        var response = await client.PostAsJsonAsync("/api/auth/login", new
+        {
+            email = AdminEmail,
+            password = AdminPassword
+        });
+
+        response.EnsureSuccessStatusCode();
+        return client;
+    }
 
     public async Task<HttpClient> LoginAsAdminAsync()
     {

@@ -12,6 +12,7 @@ um desenvolvedor. **Simplicidade é requisito**, não preguiça: ver `docs/05-ar
 | Endpoint / DTO | `backend/src/Domus.Api/Features/<Assunto>/` |
 | Leitura compartilhada (ranking, rodada corrente) | `backend/src/Domus.Api/Common/DomusQueries.cs` |
 | Tela | `frontend/src/pages/` (admin em `pages/admin/`) |
+| Ferramenta de teste (limpar banco, simular, abrir rodada) | `backend/src/Domus.Api/Features/Admin/AdminToolsEndpoints.cs` — exige `DevTools__Enabled=true` |
 | Contrato do front | `frontend/src/api/types.ts` (espelha `Common/Contracts.cs`) |
 
 ## Convenções

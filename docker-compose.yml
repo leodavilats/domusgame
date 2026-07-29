@@ -32,6 +32,8 @@ services:
       Admin__Password: 'Domus@2026'
       Admin__DisplayName: 'Administrador'
       Seed__Demo: 'true'
+      # Ferramentas de teste do painel admin. NUNCA deixe true em producao.
+      DevTools__Enabled: 'true'
     ports:
       - '5080:8080'
 

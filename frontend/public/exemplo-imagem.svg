@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Imagem de exemplo usada pela temporada de teste do painel de ferramentas. -->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 360" role="img" aria-label="Imagem de exemplo">
+  <defs>
+    <linearGradient id="ceu" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#0ea5e9"/>
+      <stop offset="100%" stop-color="#e0f2fe"/>
+    </linearGradient>
+  </defs>
+
+  <rect width="640" height="360" fill="url(#ceu)"/>
+  <circle cx="520" cy="80" r="38" fill="#fde047"/>
+  <path d="M0 250 L120 190 L240 250 L360 200 L480 260 L640 210 L640 360 L0 360 Z" fill="#166534"/>
+  <path d="M0 290 L160 250 L320 300 L480 255 L640 295 L640 360 L0 360 Z" fill="#15803d"/>
+
+  <text x="320" y="120" text-anchor="middle" font-family="Arial, Helvetica, sans-serif"
+        font-size="34" font-weight="700" fill="#0f172a">Imagem de exemplo</text>
+  <text x="320" y="156" text-anchor="middle" font-family="Arial, Helvetica, sans-serif"
+        font-size="20" fill="#0f172a">temporada de teste</text>
+</svg>

@@ -61,7 +61,7 @@ Abra **http://localhost:5173**.
 ```bash
 cd backend
 dotnet test tests/Domus.Domain.Tests   # 75 testes de regras puras: pontuação, tempo, invariantes
-dotnet test tests/Domus.Api.Tests      # 20 testes de integração; exige Docker (Testcontainers)
+dotnet test tests/Domus.Api.Tests      # 30 testes de integração; exige Docker (Testcontainers)
 ```
 
 E no front-end:
@@ -133,6 +133,7 @@ Todas as chaves aceitam variáveis de ambiente no formato `Secao__Chave`.
 | `Gc__InviteCode` | gerado | código de convite inicial |
 | `Admin__Email` / `Admin__Password` / `Admin__DisplayName` | — | administrador de bootstrap (ver abaixo) |
 | `Seed__Demo` | `false` | cria dados de demonstração |
+| `DevTools__Enabled` | `false` | libera as ferramentas de teste do painel admin (ver abaixo) |
 | `App__PublicUrl` | `http://localhost:5080` | usado em links compartilhados |
 
 ### Administrador de bootstrap
@@ -159,6 +160,31 @@ Não há recuperação por e-mail (não há serviço de e-mail na v1). Quando al
 administrador abre **Pessoas → Redefinir senha**: o sistema gera uma senha pronunciável
 (ex.: `tamu-4729`), mostra **uma única vez** e limpa qualquer bloqueio por tentativas. A senha
 antiga deixa de valer e a ação fica registrada na auditoria.
+
+### Ferramentas de teste do painel admin
+
+A aba **Ferramentas** do painel reúne atalhos para exercitar o fluxo sem esperar o relógio:
+
+| Ferramenta | O que faz |
+| --- | --- |
+| Diagnóstico | ambiente, hora do servidor, hora do aparelho, migration aplicada e contagem de registros |
+| Temporada de teste | uma temporada com três rodadas de **um dia** (encerrada, aberta, agendada), 5 perguntas fáceis cada, cobrindo sem mídia, com imagem, com áudio, 2 e 5 alternativas |
+| Abrir agora / Encerrar agora | desloca a janela da rodada, para testar quiz e gabarito na hora |
+| Refazer minha tentativa | apaga **só a sua** tentativa, já que ela é única por participante |
+| Simular participações | cria participantes fictícios respondendo a rodada, com desempenhos variados |
+| Limpar dados | três escopos: só participações, + rodadas e temporadas, ou tudo |
+| Auditoria | últimas 30 ações administrativas registradas |
+
+**Ficam desligadas por padrão.** Sem `DevTools__Enabled=true`, as ações respondem 403 — só o
+diagnóstico e a auditoria continuam acessíveis, porque são leitura e explicam o estado do ambiente.
+As ações destrutivas ainda exigem digitar `LIMPAR` no corpo da requisição, e administradores, o
+código de convite e a configuração do GC nunca são apagados.
+
+O `docker-compose.yml` liga as ferramentas para desenvolvimento local. **Deixe desligado em
+produção** — ative só quando for testar e desative em seguida.
+
+A mídia usada pela temporada de teste (`/exemplo-imagem.svg` e `/exemplo-audio.wav`) é servida pelo
+próprio app, para não depender de link externo que pode sair do ar.
 
 ### Conexão com o banco
 

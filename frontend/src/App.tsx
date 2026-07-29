@@ -24,6 +24,7 @@ const AdminRoundsPage = lazy(() => import('./pages/admin/AdminRoundsPage').then(
 const AdminRoundEditorPage = lazy(() => import('./pages/admin/AdminRoundEditorPage').then((m) => ({ default: m.AdminRoundEditorPage })))
 const AdminRoundStatsPage = lazy(() => import('./pages/admin/AdminRoundStatsPage').then((m) => ({ default: m.AdminRoundStatsPage })))
 const AdminParticipantsPage = lazy(() => import('./pages/admin/AdminParticipantsPage').then((m) => ({ default: m.AdminParticipantsPage })))
+const AdminToolsPage = lazy(() => import('./pages/admin/AdminToolsPage').then((m) => ({ default: m.AdminToolsPage })))
 
 function Protected({ children, adminOnly = false }: { children: ReactElement; adminOnly?: boolean }) {
   const { me, loading } = useSession()
@@ -73,6 +74,7 @@ export function App() {
           <Route path="rodadas/:roundId" element={<AdminRoundEditorPage />} />
           <Route path="rodadas/:roundId/estatisticas" element={<AdminRoundStatsPage />} />
           <Route path="participantes" element={<AdminParticipantsPage />} />
+          <Route path="ferramentas" element={<AdminToolsPage />} />
         </Route>
       </Route>
 
