@@ -27,7 +27,7 @@ export function RankingPage() {
 
   return (
     <div className="space-y-4">
-      <PageTitle subtitle="Pontuacao acumulada e resultado das semanas encerradas">Ranking</PageTitle>
+      <PageTitle subtitle="Pontuação acumulada e resultado das semanas encerradas">Ranking</PageTitle>
 
       <div className="flex gap-2">
         <TabButton active={tab === 'season'} onClick={() => setTab('season')}>
@@ -72,7 +72,7 @@ export function RankingPage() {
 
 function RankingList({ ranking }: { ranking: Ranking }) {
   if (ranking.entries.length === 0) {
-    return <EmptyState title="Ainda não ha pontuacao registrada" />
+    return <EmptyState title="Ainda não há pontuação registrada" />
   }
 
   const podium = ranking.entries.slice(0, 3)
@@ -121,7 +121,7 @@ function Row({ entry, highlightPodium = false }: { entry: RankingEntry; highligh
       }`}
     >
       <span className="w-8 text-center text-sm font-bold text-slate-500">
-        {highlightPodium && entry.position <= 3 ? medals[entry.position - 1] : `${entry.position}o`}
+        {highlightPodium && entry.position <= 3 ? medals[entry.position - 1] : `${entry.position}º`}
       </span>
 
       <Avatar name={entry.displayName} url={entry.avatarUrl} size={36} />

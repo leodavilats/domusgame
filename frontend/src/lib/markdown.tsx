@@ -1,8 +1,8 @@
 import type { JSX } from 'react'
 
 /**
- * Renderizador de markdown minimo (titulos, listas, negrito, italico, links e paragrafos).
- * Cobre o que o administrador escreve na licao sem trazer uma dependencia inteira.
+ * Renderizador de markdown mínimo (titulos, listas, negrito, italico, links e paragrafos).
+ * Cobre o que o administrador escreve na lição sem trazer uma dependencia inteira.
  * Não interpreta HTML: o texto e sempre tratado como texto.
  */
 export function Markdown({ content }: { content: string }) {

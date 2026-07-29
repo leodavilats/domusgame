@@ -52,7 +52,7 @@ export function ProfilePage() {
           {save.error ? <ErrorBox message={save.error} /> : null}
           {saved ? <p className="rounded-xl bg-emerald-50 p-3 text-sm text-emerald-800">Perfil atualizado.</p> : null}
 
-          <Field label="Nome de exibição" hint="E o nome que aparece no ranking.">
+          <Field label="Nome de exibição" hint="É o nome que aparece no ranking.">
             <Input
               required
               minLength={2}
@@ -62,7 +62,7 @@ export function ProfilePage() {
             />
           </Field>
 
-          <Field label="Foto (URL)" hint="Opcional. Deve comecar com https://">
+          <Field label="Foto (URL)" hint="Opcional. Deve começar com https://">
             <Input
               type="url"
               value={avatarUrl}
@@ -79,9 +79,9 @@ export function ProfilePage() {
               onChange={(event) => setShowInRanking(event.target.checked)}
             />
             <span className="text-sm text-slate-700">
-              Aparecer no ranking publico
+              Aparecer no ranking público
               <span className="block text-xs text-slate-500">
-                Desmarcado, Você continua pontuando e vendo sua posição, mas não aparece na lista.
+                Desmarcado, você continua pontuando e vendo sua posição, mas não aparece na lista.
               </span>
             </span>
           </label>
@@ -107,8 +107,8 @@ export function ProfilePage() {
       <Card className="border-red-200">
         <h2 className="text-sm font-semibold text-red-700">Excluir minha conta</h2>
         <p className="mt-1 text-xs text-slate-600">
-          Seu nome sai do ranking e seus dados pessoais sao apagados. As pontuacoes das rodadas continuam
-          contabilizadas de forma anonima.
+          Seu nome sai do ranking e seus dados pessoais são apagados. As pontuações das rodadas continuam
+          contabilizadas de forma anônima.
         </p>
 
         {!confirmingDelete ? (

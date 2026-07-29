@@ -29,7 +29,7 @@ export function ResultPage() {
     })
 
     setShareFeedback(
-      result === 'shared' ? null : result === 'copied' ? 'Texto copiado!' : 'Não foi possivel compartilhar.',
+      result === 'shared' ? null : result === 'copied' ? 'Texto copiado!' : 'Não foi possível compartilhar.',
     )
   }
 
@@ -47,22 +47,22 @@ export function ResultPage() {
         <dl className="mt-6 grid grid-cols-3 gap-2 text-center">
           <Metric label="Acertos" value={`${data.correctCount}/${data.questionCount}`} />
           <Metric label="Tempo" value={formatDuration(data.totalTimeMs)} />
-          <Metric label="Posição" value={data.position ? `${data.position}o` : '—'} />
+          <Metric label="Posição" value={data.position ? `${data.position}º` : '—'} />
         </dl>
       </Card>
 
       {!data.answersRevealed && (
         <Card className="bg-amber-50">
           <p className="text-sm text-amber-900">
-            O gabarito e o ranking da semana ficam disponiveis quando a rodada encerrar. Ate la, ninguém ve
-            a pontuacao dos outros.
+            O gabarito e o ranking da semana ficam disponíveis quando a rodada encerrar. Até lá, ninguém ve
+            a pontuação dos outros.
           </p>
         </Card>
       )}
 
       {data.status === 'InProgress' && (
         <Card className="bg-slate-50">
-          <p className="text-sm text-slate-600">Sua tentativa ainda esta em andamento.</p>
+          <p className="text-sm text-slate-600">Sua tentativa ainda está em andamento.</p>
           <Button className="mt-2" onClick={() => navigate(`/rodadas/${data.round.id}/quiz`)}>
             Continuar respondendo
           </Button>
@@ -86,7 +86,7 @@ export function ResultPage() {
         )}
 
         <Button variant="ghost" onClick={() => navigate('/')}>
-          Voltar ao inicio
+          Voltar ao início
         </Button>
       </div>
 

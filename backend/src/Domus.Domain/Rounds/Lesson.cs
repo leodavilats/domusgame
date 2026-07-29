@@ -36,7 +36,7 @@ public sealed class Lesson
     public static Lesson Create(string title, string scriptureReference, string content, string? externalUrl) =>
         new(
             Guard.Text(title, "Titulo da licao", 160),
-            Guard.Text(scriptureReference, "Referência  bíblica", 160),
+            Guard.Text(scriptureReference, "Referência bíblica", 160),
             Guard.Text(content, "Conteúdo da licao", 20_000),
             Guard.OptionalAbsoluteUrl(externalUrl, "Link da licao", 500));
 

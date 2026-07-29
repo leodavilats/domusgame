@@ -43,7 +43,7 @@ export function ReviewPage() {
           Ranking da semana
         </Button>
         <Button variant="ghost" onClick={() => navigate('/')}>
-          Inicio
+          Início
         </Button>
       </div>
     </div>

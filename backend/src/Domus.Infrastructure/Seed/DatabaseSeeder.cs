@@ -210,7 +210,7 @@ public sealed class DatabaseSeeder(
         season.Activate();
         db.Seasons.Add(season);
 
-        var closed = BuildRound(season.Id, 1, "A graça que transforma", "Efesios 2.1-10",
+        var closed = BuildRound(season.Id, 1, "A graça que transforma", "Efésios 2.1-10",
             now.AddDays(-14), now.AddDays(-8), now.AddDays(-15));
         var open = BuildRound(season.Id, 2, "Oracao que persevera", "Lucas 18.1-8",
             now.AddDays(-2), now.AddDays(4), now.AddDays(-3));

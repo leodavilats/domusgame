@@ -93,7 +93,7 @@ internal static class RoundBuilder
                 text = $"Pergunta {i}?",
                 mediaType = "None",
                 mediaUrl = (string?)null,
-                explanation = $"Explicacao {i}",
+                explanation = $"Explicação {i}",
                 options = new[]
                 {
                     new { text = $"Correta {i}", isCorrect = true },

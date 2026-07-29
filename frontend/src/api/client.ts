@@ -38,7 +38,7 @@ async function request<T>(method: string, path: string, body?: unknown): Promise
   const text = await response.text()
 
   if (!response.ok) {
-    let message = 'Não foi possivel completar a operação.'
+    let message = 'Não foi possível completar a operação.'
 
     if (text) {
       try {

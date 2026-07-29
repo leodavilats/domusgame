@@ -55,7 +55,7 @@ export function AdminSeasonsPage() {
           </Field>
 
           <div className="grid grid-cols-2 gap-3">
-            <Field label="Inicio">
+            <Field label="Início">
               <Input type="date" required value={startsOn} onChange={(event) => setStartsOn(event.target.value)} />
             </Field>
             <Field label="Fim">
@@ -94,7 +94,7 @@ export function AdminSeasonsPage() {
             <ol className="mt-3 space-y-1 rounded-xl bg-amber-50 p-3 text-sm text-amber-900">
               {season.podium.map((entry) => (
                 <li key={entry.position}>
-                  {entry.position}o — <strong>{entry.displayName}</strong> ({entry.totalPoints} pts)
+                  {entry.position}º — <strong>{entry.displayName}</strong> ({entry.totalPoints} pts)
                 </li>
               ))}
             </ol>

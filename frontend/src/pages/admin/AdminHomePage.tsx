@@ -38,7 +38,7 @@ export function AdminHomePage() {
       ) : data.weeks.length === 0 ? (
         <EmptyState
           title="Nenhuma rodada publicada nesta temporada"
-          description="Crie o rascunho da primeira semana, cadastre a licao e as perguntas."
+          description="Crie o rascunho da primeira semana, cadastre a lição e as perguntas."
           action={
             <Link
               to="/admin/rodadas"
@@ -50,7 +50,7 @@ export function AdminHomePage() {
         />
       ) : (
         <Card>
-          <h2 className="mb-3 text-sm font-semibold text-slate-700">Participacao por semana</h2>
+          <h2 className="mb-3 text-sm font-semibold text-slate-700">Participação por semana</h2>
 
           <ul className="space-y-3">
             {data.weeks.map((week) => (
@@ -77,7 +77,7 @@ export function AdminHomePage() {
                   />
                 </div>
 
-                <p className="mt-1 text-xs text-slate-500">Media de {week.averagePoints} pontos</p>
+                <p className="mt-1 text-xs text-slate-500">Média de {week.averagePoints} pontos</p>
               </li>
             ))}
           </ul>

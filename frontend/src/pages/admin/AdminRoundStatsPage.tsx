@@ -20,14 +20,14 @@ export function AdminRoundStatsPage() {
       <PageTitle subtitle={`Semana ${data.round.weekNumber}`}>{data.round.title}</PageTitle>
 
       <div className="grid grid-cols-2 gap-2">
-        <Tile label="Participacao" value={formatPercent(data.participationRate)} hint={`${data.attemptCount} de ${data.participantCount}`} />
-        <Tile label="Concluiram" value={data.finishedCount} hint="tentativas finalizadas" />
-        <Tile label="Media" value={data.averagePoints} hint={`mediana ${data.medianPoints}`} />
-        <Tile label="Tempo medio" value={`${data.averageSecondsPerQuestion}s`} hint="por pergunta" />
+        <Tile label="Participação" value={formatPercent(data.participationRate)} hint={`${data.attemptCount} de ${data.participantCount}`} />
+        <Tile label="Concluíram" value={data.finishedCount} hint="tentativas finalizadas" />
+        <Tile label="Média" value={data.averagePoints} hint={`mediana ${data.medianPoints}`} />
+        <Tile label="Tempo médio" value={`${data.averageSecondsPerQuestion}s`} hint="por pergunta" />
       </div>
 
       <Card>
-        <h2 className="mb-3 text-sm font-semibold text-slate-700">Perguntas mais dificeis</h2>
+        <h2 className="mb-3 text-sm font-semibold text-slate-700">Perguntas mais difíceis</h2>
 
         <ul className="space-y-3">
           {[...data.questions]
@@ -51,7 +51,7 @@ export function AdminRoundStatsPage() {
                 </div>
 
                 <p className="mt-1 text-xs text-slate-500">
-                  {question.correct} de {question.answers} respostas · {question.averageSeconds}s em media
+                  {question.correct} de {question.answers} respostas · {question.averageSeconds}s em média
                 </p>
               </li>
             ))}
@@ -75,7 +75,7 @@ export function AdminRoundStatsPage() {
 
         {ranking.loading && <Spinner />}
         {ranking.error && (
-          <EmptyState title="Ranking indisponivel" description="Ele fica visivel quando a rodada encerra." />
+          <EmptyState title="Ranking indisponível" description="Ele fica visível quando a rodada encerra." />
         )}
 
         {ranking.data && (
@@ -83,7 +83,7 @@ export function AdminRoundStatsPage() {
             {ranking.data.entries.map((entry) => (
               <li key={entry.participantId} className="flex justify-between gap-3">
                 <span className="min-w-0 truncate text-slate-700">
-                  {entry.position}o {entry.displayName}
+                  {entry.position}º {entry.displayName}
                 </span>
                 <span className="shrink-0 font-semibold text-slate-900">{entry.totalPoints}</span>
               </li>
@@ -100,7 +100,7 @@ function Tile({ label, value, hint }: { label: string; value: string | number; h
     <div className="rounded-2xl border border-slate-200 bg-white p-3 shadow-sm">
       <p className="text-xs text-slate-500">{label}</p>
       <p className="text-xl font-bold text-slate-900">{value}</p>
-      {hint ? <p className="text-xs text-slate-400">{hint}</p> : null}
+      {hint ? <p className="text-xs text-slate-500">{hint}</p> : null}
     </div>
   )
 }

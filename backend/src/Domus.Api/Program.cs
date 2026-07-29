@@ -125,7 +125,36 @@ app.UseForwardedHeaders();
 
 app.UseMiddleware<ExceptionHandlingMiddleware>();
 app.UseDefaultFiles();
-app.UseStaticFiles();
+
+// O Vite gera nomes com hash de conteudo (index-AbC123.js), entao o arquivo nunca muda:
+// pode ser cacheado para sempre. Sem isto o navegador revalida em toda visita e paga uma
+// ida e volta na rede antes de renderizar. O index.html, ao contrario, precisa ser sempre
+// revalidado - e ele que aponta para os assets novos depois de um deploy.
+var staticFiles = new StaticFileOptions
+{
+    OnPrepareResponse = context =>
+    {
+        var headers = context.Context.Response.GetTypedHeaders();
+        var path = context.Context.Request.Path.Value ?? string.Empty;
+
+        if (path.StartsWith("/assets/", StringComparison.OrdinalIgnoreCase))
+        {
+            headers.CacheControl = new Microsoft.Net.Http.Headers.CacheControlHeaderValue
+            {
+                Public = true,
+                MaxAge = TimeSpan.FromDays(365),
+                Extensions = { new Microsoft.Net.Http.Headers.NameValueHeaderValue("immutable") }
+            };
+        }
+        else
+        {
+            headers.CacheControl =
+                new Microsoft.Net.Http.Headers.CacheControlHeaderValue { NoCache = true, MustRevalidate = true };
+        }
+    }
+};
+
+app.UseStaticFiles(staticFiles);
 app.UseRateLimiter();
 app.UseAuthentication();
 app.UseAuthorization();
@@ -145,7 +174,7 @@ admin.MapAdminManagementEndpoints();
 app.MapGet("/api/health", () => Results.Ok(new { status = "ok" }));
 
 // O SPA cuida das rotas que não sao /api.
-app.MapFallbackToFile("index.html");
+app.MapFallbackToFile("index.html", staticFiles);
 
 // ---------------------------------------------------------------- banco
 

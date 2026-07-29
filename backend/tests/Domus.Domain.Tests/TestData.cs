@@ -46,7 +46,7 @@ internal static class TestData
                 $"Pergunta {i}?",
                 QuestionMediaType.None,
                 null,
-                $"Explicacao {i}",
+                $"Explicação {i}",
                 [
                     new AnswerOptionDraft($"Certa {i}", true),
                     new AnswerOptionDraft($"Errada {i}a", false),

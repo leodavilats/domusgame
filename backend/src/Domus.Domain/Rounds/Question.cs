@@ -57,7 +57,7 @@ public sealed class Question : Entity
         Order = order;
         Text = Guard.Text(text, "Enunciado", 500);
         (MediaType, MediaUrl) = ValidateMedia(mediaType, mediaUrl);
-        Explanation = Guard.OptionalText(explanation, "Explicacao", 1000);
+        Explanation = Guard.OptionalText(explanation, "Explicação", 1000);
     }
 
     public Guid RoundId { get; private set; }
@@ -101,7 +101,7 @@ public sealed class Question : Entity
     {
         Text = Guard.Text(text, "Enunciado", 500);
         (MediaType, MediaUrl) = ValidateMedia(mediaType, mediaUrl);
-        Explanation = Guard.OptionalText(explanation, "Explicacao", 1000);
+        Explanation = Guard.OptionalText(explanation, "Explicação", 1000);
         ReplaceOptions(options);
     }
 

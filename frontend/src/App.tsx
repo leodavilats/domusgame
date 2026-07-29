@@ -1,3 +1,4 @@
+import { Suspense, lazy } from 'react'
 import { Navigate, Route, Routes } from 'react-router-dom'
 import type { ReactElement } from 'react'
 import { Layout } from './components/Layout'
@@ -13,13 +14,16 @@ import { ReviewPage } from './pages/ReviewPage'
 import { RankingPage } from './pages/RankingPage'
 import { HistoryPage } from './pages/HistoryPage'
 import { ProfilePage } from './pages/ProfilePage'
-import { AdminLayout } from './pages/admin/AdminLayout'
-import { AdminHomePage } from './pages/admin/AdminHomePage'
-import { AdminSeasonsPage } from './pages/admin/AdminSeasonsPage'
-import { AdminRoundsPage } from './pages/admin/AdminRoundsPage'
-import { AdminRoundEditorPage } from './pages/admin/AdminRoundEditorPage'
-import { AdminRoundStatsPage } from './pages/admin/AdminRoundStatsPage'
-import { AdminParticipantsPage } from './pages/admin/AdminParticipantsPage'
+
+// A área administrativa é usada por uma pessoa; os outros 30 não precisam baixá-la.
+// O `lazy` a tira do pacote principal e ela só chega quando o admin abre /admin.
+const AdminLayout = lazy(() => import('./pages/admin/AdminLayout').then((m) => ({ default: m.AdminLayout })))
+const AdminHomePage = lazy(() => import('./pages/admin/AdminHomePage').then((m) => ({ default: m.AdminHomePage })))
+const AdminSeasonsPage = lazy(() => import('./pages/admin/AdminSeasonsPage').then((m) => ({ default: m.AdminSeasonsPage })))
+const AdminRoundsPage = lazy(() => import('./pages/admin/AdminRoundsPage').then((m) => ({ default: m.AdminRoundsPage })))
+const AdminRoundEditorPage = lazy(() => import('./pages/admin/AdminRoundEditorPage').then((m) => ({ default: m.AdminRoundEditorPage })))
+const AdminRoundStatsPage = lazy(() => import('./pages/admin/AdminRoundStatsPage').then((m) => ({ default: m.AdminRoundStatsPage })))
+const AdminParticipantsPage = lazy(() => import('./pages/admin/AdminParticipantsPage').then((m) => ({ default: m.AdminParticipantsPage })))
 
 function Protected({ children, adminOnly = false }: { children: ReactElement; adminOnly?: boolean }) {
   const { me, loading } = useSession()
@@ -57,7 +61,9 @@ export function App() {
           path="/admin"
           element={
             <Protected adminOnly>
-              <AdminLayout />
+              <Suspense fallback={<Spinner label="Carregando administração..." />}>
+                <AdminLayout />
+              </Suspense>
             </Protected>
           }
         >

@@ -143,7 +143,7 @@ export function QuizPage() {
     try {
       applyState(await api.post<AttemptState>(`/api/rounds/${roundId}/attempts`))
     } catch (caught) {
-      setError(caught instanceof ApiError ? caught.message : 'Não foi possivel iniciar.')
+      setError(caught instanceof ApiError ? caught.message : 'Não foi possível iniciar.')
       setStage('rules')
     }
   }
@@ -155,26 +155,34 @@ export function QuizPage() {
       <div className="space-y-3">
         <ErrorBox message={error ?? 'Erro inesperado.'} />
         <Button variant="secondary" onClick={() => navigate('/')}>
-          Voltar ao inicio
+          Voltar ao início
         </Button>
       </div>
     )
   }
 
   if (stage === 'rules') {
-    return <RulesCard round={round} onStart={startAttempt} error={error} />
+    return (
+      <RulesCard
+        round={round}
+        onStart={startAttempt}
+        onCancel={() => navigate('/', { replace: true })}
+        error={error}
+      />
+    )
   }
 
   if (!question) return null
 
   const total = question.totalQuestions
   const progress = Math.round(((question.order - 1) / total) * 100)
+  const timeRatio = Math.min(100, (remaining / question.timeLimitSeconds) * 100)
   const urgent = remaining <= 10
 
   return (
     <div className="flex min-h-[80dvh] flex-col gap-4">
-      <div>
-        <div className="mb-2 flex items-center justify-between text-sm">
+      <div className="space-y-2">
+        <div className="flex items-center justify-between text-sm">
           <span className="font-semibold text-slate-700">
             Pergunta {question.order} de {total}
           </span>
@@ -189,10 +197,24 @@ export function QuizPage() {
           </span>
         </div>
 
-        <div className="h-2 overflow-hidden rounded-full bg-slate-200">
+        {/* Progresso no quiz: quantas perguntas já ficaram para trás. Só cresce. */}
+        <div
+          className="h-1.5 overflow-hidden rounded-full bg-slate-200"
+          role="progressbar"
+          aria-label="Progresso no desafio"
+          aria-valuenow={question.order - 1}
+          aria-valuemin={0}
+          aria-valuemax={total}
+        >
+          <div className="h-full rounded-full bg-brand-500 transition-all" style={{ width: `${progress}%` }} />
+        </div>
+
+        {/* Tempo desta pergunta: só diminui. Antes as duas coisas dividiam a mesma barra,
+            e o usuário não sabia o que estava olhando. */}
+        <div className="h-1.5 overflow-hidden rounded-full bg-slate-200">
           <div
-            className={`h-full rounded-full transition-all ${urgent ? 'bg-red-500' : 'bg-brand-500'}`}
-            style={{ width: `${Math.max(progress, (remaining / question.timeLimitSeconds) * 100)}%` }}
+            className={`h-full rounded-full ${urgent ? 'bg-red-500' : 'bg-slate-400'}`}
+            style={{ width: `${timeRatio}%` }}
           />
         </div>
       </div>
@@ -255,10 +277,12 @@ export function QuizPage() {
 function RulesCard({
   round,
   onStart,
+  onCancel,
   error,
 }: {
   round: RoundDetail | null
   onStart: () => void
+  onCancel: () => void
   error: string | null
 }) {
   const summary = round?.round
@@ -277,7 +301,7 @@ function RulesCard({
           </li>
           <li>
             • Cada pergunta tem <strong>{summary?.questionTimeLimitSeconds ?? '-'} segundos</strong>. Responder
-            rapido vale ate <strong>{summary?.maxSpeedBonus ?? 0} pontos extras</strong>.
+            rapido vale até <strong>{summary?.maxSpeedBonus ?? 0} pontos extras</strong>.
           </li>
           <li>• Se o tempo acabar, a pergunta vale zero.</li>
           <li>• Precisa de internet estavel: o tempo e contado no servidor.</li>
@@ -287,9 +311,17 @@ function RulesCard({
 
       {error ? <ErrorBox message={error} /> : null}
 
-      <Button full onClick={onStart}>
-        Estou pronto, comecar
-      </Button>
+      <div className="space-y-2">
+        <Button full onClick={onStart}>
+          Estou pronto, começar
+        </Button>
+
+        {/* A tentativa é única: quem chegou aqui por engano precisa de uma saída
+            que não seja o botão "voltar" do navegador. */}
+        <Button full variant="secondary" onClick={onCancel}>
+          Ainda não — voltar
+        </Button>
+      </div>
     </div>
   )
 }

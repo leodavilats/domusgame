@@ -60,15 +60,15 @@ Abra **http://localhost:5173**.
 
 ```bash
 cd backend
-dotnet test tests/Domus.Domain.Tests   # 72 testes de regras puras: pontuação, tempo, invariantes
-dotnet test tests/Domus.Api.Tests      # 16 testes de integração; exige Docker (Testcontainers)
+dotnet test tests/Domus.Domain.Tests   # 75 testes de regras puras: pontuação, tempo, invariantes
+dotnet test tests/Domus.Api.Tests      # 20 testes de integração; exige Docker (Testcontainers)
 ```
 
 E no front-end:
 
 ```bash
 cd frontend
-npm test        # vitest + jsdom
+npm test        # 4 testes: vitest + jsdom
 ```
 
 Sem o SDK instalado, dá para rodar o back-end em container:
@@ -149,6 +149,16 @@ administrador do lado de fora sem nenhuma pista do motivo. Para trocar a senha, 
 e faça o redeploy.
 
 Uma falha aqui **não derruba a aplicação**: é registrada no log e o serviço continua no ar.
+
+### Senha dos participantes
+
+Regra única: **8 caracteres**. Sem exigência de maiúscula, dígito ou símbolo — a interface promete
+isso e nada mais, e exigir em silêncio produz erro que o usuário não entende.
+
+Não há recuperação por e-mail (não há serviço de e-mail na v1). Quando alguém perde o acesso, o
+administrador abre **Pessoas → Redefinir senha**: o sistema gera uma senha pronunciável
+(ex.: `tamu-4729`), mostra **uma única vez** e limpa qualquer bloqueio por tentativas. A senha
+antiga deixa de valer e a ação fica registrada na auditoria.
 
 ### Conexão com o banco
 

@@ -1,25 +1,39 @@
+import { useEffect } from 'react'
 import { NavLink, Outlet, useLocation } from 'react-router-dom'
 import { useSession } from '../auth/SessionContext'
+import { CalendarIcon, HomeIcon, TrophyIcon, UserIcon } from './Icons'
 import { LogoMark } from './Logo'
 import { Avatar } from './ui'
 
 const items = [
-  { to: '/', label: 'Início', icon: '🏠', end: true },
-  { to: '/ranking', label: 'Ranking', icon: '🏆', end: false },
-  { to: '/historico', label: 'Histórico', icon: '📅', end: false },
-  { to: '/perfil', label: 'Perfil', icon: '👤', end: false },
+  { to: '/', label: 'Início', Icon: HomeIcon, end: true },
+  { to: '/ranking', label: 'Ranking', Icon: TrophyIcon, end: false },
+  { to: '/historico', label: 'Histórico', Icon: CalendarIcon, end: false },
+  { to: '/perfil', label: 'Perfil', Icon: UserIcon, end: false },
 ]
+
+/** Trocar de tela deve começar do topo, e não na altura em que a anterior estava. */
+function useScrollToTopOnNavigate(pathname: string) {
+  useEffect(() => {
+    window.scrollTo({ top: 0, behavior: 'instant' })
+  }, [pathname])
+}
 
 /** Layout mobile-first: cabeçalho enxuto e navegação inferior ao alcance do polegar. */
 export function Layout() {
   const { me } = useSession()
   const location = useLocation()
 
+  useScrollToTopOnNavigate(location.pathname)
+
   // A tela do quiz ocupa a tela inteira: sem navegação para não tirar o foco.
   const immersive = location.pathname.includes('/quiz')
 
+  // O admin usa tabelas e listas largas; no celular a diferença não aparece.
+  const wide = location.pathname.startsWith('/admin')
+
   return (
-    <div className="mx-auto flex min-h-dvh w-full max-w-2xl flex-col bg-slate-100">
+    <div className={`mx-auto flex min-h-dvh w-full flex-col bg-slate-100 ${wide ? 'max-w-5xl' : 'max-w-2xl'}`}>
       {!immersive && (
         <header className="sticky top-0 z-10 border-b border-slate-200 bg-white/95 backdrop-blur">
           <div className="flex items-center justify-between px-4 py-3">
@@ -50,23 +64,25 @@ export function Layout() {
       </main>
 
       {!immersive && (
-        <nav className="fixed bottom-0 left-1/2 z-10 w-full max-w-2xl -translate-x-1/2 border-t border-slate-200 bg-white pb-[env(safe-area-inset-bottom)]">
+        <nav
+          className={`fixed bottom-0 left-1/2 z-10 w-full -translate-x-1/2 border-t border-slate-200 bg-white pb-[env(safe-area-inset-bottom)] ${
+            wide ? 'max-w-5xl' : 'max-w-2xl'
+          }`}
+        >
           <ul className="grid grid-cols-4">
-            {items.map((item) => (
-              <li key={item.to}>
+            {items.map(({ to, label, Icon, end }) => (
+              <li key={to}>
                 <NavLink
-                  to={item.to}
-                  end={item.end}
+                  to={to}
+                  end={end}
                   className={({ isActive }) =>
                     `flex min-h-14 flex-col items-center justify-center gap-0.5 text-xs font-medium ${
                       isActive ? 'text-brand-600' : 'text-slate-500'
                     }`
                   }
                 >
-                  <span aria-hidden="true" className="text-lg">
-                    {item.icon}
-                  </span>
-                  {item.label}
+                  <Icon />
+                  {label}
                 </NavLink>
               </li>
             ))}

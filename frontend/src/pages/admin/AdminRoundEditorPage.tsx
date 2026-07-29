@@ -40,7 +40,7 @@ export function AdminRoundEditorPage() {
   if (!round.data) return null
 
   const data = round.data
-  // RN-10: o servidor decide (rascunho, ou publicada que ainda nao abriu).
+  // RN-10: o servidor decide (rascunho, ou publicada que ainda não abriu).
   const editable = data.canEdit
 
   return (
@@ -56,8 +56,8 @@ export function AdminRoundEditorPage() {
               {formatDateTime(data.round.opensAt)} → {formatDateTime(data.round.closesAt)}
             </p>
             <p className="text-xs text-slate-500">
-              {data.round.pointsPerCorrectAnswer} pts/acerto + ate {data.round.maxSpeedBonus} de bonus ·{' '}
-              {data.round.questionTimeLimitSeconds}s por pergunta · maximo {data.round.maxPoints} pontos
+              {data.round.pointsPerCorrectAnswer} pts/acerto + até {data.round.maxSpeedBonus} de bônus ·{' '}
+              {data.round.questionTimeLimitSeconds}s por pergunta · máximo {data.round.maxPoints} pontos
             </p>
           </div>
 
@@ -75,7 +75,7 @@ export function AdminRoundEditorPage() {
             to={`/admin/rodadas/${data.round.id}/estatisticas`}
             className="mt-3 inline-block text-sm font-semibold text-brand-600"
           >
-            Ver estatisticas
+            Ver estatísticas
           </Link>
         )}
       </Card>
@@ -88,7 +88,7 @@ export function AdminRoundEditorPage() {
   )
 }
 
-// ---------------------------------------------------------------- licao
+// ---------------------------------------------------------------- lição
 
 function LessonEditor({
   round,
@@ -137,21 +137,21 @@ function LessonEditor({
         >
           {save.error ? <ErrorBox message={save.error} /> : null}
 
-          <Field label="Titulo">
+          <Field label="Título">
             <Input required maxLength={160} value={title} onChange={(event) => setTitle(event.target.value)} />
           </Field>
 
-          <Field label="Referência  bíblica">
+          <Field label="Referência bíblica">
             <Input
               required
               maxLength={160}
-              placeholder="Efesios 2.1-10"
+              placeholder="Efésios 2.1-10"
               value={reference}
               onChange={(event) => setReference(event.target.value)}
             />
           </Field>
 
-          <Field label="Conteúdo" hint="Aceita markdown simples: ## titulo, **negrito**, listas e links.">
+          <Field label="Conteúdo" hint="Aceita markdown simples: ## título, **negrito**, listas e links.">
             <Textarea
               required
               rows={8}
@@ -171,10 +171,10 @@ function LessonEditor({
 
           <div className="flex gap-2">
             <Button type="submit" loading={save.loading}>
-              Salvar licao
+              Salvar lição
             </Button>
             <Button type="button" variant="secondary" onClick={() => setPreview((value) => !value)}>
-              {preview ? 'Ocultar previa' : 'Pre-visualizar'}
+              {preview ? 'Ocultar prévia' : 'Pré-visualizar'}
             </Button>
           </div>
 
@@ -259,7 +259,7 @@ function QuestionsEditor({
                 </ul>
 
                 {question.explanation ? (
-                  <p className="mt-2 text-xs text-slate-500">Explicacao: {question.explanation}</p>
+                  <p className="mt-2 text-xs text-slate-500">Explicação: {question.explanation}</p>
                 ) : null}
 
                 {editable && (
@@ -363,7 +363,7 @@ function QuestionForm({
       </Field>
 
       <div className="grid grid-cols-3 gap-3">
-        <Field label="Midia">
+        <Field label="Mídia">
           <Select value={mediaType} onChange={(event) => setMediaType(event.target.value as QuestionMediaType)}>
             <option value="None">Nenhuma</option>
             <option value="Image">Imagem</option>
@@ -427,7 +427,7 @@ function QuestionForm({
         )}
       </fieldset>
 
-      <Field label="Explicacao (aparece no gabarito)">
+      <Field label="Explicação (aparece no gabarito)">
         <Textarea
           rows={2}
           maxLength={1000}
@@ -450,7 +450,7 @@ function QuestionForm({
 
 // ---------------------------------------------------------------- publicacao
 
-/** Exclusao definitiva: so enquanto a rodada nao abriu e nao tem participacoes. */
+/** Exclusao definitiva: so enquanto a rodada não abriu e não tem participações. */
 function DangerCard({ round }: { round: AdminRound }) {
   const navigate = useNavigate()
 
@@ -460,7 +460,7 @@ function DangerCard({ round }: { round: AdminRound }) {
   })
 
   if (!round.canDelete) {
-    // Sem o botao, mas com o motivo: silencio faria o admin procurar o que nao existe.
+    // Sem o botao, mas com o motivo: silencio faria o admin procurar o que não existe.
     if (!round.canEdit) return null
 
     return (
@@ -528,7 +528,7 @@ function PublishCard({ round, onPublished }: { round: AdminRound; onPublished: (
 
       <div className="mt-3 flex flex-wrap gap-2">
         <Button variant="secondary" onClick={() => setPreviewing((value) => !value)}>
-          {previewing ? 'Fechar previa' : 'Pre-visualizar como participante'}
+          {previewing ? 'Fechar prévia' : 'Pré-visualizar como participante'}
         </Button>
 
         <Button
@@ -544,7 +544,7 @@ function PublishCard({ round, onPublished }: { round: AdminRound; onPublished: (
 
       {previewing && (
         <div className="mt-3 space-y-3 rounded-xl border border-slate-200 bg-slate-50 p-3">
-          <p className="text-xs font-semibold uppercase text-slate-500">Previa (sem marcar a correta)</p>
+          <p className="text-xs font-semibold uppercase text-slate-500">Prévia (sem marcar a correta)</p>
           {round.questions.map((question) => (
             <div key={question.id} className="rounded-xl bg-white p-3">
               <p className="text-sm font-medium text-slate-900">

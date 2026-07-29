@@ -8,11 +8,38 @@ interface ApiState<T> {
 }
 
 /**
- * Busca dados de uma rota GET. Substitui uma biblioteca de data-fetching:
- * o app tem poucas telas e nenhuma precisa de cache compartilhado.
+ * Cache em memória por rota, com estratégia *stale-while-revalidate*: ao voltar para uma tela
+ * já visitada, o dado antigo aparece na hora e a atualização acontece por trás.
+ *
+ * Sem isso, trocar de aba mostra um spinner em cada navegação — o que, num celular com
+ * conexão ruim, faz o app parecer travado mesmo estando correto.
+ *
+ * Vive no módulo de propósito: é cache de sessão, não estado persistido. Um reload limpa.
  */
+const cache = new Map<string, unknown>()
+
+/** Invalida rotas cujo caminho contenha o trecho informado (após uma escrita, por exemplo). */
+export function invalidateCache(pathFragment?: string) {
+  if (!pathFragment) {
+    cache.clear()
+    return
+  }
+
+  for (const key of [...cache.keys()]) {
+    if (key.includes(pathFragment)) cache.delete(key)
+  }
+}
+
 export function useApi<T>(path: string | null, deps: unknown[] = []): ApiState<T> & { reload: () => void } {
-  const [state, setState] = useState<ApiState<T>>({ data: null, loading: path !== null, error: null })
+  const cached = path === null ? undefined : (cache.get(path) as T | undefined)
+
+  const [state, setState] = useState<ApiState<T>>({
+    data: cached ?? null,
+    // Com dado em cache não há espera: a tela pinta e revalida em silêncio.
+    loading: path !== null && cached === undefined,
+    error: null,
+  })
+
   const [nonce, setNonce] = useState(0)
   const mounted = useRef(true)
 
@@ -29,22 +56,39 @@ export function useApi<T>(path: string | null, deps: unknown[] = []): ApiState<T
       return
     }
 
-    setState((previous) => ({ ...previous, loading: true, error: null }))
+    const known = cache.get(path) as T | undefined
+
+    setState((previous) => ({
+      data: known ?? previous.data,
+      loading: known === undefined,
+      error: null,
+    }))
 
     api
       .get<T>(path)
       .then((data) => {
+        cache.set(path, data)
         if (mounted.current) setState({ data, loading: false, error: null })
       })
       .catch((error: unknown) => {
         if (!mounted.current) return
+
         const message = error instanceof ApiError ? error.message : 'Erro inesperado.'
-        setState({ data: null, loading: false, error: message })
+
+        // Havendo dado em cache, mantemos a tela útil e não trocamos conteúdo por erro.
+        setState((previous) => ({
+          data: previous.data,
+          loading: false,
+          error: previous.data === null ? message : null,
+        }))
       })
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [path, nonce, ...deps])
 
-  const reload = useCallback(() => setNonce((value) => value + 1), [])
+  const reload = useCallback(() => {
+    if (path !== null) cache.delete(path)
+    setNonce((value) => value + 1)
+  }, [path])
 
   return { ...state, reload }
 }
@@ -56,12 +100,12 @@ export function useMutation<TArgs extends unknown[], TResult>(
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
-  // `action` e recriada a cada render e fecha sobre o estado atual do formulario.
-  // Guardamos sempre a versao mais recente numa ref: assim `run` mantem identidade estavel
-  // (nao invalida memos de quem o recebe) sem nunca executar um closure velho.
+  // `action` é recriada a cada render e fecha sobre o estado atual do formulário.
+  // Guardamos sempre a versão mais recente numa ref: assim `run` mantém identidade estável
+  // (não invalida memos de quem o recebe) sem nunca executar um closure velho.
   //
-  // Um useCallback com lista de dependencias vazia aqui congelaria a primeira renderizacao
-  // e enviaria os valores iniciais dos campos - vazios - em todo formulario do app.
+  // Um useCallback com lista de dependências vazia aqui congelaria a primeira renderização
+  // e enviaria os valores iniciais dos campos - vazios - em todo formulário do app.
   const latestAction = useRef(action)
   latestAction.current = action
 
@@ -70,7 +114,12 @@ export function useMutation<TArgs extends unknown[], TResult>(
     setError(null)
 
     try {
-      return await latestAction.current(...args)
+      const result = await latestAction.current(...args)
+
+      // Uma escrita torna qualquer leitura em cache suspeita.
+      invalidateCache()
+
+      return result
     } catch (caught: unknown) {
       setError(caught instanceof ApiError ? caught.message : 'Erro inesperado.')
       return null

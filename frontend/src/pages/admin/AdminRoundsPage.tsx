@@ -29,7 +29,7 @@ export function AdminRoundsPage() {
   const [maxSpeedBonus, setBonus] = useState(5)
   const [questionTimeLimitSeconds, setTimeLimit] = useState(45)
 
-  // Sugere a proxima semana livre.
+  // Sugere a próxima semana livre.
   useEffect(() => {
     if (!rounds.data || rounds.data.length === 0) return
     setWeekNumber(Math.max(...rounds.data.map((item) => item.round.weekNumber)) + 1)
@@ -66,7 +66,7 @@ export function AdminRoundsPage() {
 
   return (
     <div className="space-y-4">
-      <PageTitle subtitle="Cada semana e uma rodada: licao, perguntas e janela">Rodadas</PageTitle>
+      <PageTitle subtitle="Cada semana é uma rodada: lição, perguntas e janela">Rodadas</PageTitle>
 
       {seasons.loading && <Spinner />}
       {seasons.error && <ErrorBox message={seasons.error} onRetry={seasons.reload} />}
@@ -84,7 +84,7 @@ export function AdminRoundsPage() {
       )}
 
       {seasons.data && seasons.data.length === 0 && (
-        <EmptyState title="Crie uma temporada primeiro" description="Va em Temporadas e crie a primeira." />
+        <EmptyState title="Crie uma temporada primeiro" description="Vá em Temporadas e crie a primeira." />
       )}
 
       {seasonId && (
@@ -111,7 +111,7 @@ export function AdminRoundsPage() {
                 />
               </Field>
               <div className="col-span-2">
-                <Field label="Titulo">
+                <Field label="Título">
                   <Input required maxLength={120} value={title} onChange={(event) => setTitle(event.target.value)} />
                 </Field>
               </div>
@@ -146,7 +146,7 @@ export function AdminRoundsPage() {
                   onChange={(event) => setPoints(Number(event.target.value))}
                 />
               </Field>
-              <Field label="Bonus max.">
+              <Field label="Bônus max.">
                 <Input
                   type="number"
                   min={0}
@@ -189,7 +189,7 @@ export function AdminRoundsPage() {
                 {formatDateTime(item.round.opensAt)} → {formatDateTime(item.round.closesAt)}
               </p>
               <p className="mt-0.5 text-xs text-slate-500">
-                {item.round.questionCount} perguntas · {item.attemptCount} participacoes
+                {item.round.questionCount} perguntas · {item.attemptCount} participações
               </p>
             </div>
 
@@ -205,7 +205,7 @@ export function AdminRoundsPage() {
           <div className="mt-3 flex flex-wrap gap-3 text-sm font-semibold text-brand-600">
             <Link to={`/admin/rodadas/${item.round.id}`}>{item.canEdit ? 'Editar' : 'Ver'}</Link>
             {item.status === 'Published' && (
-              <Link to={`/admin/rodadas/${item.round.id}/estatisticas`}>Estatisticas</Link>
+              <Link to={`/admin/rodadas/${item.round.id}/estatisticas`}>Estatísticas</Link>
             )}
             <button
               type="button"

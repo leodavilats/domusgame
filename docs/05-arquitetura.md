@@ -136,8 +136,13 @@ arquitetura simples (assembly do domínio sem referências proibidas).
 | Logs | `ILogger` + console estruturado | Suficiente para a escala |
 | Rate limit | `AddRateLimiter` nativo em `/auth/*` e `submit-answer` | RNF-07 sem dependência externa |
 | Front-end | React 19 + TypeScript + Vite + Tailwind 4 + React Router | Stack mínima; **sem** biblioteca de estado ou de data-fetching |
-| Estado remoto | hooks próprios (`useApi`, `useMutation`) sobre `fetch` | ~120 linhas resolvem o que TanStack Query resolveria — uma dependência a menos |
+| Estado remoto | hooks próprios (`useApi`, `useMutation`) sobre `fetch`, com cache em memória *stale-while-revalidate* | ~150 linhas resolvem o que TanStack Query resolveria — uma dependência a menos. Sem o cache, cada troca de aba mostrava spinner |
+| Carregamento | Área administrativa em `lazy()`, fora do pacote principal | Uma pessoa usa o admin; as outras 30 não precisam baixá-lo |
+| Cache HTTP | `/assets/*` (nomes com hash) `immutable, max-age=1 ano`; `index.html` sempre revalidado | Sem isso o navegador paga uma ida e volta antes de renderizar, em toda visita |
 | PWA | `manifest.webmanifest` + ícones, **sem service worker** | Instalável; o quiz exige rede de propósito (RNF-03) |
+| Cache de estáticos | `/assets/*` (nomes com hash) → `immutable, max-age=1 ano`; `index.html` → `no-cache` | Segunda visita não paga ida e volta na rede; o HTML sempre aponta para os assets do deploy atual |
+| Code splitting | Área administrativa em chunks próprios (`lazy`) | Quem nunca abre o admin não baixa o admin |
+| Estado remoto | `useApi` com cache *stale-while-revalidate* por rota | Trocar de aba deixa de mostrar spinner; a revalidação acontece por trás |
 | Testes | xUnit puro (`Assert`); Testcontainers na integração | Foco nas regras que doem (RNF-11). Sem biblioteca de asserção: FluentAssertions 8 mudou para licença comercial e o ganho de legibilidade não paga a dependência |
 
 ---
@@ -193,6 +198,8 @@ Todas as rotas sob `/api`. Autenticação por cookie. Erros em `ProblemDetails`.
 | `GET` | `/rounds/{id}/stats` | estatísticas da rodada (UC-28) |
 | `GET` | `/participants` | listar (UC-27) |
 | `PUT` | `/participants/{id}/role` | promover/rebaixar |
+| `POST` | `/participants/{id}/reset-password` | senha temporária, devolvida uma única vez (UC-31) |
+| `POST` | `/participants/{id}/reset-password` | gera senha temporária, devolvida uma única vez (UC-31) |
 | `GET`/`POST` | `/invite` | ver / rotacionar código (UC-26) |
 | `GET` | `/stats/overview` | participação por semana (UC-28) |
 

@@ -32,8 +32,8 @@ export function HomePage() {
 
       <div className="grid grid-cols-3 gap-2">
         <StatTile label="Pontos" value={stats.seasonPoints} />
-        <StatTile label="Posição" value={stats.position ? `${stats.position}o` : '-'} />
-        <StatTile label="Sequência" value={`${stats.streak}🔥`} />
+        <StatTile label="Posição" value={stats.position ? `${stats.position}º` : '-'} />
+        <StatTile label="Sequência" value={stats.streak} />
       </div>
 
       {!data.season ? (
@@ -42,7 +42,7 @@ export function HomePage() {
           description="Assim que o lider abrir uma nova temporada, o desafio aparece aqui."
         />
       ) : !round ? (
-        <EmptyState title="A proxima rodada esta sendo preparada" description="Volte em breve." />
+        <EmptyState title="A próxima rodada está sendo preparada" description="Volte em breve." />
       ) : (
         <Card>
           <div className="flex items-start justify-between gap-3">
@@ -79,7 +79,7 @@ export function HomePage() {
 
             <p className="text-sm text-slate-500">
               {pluralize(round.questionCount, 'pergunta', 'perguntas')} · {round.questionTimeLimitSeconds}s por
-              pergunta · ate {round.maxPoints} pontos
+              pergunta · até {round.maxPoints} pontos
             </p>
 
             {myAttempt?.status === 'Completed' && myAttempt.totalPoints != null && (
@@ -87,7 +87,7 @@ export function HomePage() {
                 Você fez <strong>{myAttempt.totalPoints} pontos</strong>
                 {myAttempt.correctCount != null && ` (${myAttempt.correctCount}/${myAttempt.questionCount} acertos)`}
                 {round.availability === 'Open' && '. O ranking sai quando a rodada encerrar.'}
-                {myAttempt.position ? ` · ${myAttempt.position}o lugar na semana` : ''}
+                {myAttempt.position ? ` · ${myAttempt.position}º lugar na semana` : ''}
               </div>
             )}
 
@@ -118,7 +118,7 @@ export function HomePage() {
                   to={`/rodadas/${round.id}/licao`}
                   className="inline-flex min-h-11 items-center px-2 text-sm font-semibold text-brand-600"
                 >
-                  Ler a licao
+                  Ler a lição
                 </Link>
               )}
             </div>
@@ -129,7 +129,7 @@ export function HomePage() {
       {data.nextRoundOpensAt && round?.availability !== 'Scheduled' && (
         <Card className="bg-slate-50">
           <p className="text-sm text-slate-600">
-            Proxima rodada abre {formatWeekday(data.nextRoundOpensAt)} (
+            Próxima rodada abre {formatWeekday(data.nextRoundOpensAt)} (
             {formatCountdown(data.nextRoundOpensAt, now)}).
           </p>
         </Card>

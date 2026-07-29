@@ -15,7 +15,7 @@ export function HistoryPage() {
 
   return (
     <div className="space-y-4">
-      <PageTitle subtitle="Todas as rodadas publicadas da temporada">Historico</PageTitle>
+      <PageTitle subtitle="Todas as rodadas publicadas da temporada">Histórico</PageTitle>
 
       {items.length === 0 && <EmptyState title="Nenhuma rodada publicada ainda" />}
 

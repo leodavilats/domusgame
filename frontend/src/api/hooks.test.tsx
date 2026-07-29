@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { afterEach, describe, expect, it } from 'vitest'
-import { useMutation } from './hooks'
+import { invalidateCache, useApi, useMutation } from './hooks'
 
 // Sem `globals: true`, o cleanup automatico do Testing Library nao e registrado.
 afterEach(cleanup)
@@ -85,5 +85,47 @@ describe('useMutation', () => {
     fireEvent.click(screen.getByText('enviar'))
 
     await waitFor(() => expect(screen.getByText('Erro inesperado.')).toBeTruthy())
+  })
+})
+
+/**
+ * O cache existe para que voltar a uma tela ja visitada nao mostre spinner de novo.
+ * Sem ele, cada troca de aba parecia travamento em conexao ruim.
+ */
+describe('useApi', () => {
+  const originalFetch = globalThis.fetch
+
+  afterEach(() => {
+    globalThis.fetch = originalFetch
+    invalidateCache()
+  })
+
+  function Tela() {
+    const { data, loading } = useApi<{ valor: string }>('/api/teste')
+    return <span>{loading ? 'carregando' : (data?.valor ?? 'vazio')}</span>
+  }
+
+  it('na segunda visita mostra o dado em cache sem passar por carregando', async () => {
+    let chamadas = 0
+
+    globalThis.fetch = (async () => {
+      chamadas++
+      return new Response(JSON.stringify({ valor: 'do servidor' }), {
+        status: 200,
+        headers: { 'Content-Type': 'application/json' },
+      })
+    }) as typeof fetch
+
+    const primeira = render(<Tela />)
+    expect(screen.getByText('carregando')).toBeTruthy()
+    await waitFor(() => expect(screen.getByText('do servidor')).toBeTruthy())
+    primeira.unmount()
+
+    // Segunda montagem: o valor precisa aparecer de imediato, sem estado de carregando.
+    render(<Tela />)
+    expect(screen.getByText('do servidor')).toBeTruthy()
+
+    // E ainda assim revalida por trás.
+    await waitFor(() => expect(chamadas).toBe(2))
   })
 })
