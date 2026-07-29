@@ -246,7 +246,7 @@ export interface AdminRound {
   questions: AdminQuestion[]
   problems: string[]
   attemptCount: number
-  /** RN-10: rascunho, ou publicada que ainda nao abriu. */
+  /** RN-10: rascunho, ou publicada que ainda não abriu. */
   canEdit: boolean
   canDelete: boolean
 }
@@ -262,6 +262,12 @@ export interface AdminParticipant {
   seasonPoints: number
   roundsPlayed: number
   lastAttemptAt?: string | null
+}
+
+/** Devolvida uma única vez pelo endpoint de redefinição: não fica armazenada em texto claro. */
+export interface ResetPasswordResult {
+  displayName: string
+  temporaryPassword: string
 }
 
 export interface Invite {

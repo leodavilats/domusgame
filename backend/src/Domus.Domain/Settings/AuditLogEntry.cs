@@ -13,6 +13,7 @@ public sealed class AuditLogEntry : Entity
         public const string SeasonFinished = "SeasonFinished";
         public const string InviteRotated = "InviteRotated";
         public const string RoleChanged = "RoleChanged";
+        public const string PasswordReset = "PasswordReset";
         public const string AccountDeleted = "AccountDeleted";
     }
 

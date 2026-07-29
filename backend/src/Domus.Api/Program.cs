@@ -37,9 +37,13 @@ builder.Services
     .AddIdentityCore<AppUser>(options =>
     {
         options.User.RequireUniqueEmail = true;
+        // A interface promete "minimo de 8 caracteres" e nada mais. Exigir maiuscula, digito
+        // ou simbolo sem dizer produz erro que o usuario nao entende - e o publico aqui e um
+        // grupo de 30 pessoas, nao um alvo de ataque em massa.
         options.Password.RequiredLength = 8;
         options.Password.RequireNonAlphanumeric = false;
         options.Password.RequireUppercase = false;
+        options.Password.RequireLowercase = false;
         options.Password.RequireDigit = false;
         options.SignIn.RequireConfirmedAccount = false;
         options.Lockout.MaxFailedAccessAttempts = 10;

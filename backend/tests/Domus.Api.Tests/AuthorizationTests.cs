@@ -238,4 +238,55 @@ public class AuthorizationTests(ApiFixture fixture)
         var delete = await admin.DeleteAsync($"/api/admin/rounds/{round.RoundId}");
         Assert.Equal(HttpStatusCode.Conflict, delete.StatusCode);
     }
+
+    /// <summary>
+    /// Sem servico de e-mail, a redefinicao pelo admin e o unico caminho de recuperacao.
+    /// </summary>
+    [Fact]
+    public async Task Admin_redefine_senha_e_a_antiga_deixa_de_valer()
+    {
+        var admin = await fixture.LoginAsAdminAsync();
+        await fixture.RegisterParticipantAsync("Esqueci Senha", "esqueci@teste.local");
+
+        var participants = await (await admin.GetAsync("/api/admin/participants")).ReadJsonAsync();
+
+        var id = participants.EnumerateArray()
+            .First(p => p.GetProperty("displayName").GetString() == "Esqueci Senha")
+            .GetProperty("id").GetGuid();
+
+        var reset = await (await admin.PostAsync($"/api/admin/participants/{id}/reset-password", null)).ReadJsonAsync();
+        var temporary = reset.GetProperty("temporaryPassword").GetString();
+
+        Assert.Equal("Esqueci Senha", reset.GetProperty("displayName").GetString());
+        Assert.False(string.IsNullOrWhiteSpace(temporary));
+
+        var comNova = await fixture.CreateClient().PostAsJsonAsync("/api/auth/login", new
+        {
+            email = "esqueci@teste.local",
+            password = temporary
+        });
+
+        var comAntiga = await fixture.CreateClient().PostAsJsonAsync("/api/auth/login", new
+        {
+            email = "esqueci@teste.local",
+            password = "Teste@12345"
+        });
+
+        Assert.Equal(HttpStatusCode.OK, comNova.StatusCode);
+        Assert.Equal(HttpStatusCode.BadRequest, comAntiga.StatusCode);
+    }
+
+    [Fact]
+    public async Task Participante_nao_redefine_senha_de_ninguem()
+    {
+        var admin = await fixture.LoginAsAdminAsync();
+        var participant = await fixture.RegisterParticipantAsync("Sem Poder Senha", "sempodersenha@teste.local");
+
+        var participants = await (await admin.GetAsync("/api/admin/participants")).ReadJsonAsync();
+        var alvo = participants.EnumerateArray().First().GetProperty("id").GetGuid();
+
+        var response = await participant.PostAsync($"/api/admin/participants/{alvo}/reset-password", null);
+
+        Assert.Equal(HttpStatusCode.Forbidden, response.StatusCode);
+    }
 }

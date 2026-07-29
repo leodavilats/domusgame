@@ -32,6 +32,8 @@
 | UC-28 | Consultar estatísticas | Administrador |
 | UC-29 | Encerrar temporada e registrar pódio | Administrador |
 | UC-30 | Exportar ranking em CSV | Administrador |
+| UC-31 | Gerar senha temporária para um participante | Administrador |
+| UC-31 | Gerar senha temporária para um participante | Administrador |
 
 ---
 
@@ -305,6 +307,43 @@ rodada em rascunho ou agendada **não** é exibida (RN-09).
 
 1. Admin solicita a exportação do ranking da temporada.
 2. Sistema gera CSV: posição, nome, pontos, tempo total, rodadas respondidas.
+
+---
+
+## UC-31 — Gerar senha temporária para um participante
+
+**Ator:** Administrador · **Motivação:** não há recuperação por e-mail na v1 (RN-40)
+
+**Fluxo principal**
+1. Admin abre **Pessoas** e escolhe *Redefinir senha* na linha do participante.
+2. Sistema pede confirmação, avisando que a senha atual deixará de valer.
+3. Sistema gera uma senha pronunciável (ex.: `tamu-4729`), aplica na conta, limpa bloqueio por
+   tentativas e registra a ação na auditoria.
+4. Sistema exibe a senha **uma única vez**; o admin a repassa pelo grupo.
+
+**Exceções**
+- **E1** Conta removida → 409, não é possível redefinir.
+- **E2** Participante tentando usar a rota → 403.
+
+---
+
+## UC-31 — Gerar senha temporária para um participante
+
+**Ator:** Administrador · **Motivação:** sem serviço de e-mail, não existe "esqueci minha senha"
+
+1. Admin abre **Pessoas** e escolhe *Redefinir senha* no participante.
+2. Sistema confirma a ação (a senha atual deixa de valer).
+3. Sistema gera uma senha pronunciável (ex.: `tamu-4729`), grava o hash, limpa bloqueio por
+   tentativas e registra na auditoria.
+4. A senha é exibida **uma única vez**, com botão de compartilhar.
+5. O participante entra com ela e pode seguir usando ou trocá-la depois.
+
+**Exceções**
+- **E1** Conta removida → 409.
+- **E2** Participante tentando usar a rota → 403.
+
+> A senha não é armazenada em texto claro em lugar nenhum: se o admin fechar a tela sem
+> anotar, o caminho é gerar outra.
 
 ---
 

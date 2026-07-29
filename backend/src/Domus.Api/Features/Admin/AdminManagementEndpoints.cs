@@ -5,7 +5,9 @@ using Domus.Domain.Common;
 using Domus.Domain.Participants;
 using Domus.Domain.Rounds;
 using Domus.Domain.Settings;
+using Domus.Infrastructure.Identity;
 using Domus.Infrastructure.Persistence;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 
 namespace Domus.Api.Features.Admin;
@@ -23,6 +25,9 @@ public sealed record AdminParticipantDto(
     DateTimeOffset? LastAttemptAt);
 
 public sealed record ChangeRoleRequest(ParticipantRole Role);
+
+/// <summary>A senha temporaria e devolvida uma unica vez, para o admin repassar.</summary>
+public sealed record ResetPasswordResult(string DisplayName, string TemporaryPassword);
 
 public sealed record InviteDto(string GcName, string InviteCode, DateTimeOffset RotatedAt, int MemberCount);
 
@@ -70,6 +75,7 @@ public static class AdminManagementEndpoints
     {
         admin.MapGet("/participants", ListParticipantsAsync);
         admin.MapPut("/participants/{id:guid}/role", ChangeRoleAsync);
+        admin.MapPost("/participants/{id:guid}/reset-password", ResetPasswordAsync);
 
         admin.MapGet("/invite", GetInviteAsync);
         admin.MapPost("/invite", RotateInviteAsync);
@@ -145,6 +151,73 @@ public static class AdminManagementEndpoints
 
         await db.SaveChangesAsync(ct);
         return Results.NoContent();
+    }
+
+    /// <summary>
+    /// Sem servico de e-mail, "esqueci minha senha" nao existe. O admin gera uma senha
+    /// temporaria e repassa pelo grupo. Ela e mostrada uma unica vez: nao fica guardada em
+    /// lugar nenhum em texto claro.
+    /// </summary>
+    private static async Task<IResult> ResetPasswordAsync(
+        Guid id,
+        CurrentUser currentUser,
+        DomusDbContext db,
+        UserManager<AppUser> userManager,
+        TimeProvider clock,
+        CancellationToken ct)
+    {
+        var participant = await db.Participants.AsNoTracking().SingleOrDefaultAsync(p => p.Id == id, ct)
+            ?? throw NotFoundException.For("Participante");
+
+        Guard.State(!participant.IsRemoved, "Conta removida nao pode ter a senha redefinida.");
+
+        var user = await userManager.FindByIdAsync(id.ToString())
+            ?? throw NotFoundException.For("Credenciais do participante");
+
+        var temporary = GenerateTemporaryPassword();
+
+        var token = await userManager.GeneratePasswordResetTokenAsync(user);
+        var result = await userManager.ResetPasswordAsync(user, token, temporary);
+
+        if (!result.Succeeded)
+        {
+            throw new DomainRuleException(
+                $"Nao foi possivel redefinir a senha: {string.Join("; ", result.Errors.Select(e => e.Description))}");
+        }
+
+        // Uma conta bloqueada por tentativas erradas continuaria bloqueada com a senha nova.
+        await userManager.ResetAccessFailedCountAsync(user);
+        await userManager.SetLockoutEndDateAsync(user, null);
+
+        db.AuditLogs.Add(AuditLogEntry.Record(
+            currentUser.Id, currentUser.DisplayName, AuditLogEntry.Actions.PasswordReset,
+            participant.DisplayName, clock.GetUtcNow()));
+
+        await db.SaveChangesAsync(ct);
+
+        return Results.Ok(new ResetPasswordResult(participant.DisplayName, temporary));
+    }
+
+    /// <summary>
+    /// Precisa ser ditada por telefone ou lida num grupo de WhatsApp: silabas pronunciaveis
+    /// mais quatro digitos, sem caracteres ambiguos. Ex.: "tamu-4729".
+    /// </summary>
+    private static string GenerateTemporaryPassword()
+    {
+        const string consonants = "bcdfgjklmnprstvz";
+        const string vowels = "aeiou";
+
+        var letters = new char[4];
+        for (var i = 0; i < 4; i++)
+        {
+            letters[i] = i % 2 == 0
+                ? consonants[Random.Shared.Next(consonants.Length)]
+                : vowels[Random.Shared.Next(vowels.Length)];
+        }
+
+        var digits = Random.Shared.Next(1000, 10000);
+
+        return $"{new string(letters)}-{digits}";
     }
 
     private static async Task<IResult> GetInviteAsync(DomusDbContext db, DomusQueries queries, CancellationToken ct)

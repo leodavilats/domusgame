@@ -201,6 +201,17 @@ optar por ficar fora do ranking (ele conhece o gabarito). Ver RN-22.
   Foto é opcional (informada por URL).
 - **RN-37** — Não coletamos data de nascimento, telefone nem endereço. O único dado pessoal
   obrigatório é nome de exibição + e-mail (identidade da conta).
+- **RN-39** — Senha exige apenas 8 caracteres, sem regra de maiúscula, dígito ou símbolo — é o
+  que a interface promete, e inventar regras não anunciadas gera erro que o usuário não entende.
+- **RN-40** — Não há recuperação de senha por e-mail (sem SMTP na v1). O administrador gera uma
+  senha temporária, exibida **uma única vez**, e a repassa pelo grupo. A senha anterior deixa de
+  valer e eventual bloqueio por tentativas é limpo. A ação é auditada.
+- **RN-39** — Não há recuperação de senha por e-mail (não há serviço de e-mail na v1). O
+  administrador gera uma **senha temporária**, exibida uma única vez, e a repassa pelo grupo.
+  A senha anterior deixa de valer e eventual bloqueio por tentativas é limpo. A ação é auditada.
+- **RN-40** — Senha exige apenas **8 caracteres**. Nenhuma outra regra: exigir maiúscula ou
+  dígito sem avisar produz erro que o participante não entende, e o público é um grupo de 30
+  pessoas, não um alvo de ataque em massa.
 - **RN-38** — O participante pode excluir sua conta. Suas tentativas são anonimizadas (o histórico
   agregado da rodada permanece; o nome é substituído por "Participante removido").
 
@@ -243,6 +254,8 @@ optar por ficar fora do ranking (ele conhece o gabarito). Ver RN-22.
 | RF-28 | Duplicar uma rodada anterior como base para a próxima. |
 | RF-29 | Gerenciar o código de convite do GC. |
 | RF-30 | Listar participantes e promover/rebaixar administradores. |
+| RF-33 | Gerar senha temporária para um participante que perdeu o acesso (RN-39). |
+| RF-33 | Gerar senha temporária para um participante que perdeu o acesso, exibida uma única vez. |
 | RF-31 | Dashboard de estatísticas: taxa de participação por rodada, média e distribuição de pontos, perguntas com menor índice de acerto, tempo médio por pergunta, quem ainda não respondeu a rodada aberta, evolução da participação por semana. |
 | RF-32 | Exportar o ranking da temporada em CSV (para a premiação). |
 
