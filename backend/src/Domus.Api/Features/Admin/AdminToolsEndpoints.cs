@@ -53,6 +53,7 @@ public static class AdminToolsEndpoints
         group.MapPost("/rounds/{id:guid}/close-now", CloseNowAsync);
         group.MapPost("/rounds/{id:guid}/simulate", SimulateAsync);
         group.MapDelete("/rounds/{id:guid}/my-attempt", DeleteMyAttemptAsync);
+        group.MapDelete("/my-room", LeaveRoomAsync);
         group.MapPost("/reset", ResetAsync);
     }
 
@@ -292,6 +293,44 @@ public static class AdminToolsEndpoints
         return Results.Ok(new ToolActionResultDto(removed == 0
             ? "Você não tinha tentativa nesta rodada."
             : "Sua tentativa foi apagada. Você pode responder de novo."));
+    }
+
+    private static async Task<IResult> LeaveRoomAsync(
+        IConfiguration configuration,
+        CurrentUser currentUser,
+        DomusDbContext db,
+        DomusQueries queries,
+        TimeProvider clock,
+        CancellationToken ct)
+    {
+        EnsureEnabled(configuration);
+
+        var meId = currentUser.RequireAdminId();
+        var room = await queries.GetMyRoomAsync(meId, ct);
+
+        if (room is null)
+        {
+            return Results.Ok(new ToolActionResultDto(
+                "Você já está fora de qualquer sala. Entre em /sala com o código para voltar."));
+        }
+
+        var removed = await db.RoomMemberships
+            .Where(m => m.RoomId == room.Id && m.ParticipantId == meId)
+            .ExecuteDeleteAsync(ct);
+
+        if (removed == 0)
+        {
+            return Results.Ok(new ToolActionResultDto("Nenhuma filiação sua foi encontrada nesta sala."));
+        }
+
+        db.AuditLogs.Add(AuditLogEntry.Record(
+            currentUser.Id, currentUser.DisplayName, "ToolsLeaveRoom", room.Name, clock.GetUtcNow()));
+
+        await db.SaveChangesAsync(ct);
+
+        return Results.Ok(new ToolActionResultDto(
+            $"Você saiu da sala {room.Name}. O conteúdo continua lá. " +
+            $"Para voltar, entre em /sala com o código {room.InviteCode}."));
     }
 
     private static async Task<IResult> SimulateAsync(

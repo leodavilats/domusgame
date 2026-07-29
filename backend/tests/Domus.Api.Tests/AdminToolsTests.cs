@@ -154,6 +154,61 @@ public class AdminToolsTests(ApiFixture fixture)
     }
 
     [Fact]
+    public async Task Sair_da_sala_tira_so_a_minha_filiacao_e_da_para_voltar()
+    {
+        var admin = await fixture.LoginAsAdminAsync();
+
+        const string email = "saidasala@teste.local";
+        await fixture.RegisterParticipantAsync("Sai Da Sala", email);
+
+        var participants = await (await admin.GetAsync("/api/admin/participants")).ReadJsonAsync();
+
+        var id = participants.EnumerateArray()
+            .First(p => p.GetProperty("displayName").GetString() == "Sai Da Sala")
+            .GetProperty("id").GetGuid();
+
+        (await admin.PutAsJsonAsync($"/api/admin/participants/{id}/role", new { role = "Admin" }))
+            .EnsureSuccessStatusCode();
+
+        var eu = await fixture.LoginOnToolsAsync(email, "Teste@12345");
+
+        var antes = await (await eu.GetAsync("/api/auth/me")).ReadJsonAsync();
+        Assert.True(antes.TryGetProperty("room", out _));
+
+        (await eu.DeleteAsync("/api/admin/tools/my-room")).EnsureSuccessStatusCode();
+
+        var depois = await (await eu.GetAsync("/api/auth/me")).ReadJsonAsync();
+        var ranking = await eu.GetAsync("/api/rankings/season");
+
+        Assert.False(depois.TryGetProperty("room", out _));
+        Assert.Equal(HttpStatusCode.Forbidden, ranking.StatusCode);
+
+        var outros = await (await admin.GetAsync("/api/admin/participants")).ReadJsonAsync();
+        Assert.DoesNotContain(
+            "Sai Da Sala",
+            outros.EnumerateArray().Select(p => p.GetProperty("displayName").GetString()));
+
+        (await eu.PostAsJsonAsync("/api/rooms/join", new { inviteCode = ApiFixture.InviteCode }))
+            .EnsureSuccessStatusCode();
+
+        var devolta = await (await eu.GetAsync("/api/auth/me")).ReadJsonAsync();
+        Assert.True(devolta.TryGetProperty("room", out _));
+    }
+
+    [Fact]
+    public async Task Sair_da_sala_exige_as_ferramentas_ligadas()
+    {
+        var admin = await fixture.LoginAsAdminAsync();
+
+        var response = await admin.DeleteAsync("/api/admin/tools/my-room");
+
+        Assert.Equal(HttpStatusCode.Forbidden, response.StatusCode);
+
+        var eu = await (await admin.GetAsync("/api/auth/me")).ReadJsonAsync();
+        Assert.True(eu.TryGetProperty("room", out _));
+    }
+
+    [Fact]
     public async Task Limpeza_exige_a_frase_de_confirmacao_exata()
     {
         var admin = await fixture.LoginAsToolsAdminAsync();

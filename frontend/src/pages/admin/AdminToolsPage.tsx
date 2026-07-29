@@ -1,7 +1,9 @@
 import { useState } from 'react'
+import { Link } from 'react-router-dom'
 import { api } from '../../api/client'
 import { useApi, useMutation } from '../../api/hooks'
 import type { AdminRoundListItem, AuditEntry, ToolActionResult, ToolsDiagnostics } from '../../api/types'
+import { useSession } from '../../auth/SessionContext'
 import { Badge, Button, Card, ErrorBox, Field, Input, PageTitle, Select, Spinner } from '../../components/ui'
 import { formatDateTime } from '../../lib/format'
 import { AvailabilityBadge } from '../HomePage'
@@ -9,6 +11,7 @@ import { AvailabilityBadge } from '../HomePage'
 const CONFIRMATION = 'LIMPAR'
 
 export function AdminToolsPage() {
+  const { me, refresh } = useSession()
   const diagnostics = useApi<ToolsDiagnostics>('/api/admin/tools/diagnostics')
   const audit = useApi<AuditEntry[]>('/api/admin/tools/audit')
   const rounds = useApi<AdminRoundListItem[]>('/api/admin/rounds')
@@ -36,6 +39,17 @@ export function AdminToolsPage() {
     const result = await api.del<ToolActionResult>(`/api/admin/tools/rounds/${id}/my-attempt`)
     setMessage(result.message)
     reloadAll()
+    return result
+  })
+
+  const leaveRoom = useMutation(async () => {
+    const result = await api.del<ToolActionResult>('/api/admin/tools/my-room')
+    setMessage(result.message)
+
+    await refresh()
+    diagnostics.reload()
+    audit.reload()
+
     return result
   })
 
@@ -78,6 +92,7 @@ export function AdminToolsPage() {
       {run.error ? <ErrorBox message={run.error} /> : null}
       {reset.error ? <ErrorBox message={reset.error} /> : null}
       {removeMyAttempt.error ? <ErrorBox message={removeMyAttempt.error} /> : null}
+      {leaveRoom.error ? <ErrorBox message={leaveRoom.error} /> : null}
 
       <Card>
         <div className="mb-3 flex items-center justify-between gap-2">
@@ -220,6 +235,54 @@ export function AdminToolsPage() {
             regras reais de pontuação — serve para ver ranking e estatísticas com dados.
           </p>
         </div>
+      </Card>
+
+      <Card>
+        <h2 className="text-sm font-semibold text-slate-700">Minha sala</h2>
+
+        <p className="mt-1 text-xs text-slate-500">
+          Sair da sala mexe <strong>só na sua filiação</strong>: temporadas, rodadas, pontuação e as
+          outras pessoas ficam intactas. Serve para ver o app como quem acabou de se cadastrar e
+          ainda não entrou em sala nenhuma.
+        </p>
+
+        {me?.room ? (
+          <>
+            <p className="mt-3 text-sm text-slate-700">
+              Você está em <strong>{me.room.name}</strong>.
+            </p>
+
+            <Button
+              className="mt-3"
+              variant="secondary"
+              disabled={!info.enabled}
+              loading={leaveRoom.loading}
+              onClick={() => {
+                if (window.confirm('Sair da sala? O painel administrativo fica sem conteúdo até você voltar.')) {
+                  void leaveRoom.run()
+                }
+              }}
+            >
+              Sair da sala
+            </Button>
+
+            <p className="mt-2 text-xs text-amber-800">
+              Enquanto estiver fora, as outras abas do painel responderão "entre em uma sala" — é o
+              comportamento esperado, não um erro. O código para voltar aparece na mensagem.
+            </p>
+          </>
+        ) : (
+          <>
+            <p className="mt-3 text-sm text-slate-700">Você está fora de qualquer sala.</p>
+
+            <Link
+              to="/sala"
+              className="mt-3 inline-flex min-h-11 items-center justify-center rounded-xl bg-brand-600 px-4 py-2.5 text-sm font-semibold text-white"
+            >
+              Entrar em uma sala
+            </Link>
+          </>
+        )}
       </Card>
 
       <Card className="border-red-200">

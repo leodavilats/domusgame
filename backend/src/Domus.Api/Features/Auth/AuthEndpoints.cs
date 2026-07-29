@@ -141,7 +141,13 @@ public static class AuthEndpoints
         var signedIn = await signInManager.ExternalLoginSignInAsync(
             info.LoginProvider, info.ProviderKey, isPersistent: true, bypassTwoFactor: true);
 
-        if (signedIn.Succeeded) return Results.Redirect("/");
+        if (signedIn.Succeeded)
+        {
+            var linked = await userManager.FindByLoginAsync(info.LoginProvider, info.ProviderKey);
+            if (linked is not null) await AdoptGooglePhotoAsync(db, linked.Id, info, ct);
+
+            return Results.Redirect("/");
+        }
 
         var email = info.Principal.FindFirstValue(ClaimTypes.Email);
         if (string.IsNullOrWhiteSpace(email)) return Results.Redirect("/entrar?erro=google-sem-email");
@@ -150,6 +156,7 @@ public static class AuthEndpoints
         if (existing is not null)
         {
             await userManager.AddLoginAsync(existing, info);
+            await AdoptGooglePhotoAsync(db, existing.Id, info, ct);
             await signInManager.SignInAsync(existing, isPersistent: true);
             return Results.Redirect("/");
         }
@@ -167,8 +174,7 @@ public static class AuthEndpoints
         Participant participant;
         try
         {
-            participant = Participant.Register(
-                id, displayName, info.Principal.FindFirstValue("picture"), clock.GetUtcNow());
+            participant = Participant.Register(id, displayName, null, clock.GetUtcNow());
         }
         catch (DomainValidationException)
         {
@@ -189,8 +195,34 @@ public static class AuthEndpoints
         db.Participants.Add(participant);
         await db.SaveChangesAsync(ct);
 
+        await AdoptGooglePhotoAsync(db, id, info, ct);
+
         await signInManager.SignInAsync(user, isPersistent: true);
         return Results.Redirect("/");
+    }
+
+    private static async Task AdoptGooglePhotoAsync(
+        DomusDbContext db,
+        Guid participantId,
+        ExternalLoginInfo info,
+        CancellationToken ct)
+    {
+        var photo = info.Principal.FindFirstValue("picture");
+        if (string.IsNullOrWhiteSpace(photo)) return;
+
+        var participant = await db.Participants.SingleOrDefaultAsync(p => p.Id == participantId, ct);
+        if (participant is null || participant.IsRemoved) return;
+        if (!string.IsNullOrWhiteSpace(participant.AvatarUrl)) return;
+
+        try
+        {
+            participant.UpdateProfile(participant.DisplayName, photo, participant.ShowInRanking);
+            await db.SaveChangesAsync(ct);
+        }
+        catch (DomainValidationException)
+        {
+            db.ChangeTracker.Clear();
+        }
     }
 
     internal static async Task EnsureDisplayNameIsFreeAsync(

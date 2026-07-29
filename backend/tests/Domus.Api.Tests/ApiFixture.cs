@@ -100,6 +100,16 @@ public sealed class ApiFixture : IAsyncLifetime
         return client;
     }
 
+    public async Task<HttpClient> LoginOnToolsAsync(string email, string password)
+    {
+        var client = ToolsFactory.CreateClient();
+
+        var response = await client.PostAsJsonAsync("/api/auth/login", new { email, password });
+
+        response.EnsureSuccessStatusCode();
+        return client;
+    }
+
     public async Task<HttpClient> RegisterWithoutRoomAsync(string displayName, string email)
     {
         var client = CreateClient();

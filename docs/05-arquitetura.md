@@ -225,6 +225,7 @@ rodada de outra sala responde **404** (RN-45) — o único lugar onde essa decis
 | `POST` | `/tools/rounds/{id}/open-now` · `/close-now` | desloca a janela da rodada |
 | `POST` | `/tools/rounds/{id}/simulate` | `{ count }` participações fictícias |
 | `DELETE` | `/tools/rounds/{id}/my-attempt` | apaga a própria tentativa |
+| `DELETE` | `/tools/my-room` | sai da sala (só a própria filiação); devolve o código para voltar |
 | `POST` | `/tools/reset` | `{ scope, confirmation }` — `attempts` \| `content` \| `all`, com frase `LIMPAR` |
 
 > `open-now` e `close-now` são o único caminho que chama `Round.OverrideWindowForTesting`, que

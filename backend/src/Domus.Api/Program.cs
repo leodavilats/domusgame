@@ -1,3 +1,4 @@
+using System.Security.Claims;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using System.Threading.RateLimiting;
@@ -15,6 +16,7 @@ using Domus.Infrastructure;
 using Domus.Infrastructure.Identity;
 using Domus.Infrastructure.Persistence;
 using Domus.Infrastructure.Seed;
+using Microsoft.AspNetCore.Authentication.OAuth.Claims;
 using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.RateLimiting;
@@ -64,6 +66,7 @@ if (!string.IsNullOrWhiteSpace(googleClientId) && !string.IsNullOrWhiteSpace(goo
         options.ClientId = googleClientId;
         options.ClientSecret = googleClientSecret;
         options.SignInScheme = IdentityConstants.ExternalScheme;
+        options.ClaimActions.Add(new JsonKeyClaimAction("picture", ClaimValueTypes.String, "picture"));
     });
 }
 

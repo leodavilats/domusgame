@@ -192,6 +192,7 @@ A aba **Ferramentas** do painel reúne atalhos para exercitar o fluxo sem espera
 | Temporada de teste | uma temporada com três rodadas de **um dia** (encerrada, aberta, agendada), 5 perguntas fáceis cada, cobrindo sem mídia, com imagem, com áudio, 2 e 5 alternativas |
 | Abrir agora / Encerrar agora | desloca a janela da rodada, para testar quiz e gabarito na hora |
 | Refazer minha tentativa | apaga **só a sua** tentativa, já que ela é única por participante |
+| Sair da sala | remove **só a sua** filiação, para ver o app como quem acabou de se cadastrar. A mensagem devolve o código para você voltar |
 | Simular participações | cria participantes fictícios respondendo a rodada, com desempenhos variados |
 | Limpar dados | três escopos: só participações, + rodadas e temporadas, ou tudo |
 | Auditoria | últimas 30 ações administrativas registradas |
