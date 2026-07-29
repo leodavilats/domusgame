@@ -1,0 +1,25 @@
+{
+  "files.exclude": {
+    "**/bin": true,
+    "**/obj": true,
+    "**/node_modules": true,
+    "backend/src/Domus.Api/wwwroot": true,
+    "frontend/dist": true,
+    "frontend/.vite": true
+  },
+  "search.exclude": {
+    "**/bin": true,
+    "**/obj": true,
+    "**/node_modules": true,
+    "backend/src/Domus.Api/wwwroot": true,
+    "frontend/dist": true,
+    "frontend/.vite": true,
+    "**/package-lock.json": true
+  },
+  "files.watcherExclude": {
+    "**/bin/**": true,
+    "**/obj/**": true,
+    "**/node_modules/**": true,
+    "backend/src/Domus.Api/wwwroot/**": true
+  }
+}

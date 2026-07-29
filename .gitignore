@@ -7,12 +7,12 @@ obj/
 artifacts/
 
 # front-end compilado servido pela API
-backend/src/Domus.Api/wwwroot/
+wwwroot/
 
 # Node
 node_modules/
-frontend/dist/
-frontend/.vite/
+dist/
+.vite/
 
 # Ambiente
 .env
