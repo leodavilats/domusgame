@@ -4,7 +4,18 @@ import { api } from '../../api/client'
 import { useApi, useMutation } from '../../api/hooks'
 import type { AdminRoundListItem, AuditEntry, ToolActionResult, ToolsDiagnostics } from '../../api/types'
 import { useSession } from '../../auth/SessionContext'
-import { Badge, Button, Card, ErrorBox, Field, Input, PageTitle, Select, Spinner } from '../../components/ui'
+import {
+  Badge,
+  Button,
+  Callout,
+  Card,
+  ErrorBox,
+  Field,
+  Input,
+  PageTitle,
+  Select,
+  Spinner,
+} from '../../components/ui'
 import { formatDateTime } from '../../lib/format'
 import { AvailabilityBadge } from '../HomePage'
 
@@ -84,9 +95,9 @@ export function AdminToolsPage() {
       <PageTitle subtitle="Atalhos para testar o fluxo sem esperar o relógio">Ferramentas</PageTitle>
 
       {message ? (
-        <Card className="border-emerald-300 bg-emerald-50">
-          <p className="text-sm text-emerald-900">{message}</p>
-        </Card>
+        <Callout tone="success" live>
+          {message}
+        </Callout>
       ) : null}
 
       {run.error ? <ErrorBox message={run.error} /> : null}
@@ -121,11 +132,12 @@ export function AdminToolsPage() {
         </div>
 
         {!info.enabled && (
-          <p className="mt-3 rounded-xl bg-amber-50 p-3 text-sm text-amber-900">
-            As ações abaixo estão bloqueadas. Para liberá-las, defina{' '}
-            <code className="font-mono">DevTools__Enabled=true</code> nas variáveis de ambiente e
-            reinicie. Desligue de novo antes de abrir o app para o GC.
-          </p>
+          <div className="mt-4">
+            <Callout tone="warning" title="As ações abaixo estão bloqueadas">
+              Para liberá-las, defina <code className="font-mono">DevTools__Enabled=true</code> nas
+              variáveis de ambiente e reinicie. Desligue de novo antes de abrir o app para o GC.
+            </Callout>
+          </div>
         )}
       </Card>
 
@@ -277,7 +289,7 @@ export function AdminToolsPage() {
 
             <Link
               to="/sala"
-              className="mt-3 inline-flex min-h-11 items-center justify-center rounded-xl bg-brand-600 px-4 py-2.5 text-sm font-semibold text-white"
+              className="mt-3 inline-flex min-h-11 items-center justify-center rounded-xl bg-brand-600 px-4 text-sm font-semibold text-white transition hover:bg-brand-700"
             >
               Entrar em uma sala
             </Link>
@@ -297,10 +309,10 @@ export function AdminToolsPage() {
             </Select>
           </Field>
 
-          <p className="rounded-xl bg-red-50 p-3 text-xs text-red-800">
-            Não há desfazer. Administradores, o código de convite e a configuração do GC são sempre
-            preservados — sem eles ninguém entra para consertar o estrago.
-          </p>
+          <Callout tone="danger" title="Não há desfazer">
+            Administradores, a sala e o seu código de convite são sempre preservados — sem eles
+            ninguém entra para consertar o estrago.
+          </Callout>
 
           <Field label={`Digite ${CONFIRMATION} para confirmar`}>
             <Input

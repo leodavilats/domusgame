@@ -1,7 +1,7 @@
 import { useEffect } from 'react'
-import { NavLink, Outlet, useLocation } from 'react-router-dom'
+import { Link, NavLink, Outlet, useLocation } from 'react-router-dom'
 import { useSession } from '../auth/SessionContext'
-import { CalendarIcon, HomeIcon, TrophyIcon, UserIcon } from './Icons'
+import { CalendarIcon, HomeIcon, ShieldIcon, TrophyIcon } from './Icons'
 import { LogoMark } from './Logo'
 import { Avatar } from './ui'
 
@@ -9,7 +9,6 @@ const items = [
   { to: '/', label: 'Início', Icon: HomeIcon, end: true },
   { to: '/ranking', label: 'Ranking', Icon: TrophyIcon, end: false },
   { to: '/historico', label: 'Histórico', Icon: CalendarIcon, end: false },
-  { to: '/perfil', label: 'Perfil', Icon: UserIcon, end: false },
 ]
 
 function useScrollToTopOnNavigate(pathname: string) {
@@ -25,60 +24,109 @@ export function Layout() {
   useScrollToTopOnNavigate(location.pathname)
 
   const immersive = location.pathname.includes('/quiz')
-
   const wide = location.pathname.startsWith('/admin')
 
   return (
-    <div className={`mx-auto flex min-h-dvh w-full flex-col bg-slate-100 ${wide ? 'max-w-5xl' : 'max-w-2xl'}`}>
+    <div className="flex min-h-dvh flex-col">
       {!immersive && (
-        <header className="sticky top-0 z-10 border-b border-slate-200 bg-white/95 backdrop-blur">
-          <div className="flex items-center justify-between px-4 py-3">
-            <div className="flex items-center gap-3">
-              <LogoMark size={38} />
-              <div>
-                <p className="text-xs font-medium uppercase tracking-wide text-slate-500">
+        <header className="sticky top-0 z-20 border-b border-slate-200/80 bg-surface/85 backdrop-blur-md">
+          <div className={`mx-auto flex items-center gap-3 px-4 py-2.5 ${wide ? 'max-w-6xl' : 'max-w-2xl'}`}>
+            <Link to="/" className="flex min-w-0 items-center gap-2.5 rounded-xl">
+              <LogoMark size={36} />
+              <span className="min-w-0">
+                <span className="block truncate text-[15px] font-bold leading-tight text-slate-900">
+                  {me?.room?.name ?? 'GC Domus'}
+                </span>
+                <span className="block text-[11px] font-medium uppercase tracking-wide text-slate-500">
                   Desafio semanal
-                </p>
-                <p className="text-base font-bold text-slate-900">{me?.room?.name ?? 'GC Domus'}</p>
-              </div>
-            </div>
+                </span>
+              </span>
+            </Link>
 
-            <div className="flex items-center gap-3">
+            <nav aria-label="Seções" className="ml-auto hidden items-center gap-1 md:flex">
+              {items.map(({ to, label, end }) => (
+                <NavLink
+                  key={to}
+                  to={to}
+                  end={end}
+                  className={({ isActive }) =>
+                    `rounded-xl px-3 py-2 text-sm font-semibold transition ${
+                      isActive ? 'bg-slate-100 text-slate-900' : 'text-slate-500 hover:bg-slate-50 hover:text-slate-700'
+                    }`
+                  }
+                >
+                  {label}
+                </NavLink>
+              ))}
+            </nav>
+
+            <div className="ml-auto flex items-center gap-1 md:ml-2">
               {me?.isAdmin && (
-                <NavLink to="/admin" className="text-sm font-semibold text-brand-600">
-                  Admin
+                <NavLink
+                  to="/admin"
+                  className={({ isActive }) =>
+                    `inline-flex min-h-10 items-center gap-1.5 rounded-xl px-2.5 text-sm font-semibold transition ${
+                      isActive ? 'bg-night-900 text-white' : 'text-slate-500 hover:bg-slate-100 hover:text-slate-700'
+                    }`
+                  }
+                >
+                  <ShieldIcon className="h-5 w-5" />
+                  <span className="hidden sm:inline">Admin</span>
                 </NavLink>
               )}
-              {me && <Avatar name={me.displayName} url={me.avatarUrl} size={36} />}
+
+              {me && (
+                <Link
+                  to="/perfil"
+                  aria-label={`Meu perfil (${me.displayName})`}
+                  title="Meu perfil"
+                  className="rounded-full p-0.5 transition hover:bg-slate-100"
+                >
+                  <Avatar name={me.displayName} url={me.avatarUrl} size={36} ring />
+                </Link>
+              )}
             </div>
           </div>
         </header>
       )}
 
-      <main className={`flex-1 px-4 ${immersive ? 'py-4' : 'pb-24 pt-4'}`}>
+      <main
+        className={`mx-auto w-full flex-1 px-4 ${wide ? 'max-w-6xl' : 'max-w-2xl'} ${
+          immersive ? 'py-3' : 'pb-28 pt-5 md:pb-10'
+        }`}
+      >
         <Outlet />
       </main>
 
       {!immersive && (
         <nav
-          className={`fixed bottom-0 left-1/2 z-10 w-full -translate-x-1/2 border-t border-slate-200 bg-white pb-[env(safe-area-inset-bottom)] ${
-            wide ? 'max-w-5xl' : 'max-w-2xl'
-          }`}
+          aria-label="Navegação principal"
+          className="fixed bottom-0 left-0 z-20 w-full border-t border-slate-200/80 bg-surface/95 pb-[env(safe-area-inset-bottom)] backdrop-blur-md md:hidden"
         >
-          <ul className="grid grid-cols-4">
+          <ul className="mx-auto grid max-w-2xl grid-cols-3">
             {items.map(({ to, label, Icon, end }) => (
               <li key={to}>
                 <NavLink
                   to={to}
                   end={end}
                   className={({ isActive }) =>
-                    `flex min-h-14 flex-col items-center justify-center gap-0.5 text-xs font-medium ${
-                      isActive ? 'text-brand-600' : 'text-slate-500'
+                    `group flex min-h-14 flex-col items-center justify-center gap-1 text-[11px] font-semibold transition ${
+                      isActive ? 'text-brand-700' : 'text-slate-500'
                     }`
                   }
                 >
-                  <Icon />
-                  {label}
+                  {({ isActive }) => (
+                    <>
+                      <span
+                        className={`flex h-8 w-14 items-center justify-center rounded-full transition ${
+                          isActive ? 'bg-brand-50' : 'group-active:bg-slate-100'
+                        }`}
+                      >
+                        <Icon className="h-[22px] w-[22px]" />
+                      </span>
+                      {label}
+                    </>
+                  )}
                 </NavLink>
               </li>
             ))}

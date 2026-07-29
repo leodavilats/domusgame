@@ -12,22 +12,29 @@ const tabs = [
 
 export function AdminLayout() {
   return (
-    <div className="space-y-4">
-      <nav className="-mx-1 flex snap-x gap-1 overflow-x-auto pb-1">
-        {tabs.map((tab) => (
-          <NavLink
-            key={tab.to}
-            to={tab.to}
-            end={tab.end}
-            className={({ isActive }) =>
-              `shrink-0 snap-start rounded-xl px-3 py-2 text-sm font-semibold ${
-                isActive ? 'bg-night-900 text-white' : 'bg-white text-slate-600 border border-slate-200'
-              }`
-            }
-          >
-            {tab.label}
-          </NavLink>
-        ))}
+    <div className="space-y-5">
+      <nav
+        aria-label="Seções da administração"
+        className="-mx-4 overflow-x-auto px-4 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+      >
+        <div className="inline-flex min-w-full gap-1 rounded-2xl bg-slate-200/70 p-1">
+          {tabs.map((tab) => (
+            <NavLink
+              key={tab.to}
+              to={tab.to}
+              end={tab.end}
+              className={({ isActive }) =>
+                `shrink-0 rounded-xl px-3.5 py-2 text-sm font-semibold transition ${
+                  isActive
+                    ? 'bg-surface text-slate-900 shadow-card'
+                    : 'text-slate-600 hover:text-slate-900'
+                }`
+              }
+            >
+              {tab.label}
+            </NavLink>
+          ))}
+        </div>
       </nav>
 
       <Suspense fallback={<Spinner />}>

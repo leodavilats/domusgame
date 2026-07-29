@@ -6,13 +6,16 @@ import type { AdminQuestion, AdminRound, QuestionMediaType } from '../../api/typ
 import {
   Badge,
   Button,
+  Callout,
   Card,
   ErrorBox,
   Field,
+  IconButton,
   Input,
   PageTitle,
+  SectionTitle,
   Select,
-  Spinner,
+  SkeletonCard,
   Textarea,
 } from '../../components/ui'
 import { formatDateTime } from '../../lib/format'
@@ -35,7 +38,7 @@ export function AdminRoundEditorPage() {
   const { roundId } = useParams<{ roundId: string }>()
   const round = useApi<AdminRound>(`/api/admin/rounds/${roundId}`)
 
-  if (round.loading) return <Spinner />
+  if (round.loading) return <SkeletonCard lines={5} />
   if (round.error) return <ErrorBox message={round.error} onRetry={round.reload} />
   if (!round.data) return null
 
@@ -65,15 +68,17 @@ export function AdminRoundEditorPage() {
         </div>
 
         {!editable && (
-          <p className="mt-3 rounded-xl bg-amber-50 p-3 text-sm text-amber-900">
-            Esta rodada já abriu e não pode mais ser alterada: há respostas e pontuação em jogo.
-          </p>
+          <div className="mt-4">
+            <Callout tone="warning" title="Esta rodada já abriu">
+              Ela não pode mais ser alterada: há respostas e pontuação em jogo.
+            </Callout>
+          </div>
         )}
 
         {data.status === 'Published' && (
           <Link
             to={`/admin/rodadas/${data.round.id}/estatisticas`}
-            className="mt-3 inline-block text-sm font-semibold text-brand-600"
+            className="mt-4 inline-flex min-h-10 items-center rounded-xl bg-slate-100 px-3 text-sm font-semibold text-slate-700 transition hover:bg-slate-200"
           >
             Ver estatísticas
           </Link>
@@ -211,10 +216,12 @@ function QuestionsEditor({
 
   return (
     <Card>
-      <div className="mb-3 flex items-center justify-between">
-        <h2 className="text-sm font-semibold text-slate-700">Perguntas ({round.questions.length})</h2>
+      <div className="mb-4 flex items-center justify-between gap-3">
+        <h2 className="text-sm font-semibold text-slate-700">
+          Perguntas ({round.questions.length})
+        </h2>
         {editable && !adding && (
-          <Button variant="secondary" onClick={() => setAdding(true)}>
+          <Button size="sm" onClick={() => setAdding(true)}>
             Adicionar
           </Button>
         )}
@@ -238,46 +245,80 @@ function QuestionsEditor({
               />
             ) : (
               <div>
-                <p className="text-sm font-medium text-slate-900">
-                  {question.order}. {question.text}
-                </p>
+                <div className="flex items-start gap-2.5">
+                  <span
+                    aria-hidden="true"
+                    className="nums mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-lg bg-slate-100 text-xs font-bold text-slate-500"
+                  >
+                    {question.order}
+                  </span>
+                  <p className="text-sm font-semibold leading-snug text-slate-900">{question.text}</p>
+                </div>
 
-                <ul className="mt-2 space-y-1 text-sm">
-                  {question.options.map((option) => (
+                {question.mediaType !== 'None' && (
+                  <p className="mt-2 pl-8">
+                    <Badge tone="info">{question.mediaType === 'Image' ? 'imagem' : 'áudio'}</Badge>
+                  </p>
+                )}
+
+                <ul className="mt-2.5 space-y-1">
+                  {question.options.map((option, index) => (
                     <li
                       key={option.id}
-                      className={option.isCorrect ? 'font-semibold text-emerald-700' : 'text-slate-600'}
+                      className={`flex items-center gap-2 rounded-lg px-2 py-1 text-sm ${
+                        option.isCorrect
+                          ? 'bg-emerald-50 font-semibold text-emerald-800'
+                          : 'text-slate-600'
+                      }`}
                     >
-                      {option.isCorrect ? '✓ ' : '· '}
+                      <span
+                        aria-hidden="true"
+                        className={`flex h-5 w-5 shrink-0 items-center justify-center rounded text-[10px] font-bold ${
+                          option.isCorrect ? 'bg-emerald-600 text-white' : 'bg-slate-100 text-slate-500'
+                        }`}
+                      >
+                        {option.isCorrect ? '✓' : ['A', 'B', 'C', 'D', 'E'][index] ?? index + 1}
+                      </span>
                       {option.text}
                     </li>
                   ))}
                 </ul>
 
                 {question.explanation ? (
-                  <p className="mt-2 text-xs text-slate-500">Explicação: {question.explanation}</p>
+                  <p className="mt-2 text-xs leading-relaxed text-slate-500">
+                    <span className="font-semibold">Explicação:</span> {question.explanation}
+                  </p>
                 ) : null}
 
                 {editable && (
-                  <div className="mt-3 flex flex-wrap gap-3 text-sm font-semibold">
-                    <button type="button" className="text-brand-600" onClick={() => setEditingId(question.id)}>
+                  <div className="mt-3 flex flex-wrap items-center gap-1.5">
+                    <Button size="sm" variant="subtle" onClick={() => setEditingId(question.id)}>
                       Editar
-                    </button>
-                    <button type="button" className="text-slate-600" onClick={() => void move.run(question.id, -1)}>
-                      Subir
-                    </button>
-                    <button type="button" className="text-slate-600" onClick={() => void move.run(question.id, 1)}>
-                      Descer
-                    </button>
-                    <button
-                      type="button"
-                      className="text-red-600"
+                    </Button>
+                    <IconButton
+                      label="Mover para cima"
+                      className="h-9 w-9"
+                      onClick={() => void move.run(question.id, -1)}
+                    >
+                      ↑
+                    </IconButton>
+                    <IconButton
+                      label="Mover para baixo"
+                      className="h-9 w-9"
+                      onClick={() => void move.run(question.id, 1)}
+                    >
+                      ↓
+                    </IconButton>
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      className="ml-auto text-red-700 hover:bg-red-50"
                       onClick={() => {
                         if (window.confirm('Remover esta pergunta?')) void remove.run(question.id)
                       }}
                     >
                       Remover
-                    </button>
+                    </Button>
                   </div>
                 )}
               </div>
@@ -363,11 +404,11 @@ function QuestionForm({
           <Select value={mediaType} onChange={(event) => setMediaType(event.target.value as QuestionMediaType)}>
             <option value="None">Nenhuma</option>
             <option value="Image">Imagem</option>
-            <option value="Audio">Audio</option>
+            <option value="Audio">Áudio</option>
           </Select>
         </Field>
         <div className="col-span-2">
-          <Field label="URL da midia">
+          <Field label="URL da mídia">
             <Input
               type="url"
               placeholder="https://..."
@@ -380,34 +421,52 @@ function QuestionForm({
       </div>
 
       <fieldset className="space-y-2">
-        <legend className="mb-1 text-sm font-medium text-slate-700">
-          Alternativas (2 a 5, marque exatamente uma correta)
+        <legend className="mb-2 text-sm font-medium text-slate-700">
+          Alternativas
+          <span className="ml-1 font-normal text-slate-500">— 2 a 5, marque a correta</span>
         </legend>
 
         {options.map((option, index) => (
-          <div key={index} className="flex items-center gap-2">
-            <input
-              type="radio"
-              name="correct"
-              className="h-5 w-5 shrink-0"
-              checked={option.isCorrect}
-              onChange={() => setOptions((current) => current.map((item, i) => ({ ...item, isCorrect: i === index })))}
-              aria-label={`Alternativa ${index + 1} e a correta`}
-            />
+          <div
+            key={index}
+            className={`flex items-center gap-2 rounded-xl border p-2 transition ${
+              option.isCorrect ? 'border-emerald-300 bg-emerald-50/60' : 'border-slate-200'
+            }`}
+          >
+            <label className="flex shrink-0 cursor-pointer items-center gap-1.5 px-1">
+              <input
+                type="radio"
+                name="correct"
+                className="h-4 w-4 accent-emerald-600"
+                checked={option.isCorrect}
+                onChange={() =>
+                  setOptions((current) => current.map((item, i) => ({ ...item, isCorrect: i === index })))
+                }
+                aria-label={`Alternativa ${['A', 'B', 'C', 'D', 'E'][index] ?? index + 1} é a correta`}
+              />
+              <span
+                aria-hidden="true"
+                className={`text-xs font-bold ${option.isCorrect ? 'text-emerald-700' : 'text-slate-400'}`}
+              >
+                {['A', 'B', 'C', 'D', 'E'][index] ?? index + 1}
+              </span>
+            </label>
+
             <Input
               value={option.text}
               maxLength={300}
-              placeholder={`Alternativa ${index + 1}`}
+              placeholder={`Alternativa ${['A', 'B', 'C', 'D', 'E'][index] ?? index + 1}`}
               onChange={(event) => updateOption(index, { text: event.target.value })}
             />
+
             {options.length > 2 && (
-              <button
-                type="button"
-                className="shrink-0 px-2 text-sm text-red-600"
+              <IconButton
+                label={`Remover alternativa ${index + 1}`}
+                className="h-9 w-9 shrink-0 hover:bg-red-50 hover:text-red-700"
                 onClick={() => setOptions((current) => current.filter((_, i) => i !== index))}
               >
-                remover
-              </button>
+                ×
+              </IconButton>
             )}
           </div>
         ))}
@@ -415,6 +474,7 @@ function QuestionForm({
         {options.length < 5 && (
           <Button
             type="button"
+            size="sm"
             variant="ghost"
             onClick={() => setOptions((current) => [...current, { text: '', isCorrect: false }])}
           >
@@ -456,18 +516,16 @@ function DangerCard({ round }: { round: AdminRound }) {
     if (!round.canEdit) return null
 
     return (
-      <Card>
-        <p className="text-xs text-slate-500">
-          Esta rodada já tem {round.attemptCount} participação(ões) e por isso não pode ser excluída.
-        </p>
-      </Card>
+      <Callout tone="neutral">
+        Esta rodada já tem {round.attemptCount} participação(ões) e por isso não pode ser excluída.
+      </Callout>
     )
   }
 
   return (
-    <Card className="border-red-200">
+    <Card className="border-red-200/80">
       <h2 className="text-sm font-semibold text-red-700">Excluir rodada</h2>
-      <p className="mt-1 text-xs text-slate-600">
+      <p className="mt-1 text-xs leading-relaxed text-slate-600">
         Apaga a rodada, a lição e as perguntas. Só é possível porque ela ainda não abriu.
       </p>
 
@@ -500,37 +558,44 @@ function PublishCard({ round, onPublished }: { round: AdminRound; onPublished: (
   const ready = round.problems.length === 0
 
   return (
-    <Card>
-      <h2 className="mb-3 text-sm font-semibold text-slate-700">Publicacao</h2>
+    <Card elevated>
+      <SectionTitle>Publicação</SectionTitle>
 
       {publish.error ? <ErrorBox message={publish.error} /> : null}
 
       {ready ? (
-        <p className="rounded-xl bg-emerald-50 p-3 text-sm text-emerald-800">
-          Tudo certo. Depois de publicar, a rodada abre sozinha em {formatDateTime(round.round.opensAt)} e não
-          podera mais ser editada.
-        </p>
+        <Callout tone="success" title="Tudo certo para publicar">
+          A rodada abre sozinha em {formatDateTime(round.round.opensAt)}. Enquanto não abrir, você
+          ainda pode editá-la ou excluí-la.
+        </Callout>
       ) : (
-        <ul className="space-y-1 rounded-xl bg-amber-50 p-3 text-sm text-amber-900">
-          {round.problems.map((problem) => (
-            <li key={problem}>• {problem}</li>
-          ))}
-        </ul>
+        <Callout tone="warning" title={`Faltam ${round.problems.length} item(ns)`}>
+          <ul className="mt-1 space-y-1">
+            {round.problems.map((problem) => (
+              <li key={problem} className="flex gap-2">
+                <span aria-hidden="true">•</span>
+                {problem}
+              </li>
+            ))}
+          </ul>
+        </Callout>
       )}
 
-      <div className="mt-3 flex flex-wrap gap-2">
-        <Button variant="secondary" onClick={() => setPreviewing((value) => !value)}>
-          {previewing ? 'Fechar prévia' : 'Pré-visualizar como participante'}
-        </Button>
-
+      <div className="mt-4 flex flex-wrap gap-2">
         <Button
           disabled={!ready}
           loading={publish.loading}
           onClick={() => {
-            if (window.confirm('Publicar a rodada? Depois disso ela não podera ser editada.')) void publish.run()
+            if (window.confirm('Publicar a rodada? Ela abre e fecha sozinha na janela definida.')) {
+              void publish.run()
+            }
           }}
         >
           Publicar
+        </Button>
+
+        <Button variant="secondary" onClick={() => setPreviewing((value) => !value)}>
+          {previewing ? 'Fechar prévia' : 'Pré-visualizar como participante'}
         </Button>
       </div>
 

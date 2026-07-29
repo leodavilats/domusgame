@@ -2,9 +2,12 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { ApiError, api } from '../api/client'
 import type { AttemptQuestion, AttemptState, RoundDetail, SubmitAnswerResponse } from '../api/types'
-import { Button, Card, ErrorBox, Spinner } from '../components/ui'
+import { ClockIcon } from '../components/Icons'
+import { Button, Callout, Card, ErrorBox, ProgressBar, Spinner } from '../components/ui'
 
 type Stage = 'loading' | 'rules' | 'question' | 'error'
+
+const letters = ['A', 'B', 'C', 'D', 'E']
 
 export function QuizPage() {
   const { roundId } = useParams<{ roundId: string }>()
@@ -131,6 +134,36 @@ export function QuizPage() {
     return () => window.clearInterval(timer)
   }, [stage, question, submit])
 
+  // Atalhos de teclado: A-E (ou 1-5) escolhe, Enter confirma. Quem responde no notebook
+  // deixa de precisar do mouse com o cronometro correndo.
+  useEffect(() => {
+    if (stage !== 'question' || !question) return
+
+    const options = question.options
+
+    function onKey(event: KeyboardEvent) {
+      if (event.metaKey || event.ctrlKey || event.altKey) return
+
+      const index = letters.indexOf(event.key.toUpperCase())
+      const numeric = Number.parseInt(event.key, 10) - 1
+      const target = index >= 0 ? index : Number.isNaN(numeric) ? -1 : numeric
+
+      if (target >= 0 && target < options.length) {
+        event.preventDefault()
+        setSelected(options[target].id)
+        return
+      }
+
+      if (event.key === 'Enter' && selected && !submitting.current) {
+        event.preventDefault()
+        void submit(selected)
+      }
+    }
+
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [stage, question, selected, submit])
+
   async function startAttempt() {
     if (!roundId) return
 
@@ -172,96 +205,129 @@ export function QuizPage() {
   if (!question) return null
 
   const total = question.totalQuestions
-  const progress = Math.round(((question.order - 1) / total) * 100)
-  const timeRatio = Math.min(100, (remaining / question.timeLimitSeconds) * 100)
   const urgent = remaining <= 10
+  const last = question.order === total
 
   return (
-    <div className="flex min-h-[80dvh] flex-col gap-4">
-      <div className="space-y-2">
-        <div className="flex items-center justify-between text-sm">
-          <span className="font-semibold text-slate-700">
-            Pergunta {question.order} de {total}
+    <div className="flex min-h-[calc(100dvh-2rem)] flex-col gap-4">
+      <div className="sticky top-0 z-10 -mx-4 space-y-2 bg-canvas/95 px-4 pb-3 pt-1 backdrop-blur">
+        <div className="flex items-center justify-between gap-3">
+          <span className="text-sm font-semibold text-slate-600">
+            Pergunta <span className="nums text-slate-900">{question.order}</span> de{' '}
+            <span className="nums">{total}</span>
           </span>
+
           <span
-            className={`rounded-full px-3 py-1 font-bold tabular-nums ${
-              urgent ? 'bg-red-100 text-red-700' : 'bg-slate-200 text-slate-700'
-            }`}
             role="timer"
             aria-live="off"
+            className={`nums inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-sm font-bold transition-colors ${
+              urgent ? 'bg-red-100 text-red-700 animate-urgent' : 'bg-slate-200/80 text-slate-700'
+            }`}
           >
+            <ClockIcon className="h-4 w-4" />
             {remaining}s
           </span>
         </div>
 
-        <div
-          className="h-1.5 overflow-hidden rounded-full bg-slate-200"
-          role="progressbar"
-          aria-label="Progresso no desafio"
-          aria-valuenow={question.order - 1}
-          aria-valuemin={0}
-          aria-valuemax={total}
-        >
-          <div className="h-full rounded-full bg-brand-500 transition-all" style={{ width: `${progress}%` }} />
-        </div>
+        <ProgressBar
+          value={question.order - 1}
+          max={total}
+          label="Progresso no desafio"
+          size="sm"
+        />
 
-        <div className="h-1.5 overflow-hidden rounded-full bg-slate-200">
-          <div
-            className={`h-full rounded-full ${urgent ? 'bg-red-500' : 'bg-slate-400'}`}
-            style={{ width: `${timeRatio}%` }}
-          />
-        </div>
+        <ProgressBar
+          value={remaining}
+          max={question.timeLimitSeconds}
+          label="Tempo restante nesta pergunta"
+          tone={urgent ? 'danger' : 'neutral'}
+          size="sm"
+        />
       </div>
 
-      <Card className="flex-1">
-        <h2 className="text-lg font-semibold text-slate-900">{question.text}</h2>
+      <Card elevated className="flex-1 animate-rise">
+        <h1 className="text-lg font-semibold leading-snug text-slate-900">{question.text}</h1>
 
         {question.mediaType === 'Image' && question.mediaUrl && (
           <img
             src={question.mediaUrl}
             alt=""
-            className="mt-3 max-h-64 w-full rounded-xl object-contain"
+            className="mt-4 max-h-64 w-full rounded-xl bg-slate-50 object-contain"
             loading="lazy"
           />
         )}
 
         {question.mediaType === 'Audio' && question.mediaUrl && (
-          <audio controls src={question.mediaUrl} className="mt-3 w-full">
-            Seu navegador não suporta audio.
+          <audio controls src={question.mediaUrl} className="mt-4 w-full">
+            Seu navegador não suporta áudio.
           </audio>
         )}
 
-        <ul className="mt-4 space-y-2">
-          {question.options.map((option) => {
+        <div
+          role="radiogroup"
+          aria-label="Alternativas"
+          className="mt-5 space-y-2.5"
+        >
+          {question.options.map((option, index) => {
             const active = selected === option.id
+
             return (
-              <li key={option.id}>
-                <button
-                  type="button"
-                  onClick={() => setSelected(option.id)}
-                  disabled={sending}
-                  className={`min-h-14 w-full rounded-xl border px-4 py-3 text-left text-sm transition ${
-                    active
-                      ? 'border-brand-500 bg-brand-50 font-semibold text-brand-800'
-                      : 'border-slate-300 bg-white text-slate-700'
+              <button
+                key={option.id}
+                type="button"
+                role="radio"
+                aria-checked={active}
+                onClick={() => setSelected(option.id)}
+                disabled={sending}
+                className={`flex min-h-14 w-full items-center gap-3 rounded-xl border px-3 py-3 text-left transition ${
+                  active
+                    ? 'border-brand-500 bg-brand-50 ring-2 ring-brand-500/20'
+                    : 'border-slate-200 bg-surface hover:border-slate-300 hover:bg-slate-50'
+                } disabled:opacity-60`}
+              >
+                <span
+                  aria-hidden="true"
+                  className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-sm font-bold transition ${
+                    active ? 'bg-brand-600 text-white' : 'bg-slate-100 text-slate-500'
+                  }`}
+                >
+                  {letters[index] ?? index + 1}
+                </span>
+
+                <span
+                  className={`text-sm leading-relaxed ${
+                    active ? 'font-semibold text-brand-900' : 'text-slate-700'
                   }`}
                 >
                   {option.text}
-                </button>
-              </li>
+                </span>
+              </button>
             )
           })}
-        </ul>
+        </div>
+
+        <p className="mt-4 hidden text-xs text-slate-400 md:block">
+          Atalhos: {letters.slice(0, question.options.length).join(', ')} para escolher · Enter para
+          confirmar
+        </p>
       </Card>
 
       {error ? <ErrorBox message={error} /> : null}
 
-      <div className="sticky bottom-4">
-        <Button full loading={sending} disabled={!selected} onClick={() => void submit(selected)}>
-          {question.order === total ? 'Responder e finalizar' : 'Confirmar e avancar'}
+      <div className="sticky bottom-3 space-y-2 pb-[env(safe-area-inset-bottom)]">
+        <Button
+          size="lg"
+          full
+          loading={sending}
+          disabled={!selected}
+          onClick={() => void submit(selected)}
+          className="shadow-float"
+        >
+          {sending ? 'Enviando...' : last ? 'Responder e finalizar' : 'Confirmar e avançar'}
         </Button>
-        <p className="mt-2 text-center text-xs text-slate-500">
-          Não da para voltar depois de confirmar.
+
+        <p className="text-center text-xs text-slate-500">
+          {selected ? 'Não dá para voltar depois de confirmar.' : 'Escolha uma alternativa para continuar.'}
         </p>
       </div>
     </div>
@@ -281,36 +347,67 @@ function RulesCard({
 }) {
   const summary = round?.round
 
+  const rules = [
+    { icon: '1', text: <>Você tem <strong>uma única tentativa</strong> nesta rodada.</> },
+    {
+      icon: '2',
+      text: (
+        <>
+          São <strong>{summary?.questionCount ?? '—'} perguntas</strong>, uma de cada vez, sem voltar.
+        </>
+      ),
+    },
+    {
+      icon: '3',
+      text: (
+        <>
+          Cada pergunta tem <strong>{summary?.questionTimeLimitSeconds ?? '—'} segundos</strong>.
+          Responder rápido vale até <strong>{summary?.maxSpeedBonus ?? 0} pontos extras</strong>.
+        </>
+      ),
+    },
+    { icon: '4', text: <>Se o tempo acabar, a pergunta vale zero.</> },
+    { icon: '5', text: <>O tempo é contado no servidor — precisa de internet estável.</> },
+    { icon: '6', text: <>O gabarito aparece quando a rodada encerrar.</> },
+  ]
+
   return (
-    <div className="space-y-4">
-      <Card>
-        <h1 className="text-xl font-bold text-slate-900">
-          {summary ? `Semana ${summary.weekNumber}: ${summary.title}` : 'Desafio da semana'}
+    <div className="mx-auto max-w-lg space-y-4">
+      <Card elevated className="animate-rise">
+        <p className="text-xs font-semibold uppercase tracking-wide text-brand-600">
+          Semana {summary?.weekNumber ?? '—'}
+        </p>
+        <h1 className="mt-1 text-xl font-bold tracking-tight text-slate-900">
+          {summary?.title ?? 'Desafio da semana'}
         </h1>
 
-        <ul className="mt-4 space-y-2 text-sm text-slate-700">
-          <li>• Você tem <strong>uma única tentativa</strong> nesta rodada.</li>
-          <li>
-            • Sao <strong>{summary?.questionCount ?? '-'} perguntas</strong>, uma de cada vez, sem voltar.
-          </li>
-          <li>
-            • Cada pergunta tem <strong>{summary?.questionTimeLimitSeconds ?? '-'} segundos</strong>. Responder
-            rapido vale até <strong>{summary?.maxSpeedBonus ?? 0} pontos extras</strong>.
-          </li>
-          <li>• Se o tempo acabar, a pergunta vale zero.</li>
-          <li>• Precisa de internet estavel: o tempo e contado no servidor.</li>
-          <li>• O gabarito aparece quando a rodada encerrar.</li>
+        <ul className="mt-5 space-y-3">
+          {rules.map((rule) => (
+            <li key={rule.icon} className="flex gap-3 text-sm leading-relaxed text-slate-700">
+              <span
+                aria-hidden="true"
+                className="nums mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-slate-100 text-xs font-bold text-slate-500"
+              >
+                {rule.icon}
+              </span>
+              <span>{rule.text}</span>
+            </li>
+          ))}
         </ul>
       </Card>
 
       {error ? <ErrorBox message={error} /> : null}
 
+      <Callout tone="warning">
+        Ao começar, o cronômetro da primeira pergunta já está correndo.
+      </Callout>
+
       <div className="space-y-2">
-        <Button full onClick={onStart}>
+        <Button size="lg" full onClick={onStart}>
           Estou pronto, começar
         </Button>
 
-        <Button full variant="secondary" onClick={onCancel}>
+        <Button size="lg" full variant="secondary" onClick={onCancel}>
           Ainda não — voltar
         </Button>
       </div>

@@ -1,38 +1,59 @@
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import { useApi } from '../../api/hooks'
 import type { Overview } from '../../api/types'
-import { Card, EmptyState, ErrorBox, PageTitle, Spinner } from '../../components/ui'
+import { ChevronRightIcon } from '../../components/Icons'
+import {
+  Button,
+  Card,
+  EmptyState,
+  ErrorBox,
+  PageTitle,
+  ProgressBar,
+  SkeletonCard,
+  StatTile,
+} from '../../components/ui'
 import { AvailabilityBadge } from '../HomePage'
 
 export function AdminHomePage() {
+  const navigate = useNavigate()
   const { data, loading, error, reload } = useApi<Overview>('/api/admin/stats/overview')
 
-  if (loading) return <Spinner />
+  if (loading) return <SkeletonCard lines={4} />
   if (error) return <ErrorBox message={error} onRetry={reload} />
   if (!data) return null
 
-  const maxAttempts = Math.max(1, data.participantCount)
+  const total = Math.max(1, data.participantCount)
 
   return (
     <div className="space-y-4">
       <PageTitle subtitle={data.seasonName ?? 'Nenhuma temporada ativa'}>Visão geral</PageTitle>
 
-      <div className="grid grid-cols-2 gap-2">
-        <Tile label="Participantes" value={data.participantCount} />
-        <Tile label="Administradores" value={data.adminCount} />
+      <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+        <StatTile label="Participantes" value={data.participantCount} tone="brand" />
+        <StatTile label="Administradores" value={data.adminCount} />
+        <StatTile label="Rodadas publicadas" value={data.weeks.length} />
+        <StatTile
+          label="Participação média"
+          value={
+            data.weeks.length === 0
+              ? '—'
+              : `${Math.round(
+                  (data.weeks.reduce((sum, week) => sum + week.attempts, 0) /
+                    (data.weeks.length * total)) *
+                    100,
+                )}%`
+          }
+        />
       </div>
 
       {!data.seasonId ? (
         <EmptyState
           title="Nenhuma temporada ativa"
-          description="A temporada agrupa as rodadas e define o ranking premiado. E o primeiro passo."
+          description="A temporada agrupa as rodadas e define o ranking premiado. É o primeiro passo."
           action={
-            <Link
-              to="/admin/temporadas"
-              className="inline-flex min-h-11 items-center rounded-xl bg-brand-600 px-4 text-sm font-semibold text-white"
-            >
+            <Button size="lg" onClick={() => navigate('/admin/temporadas')}>
               Criar temporada
-            </Link>
+            </Button>
           }
         />
       ) : data.weeks.length === 0 ? (
@@ -40,58 +61,55 @@ export function AdminHomePage() {
           title="Nenhuma rodada publicada nesta temporada"
           description="Crie o rascunho da primeira semana, cadastre a lição e as perguntas."
           action={
-            <Link
-              to="/admin/rodadas"
-              className="inline-flex min-h-11 items-center rounded-xl bg-brand-600 px-4 text-sm font-semibold text-white"
-            >
+            <Button size="lg" onClick={() => navigate('/admin/rodadas')}>
               Criar rodada
-            </Link>
+            </Button>
           }
         />
       ) : (
-        <Card>
-          <h2 className="mb-3 text-sm font-semibold text-slate-700">Participação por semana</h2>
+        <Card padded={false}>
+          <h2 className="border-b border-slate-100 px-4 py-3 text-sm font-semibold text-slate-700 sm:px-5">
+            Participação por semana
+          </h2>
 
-          <ul className="space-y-3">
+          <ul className="divide-y divide-slate-100">
             {data.weeks.map((week) => (
               <li key={week.roundId}>
-                <div className="flex items-center justify-between gap-2 text-sm">
-                  <Link
-                    to={`/admin/rodadas/${week.roundId}/estatisticas`}
-                    className="min-w-0 truncate font-medium text-slate-800"
-                  >
-                    S{week.weekNumber}. {week.title}
-                  </Link>
-                  <div className="flex shrink-0 items-center gap-2">
-                    <AvailabilityBadge availability={week.availability} />
-                    <span className="tabular-nums text-slate-600">
+                <Link
+                  to={`/admin/rodadas/${week.roundId}/estatisticas`}
+                  className="block px-4 py-3 transition hover:bg-slate-50 sm:px-5"
+                >
+                  <div className="flex items-center justify-between gap-2">
+                    <span className="min-w-0 truncate text-sm font-semibold text-slate-800">
+                      S{week.weekNumber}. {week.title}
+                    </span>
+                    <span className="flex shrink-0 items-center gap-2">
+                      <AvailabilityBadge availability={week.availability} />
+                      <ChevronRightIcon className="h-4 w-4 text-slate-400" />
+                    </span>
+                  </div>
+
+                  <div className="mt-2 flex items-center gap-3">
+                    <ProgressBar
+                      value={week.attempts}
+                      max={total}
+                      label={`Participação na semana ${week.weekNumber}`}
+                      size="sm"
+                    />
+                    <span className="nums shrink-0 text-xs font-semibold text-slate-600">
                       {week.attempts}/{data.participantCount}
                     </span>
                   </div>
-                </div>
 
-                <div className="mt-1 h-2 overflow-hidden rounded-full bg-slate-200">
-                  <div
-                    className="h-full rounded-full bg-brand-500"
-                    style={{ width: `${Math.min(100, (week.attempts / maxAttempts) * 100)}%` }}
-                  />
-                </div>
-
-                <p className="mt-1 text-xs text-slate-500">Média de {week.averagePoints} pontos</p>
+                  <p className="nums mt-1 text-xs text-slate-500">
+                    Média de {week.averagePoints} pontos
+                  </p>
+                </Link>
               </li>
             ))}
           </ul>
         </Card>
       )}
-    </div>
-  )
-}
-
-function Tile({ label, value }: { label: string; value: number }) {
-  return (
-    <div className="rounded-2xl border border-slate-200 bg-white p-3 text-center shadow-sm">
-      <p className="text-xl font-bold text-slate-900">{value}</p>
-      <p className="text-xs text-slate-500">{label}</p>
     </div>
   )
 }

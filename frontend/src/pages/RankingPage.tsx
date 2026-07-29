@@ -1,9 +1,18 @@
 import { useMemo, useState } from 'react'
-import type { ReactNode } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { useApi } from '../api/hooks'
 import type { Ranking, RankingEntry, RoundListItem } from '../api/types'
-import { Avatar, Card, EmptyState, ErrorBox, PageTitle, Spinner } from '../components/ui'
+import {
+  Avatar,
+  Card,
+  EmptyState,
+  ErrorBox,
+  Field,
+  PageTitle,
+  SegmentedControl,
+  Select,
+  SkeletonCard,
+} from '../components/ui'
 import { formatDuration } from '../lib/format'
 
 type Tab = 'season' | 'round'
@@ -22,50 +31,55 @@ export function RankingPage() {
 
   const selectedRoundId = roundFromUrl ?? closedRounds[0]?.round.id ?? null
 
-  const path = tab === 'season' ? '/api/rankings/season' : selectedRoundId ? `/api/rankings/round/${selectedRoundId}` : null
+  const path =
+    tab === 'season'
+      ? '/api/rankings/season'
+      : selectedRoundId
+        ? `/api/rankings/round/${selectedRoundId}`
+        : null
+
   const ranking = useApi<Ranking>(path)
 
   return (
     <div className="space-y-4">
       <PageTitle subtitle="Pontuação acumulada e resultado das semanas encerradas">Ranking</PageTitle>
 
-      <div className="flex gap-2">
-        <TabButton active={tab === 'season'} onClick={() => setTab('season')}>
-          Temporada
-        </TabButton>
-        <TabButton active={tab === 'round'} onClick={() => setTab('round')}>
-          Semana
-        </TabButton>
-      </div>
+      <SegmentedControl<Tab>
+        label="Escopo do ranking"
+        value={tab}
+        onChange={setTab}
+        options={[
+          { value: 'season', label: 'Temporada' },
+          { value: 'round', label: 'Por semana' },
+        ]}
+      />
 
-      {tab === 'round' && (
-        <select
-          className="w-full rounded-xl border border-slate-300 bg-white px-3 py-2.5 text-sm"
-          value={selectedRoundId ?? ''}
-          onChange={(event) => setParams({ rodada: event.target.value })}
-        >
-          {closedRounds.length === 0 && <option value="">Nenhuma semana encerrada ainda</option>}
-          {closedRounds.map((item) => (
-            <option key={item.round.id} value={item.round.id}>
-              Semana {item.round.weekNumber} — {item.round.title}
-            </option>
-          ))}
-        </select>
+      {tab === 'round' && closedRounds.length > 0 && (
+        <Field label="Semana">
+          <Select
+            value={selectedRoundId ?? ''}
+            onChange={(event) => setParams({ rodada: event.target.value })}
+          >
+            {closedRounds.map((item) => (
+              <option key={item.round.id} value={item.round.id}>
+                Semana {item.round.weekNumber} — {item.round.title}
+              </option>
+            ))}
+          </Select>
+        </Field>
       )}
 
-      {ranking.loading && <Spinner />}
-      {ranking.error && <ErrorBox message={ranking.error} onRetry={ranking.reload} />}
-
-      {!ranking.loading && !ranking.error && ranking.data && (
-        <RankingList ranking={ranking.data} />
-      )}
-
-      {tab === 'round' && !selectedRoundId && (
+      {tab === 'round' && !selectedRoundId && !rounds.loading && (
         <EmptyState
           title="Nenhuma semana encerrada"
-          description="O ranking da semana aparece quando a rodada fecha."
+          description="O ranking da semana aparece quando a rodada fecha — assim ninguém vê a pontuação dos outros durante a semana."
         />
       )}
+
+      {ranking.loading && <SkeletonCard lines={5} />}
+      {ranking.error && <ErrorBox message={ranking.error} onRetry={ranking.reload} />}
+
+      {!ranking.loading && !ranking.error && ranking.data && <RankingList ranking={ranking.data} />}
     </div>
   )
 }
@@ -75,23 +89,25 @@ function RankingList({ ranking }: { ranking: Ranking }) {
     return <EmptyState title="Ainda não há pontuação registrada" />
   }
 
-  const podium = ranking.entries.slice(0, 3)
-  const rest = ranking.entries.slice(3)
+  const [first, second, third, ...rest] = ranking.entries
+  const podium = [second, first, third].filter(Boolean)
   const meOutsideList = ranking.me && !ranking.entries.some((entry) => entry.isMe) ? ranking.me : null
 
   return (
     <div className="space-y-3">
-      <Card>
-        <ul className="space-y-2">
-          {podium.map((entry) => (
-            <Row key={entry.participantId} entry={entry} highlightPodium />
-          ))}
-        </ul>
-      </Card>
+      {first && (
+        <Card elevated className="animate-rise">
+          <ul className="flex items-end justify-center gap-2 sm:gap-4">
+            {podium.map((entry) => (
+              <PodiumSpot key={entry.participantId} entry={entry} />
+            ))}
+          </ul>
+        </Card>
+      )}
 
       {rest.length > 0 && (
-        <Card>
-          <ul className="space-y-2">
+        <Card padded={false}>
+          <ul className="divide-y divide-slate-100">
             {rest.map((entry) => (
               <Row key={entry.participantId} entry={entry} />
             ))}
@@ -101,7 +117,9 @@ function RankingList({ ranking }: { ranking: Ranking }) {
 
       {meOutsideList && (
         <Card className="border-brand-300 bg-brand-50">
-          <p className="mb-2 text-xs font-semibold uppercase text-brand-700">Sua posição</p>
+          <p className="mb-1 text-xs font-semibold uppercase tracking-wide text-brand-700">
+            Sua posição
+          </p>
           <ul>
             <Row entry={meOutsideList} />
           </ul>
@@ -111,17 +129,49 @@ function RankingList({ ranking }: { ranking: Ranking }) {
   )
 }
 
-function Row({ entry, highlightPodium = false }: { entry: RankingEntry; highlightPodium?: boolean }) {
-  const medals = ['🥇', '🥈', '🥉']
+function PodiumSpot({ entry }: { entry: RankingEntry }) {
+  const medals: Record<number, { emoji: string; height: string; size: number }> = {
+    1: { emoji: '🥇', height: 'h-20', size: 64 },
+    2: { emoji: '🥈', height: 'h-14', size: 48 },
+    3: { emoji: '🥉', height: 'h-11', size: 48 },
+  }
+
+  const medal = medals[entry.position] ?? medals[3]
 
   return (
+    <li className="flex min-w-0 flex-1 flex-col items-center">
+      <span aria-hidden="true" className="text-xl">
+        {medal.emoji}
+      </span>
+
+      <Avatar name={entry.displayName} url={entry.avatarUrl} size={medal.size} ring />
+
+      <p className="mt-1.5 w-full truncate text-center text-xs font-semibold text-slate-800">
+        {entry.displayName}
+        {entry.isMe ? ' (você)' : ''}
+      </p>
+
+      <p className="nums text-sm font-bold text-brand-700">{entry.totalPoints}</p>
+
+      <div
+        className={`mt-1.5 w-full rounded-t-xl ${medal.height} ${
+          entry.isMe ? 'bg-brand-200' : 'bg-slate-100'
+        }`}
+        aria-hidden="true"
+      />
+    </li>
+  )
+}
+
+function Row({ entry }: { entry: RankingEntry }) {
+  return (
     <li
-      className={`flex items-center gap-3 rounded-xl px-2 py-2 ${
-        entry.isMe ? 'bg-brand-50 ring-1 ring-brand-200' : ''
+      className={`flex items-center gap-3 px-3 py-2.5 ${
+        entry.isMe ? 'bg-brand-50/70 ring-1 ring-inset ring-brand-200' : ''
       }`}
     >
-      <span className="w-8 text-center text-sm font-bold text-slate-500">
-        {highlightPodium && entry.position <= 3 ? medals[entry.position - 1] : `${entry.position}º`}
+      <span className="nums w-7 shrink-0 text-center text-sm font-bold text-slate-400">
+        {entry.position}
       </span>
 
       <Avatar name={entry.displayName} url={entry.avatarUrl} size={36} />
@@ -129,36 +179,14 @@ function Row({ entry, highlightPodium = false }: { entry: RankingEntry; highligh
       <div className="min-w-0 flex-1">
         <p className="truncate text-sm font-semibold text-slate-900">
           {entry.displayName}
-          {entry.isMe ? ' (Você)' : ''}
+          {entry.isMe ? ' (você)' : ''}
         </p>
-        <p className="text-xs text-slate-500">
+        <p className="nums text-xs text-slate-500">
           {entry.roundsPlayed} rodada(s) · {formatDuration(entry.totalTimeMs)}
         </p>
       </div>
 
-      <span className="text-base font-bold text-brand-700">{entry.totalPoints}</span>
+      <span className="nums shrink-0 text-base font-bold text-brand-700">{entry.totalPoints}</span>
     </li>
-  )
-}
-
-function TabButton({
-  active,
-  onClick,
-  children,
-}: {
-  active: boolean
-  onClick: () => void
-  children: ReactNode
-}) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      className={`min-h-11 flex-1 rounded-xl px-4 text-sm font-semibold ${
-        active ? 'bg-brand-600 text-white' : 'border border-slate-300 bg-white text-slate-600'
-      }`}
-    >
-      {children}
-    </button>
   )
 }

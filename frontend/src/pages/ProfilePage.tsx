@@ -4,7 +4,7 @@ import { api } from '../api/client'
 import { useMutation } from '../api/hooks'
 import type { Me } from '../api/types'
 import { useSession } from '../auth/SessionContext'
-import { Avatar, Button, Card, ErrorBox, Field, Input, PageTitle } from '../components/ui'
+import { Avatar, Badge, Button, Callout, Card, ErrorBox, Field, Input, PageTitle } from '../components/ui'
 
 export function ProfilePage() {
   const { me, setMe, logout } = useSession()
@@ -30,13 +30,35 @@ export function ProfilePage() {
     navigate('/entrar', { replace: true })
   })
 
+  const dirty = displayName.trim() !== (me?.displayName ?? '')
+
   return (
-    <div className="space-y-4">
+    <div className="mx-auto max-w-lg space-y-4">
       <PageTitle subtitle="Como você aparece para o restante do GC">Meu perfil</PageTitle>
+
+      <Card elevated>
+        <div className="flex items-center gap-4">
+          <Avatar name={me?.displayName ?? '?'} url={me?.avatarUrl} size={64} ring />
+
+          <div className="min-w-0">
+            <p className="truncate text-lg font-bold text-slate-900">{me?.displayName}</p>
+            <div className="mt-1 flex flex-wrap gap-1.5">
+              {me?.room ? <Badge tone="info">{me.room.name}</Badge> : <Badge>Sem sala</Badge>}
+              {me?.isAdmin ? <Badge tone="success">Administrador</Badge> : null}
+            </div>
+          </div>
+        </div>
+
+        <p className="mt-3 text-xs leading-relaxed text-slate-500">
+          {me?.avatarUrl
+            ? 'Sua foto vem da sua conta do Google — para trocar, troque por lá.'
+            : 'Entre com o Google para que sua foto apareça aqui e no ranking.'}
+        </p>
+      </Card>
 
       <Card>
         <form
-          className="space-y-3"
+          className="space-y-4"
           onSubmit={(event) => {
             event.preventDefault()
             setSaved(false)
@@ -44,29 +66,27 @@ export function ProfilePage() {
           }}
         >
           {save.error ? <ErrorBox message={save.error} /> : null}
-          {saved ? <p className="rounded-xl bg-emerald-50 p-3 text-sm text-emerald-800">Perfil atualizado.</p> : null}
+          {saved && !dirty ? (
+            <Callout tone="success" live>
+              Perfil atualizado.
+            </Callout>
+          ) : null}
 
-          <div className="flex items-center gap-3 rounded-xl bg-slate-50 p-3">
-            <Avatar name={me?.displayName ?? '?'} url={me?.avatarUrl} size={48} />
-            <p className="text-xs text-slate-600">
-              {me?.avatarUrl
-                ? 'Sua foto vem da sua conta do Google. Para trocar, troque a foto por lá.'
-                : 'Entre com o Google para que sua foto apareça aqui e no ranking.'}
-            </p>
-          </div>
-
-          <Field label="Nome de exibição" hint="É o nome que aparece no ranking.">
+          <Field label="Nome de exibição" hint="É o nome que aparece no ranking para todo o GC.">
             <Input
               required
               minLength={2}
               maxLength={40}
               value={displayName}
-              onChange={(event) => setDisplayName(event.target.value)}
+              onChange={(event) => {
+                setDisplayName(event.target.value)
+                setSaved(false)
+              }}
             />
           </Field>
 
-          <Button type="submit" full loading={save.loading}>
-            Salvar
+          <Button type="submit" full loading={save.loading} disabled={!dirty}>
+            {dirty ? 'Salvar alterações' : 'Nada para salvar'}
           </Button>
         </form>
       </Card>
@@ -83,20 +103,20 @@ export function ProfilePage() {
         </Button>
       </Card>
 
-      <Card className="border-red-200">
+      <Card className="border-red-200/80">
         <h2 className="text-sm font-semibold text-red-700">Excluir minha conta</h2>
-        <p className="mt-1 text-xs text-slate-600">
-          Seu nome sai do ranking e seus dados pessoais são apagados. As pontuações das rodadas continuam
-          contabilizadas de forma anônima.
+        <p className="mt-1 text-xs leading-relaxed text-slate-600">
+          Seu nome sai do ranking e seus dados pessoais são apagados. As pontuações das rodadas
+          continuam contabilizadas de forma anônima.
         </p>
 
         {!confirmingDelete ? (
-          <Button variant="danger" className="mt-3" onClick={() => setConfirmingDelete(true)}>
+          <Button variant="secondary" size="sm" className="mt-3" onClick={() => setConfirmingDelete(true)}>
             Quero excluir
           </Button>
         ) : (
           <form
-            className="mt-3 space-y-3"
+            className="mt-4 space-y-3"
             onSubmit={(event) => {
               event.preventDefault()
               void remove.run()
@@ -105,11 +125,20 @@ export function ProfilePage() {
             {remove.error ? <ErrorBox message={remove.error} /> : null}
 
             <Field label={`Digite "${me?.displayName}" para confirmar`}>
-              <Input value={confirmation} onChange={(event) => setConfirmation(event.target.value)} required />
+              <Input
+                value={confirmation}
+                onChange={(event) => setConfirmation(event.target.value)}
+                required
+              />
             </Field>
 
             <div className="flex gap-2">
-              <Button type="submit" variant="danger" loading={remove.loading}>
+              <Button
+                type="submit"
+                variant="danger"
+                loading={remove.loading}
+                disabled={confirmation.trim().toLowerCase() !== (me?.displayName ?? '').toLowerCase()}
+              >
                 Excluir definitivamente
               </Button>
               <Button type="button" variant="ghost" onClick={() => setConfirmingDelete(false)}>
