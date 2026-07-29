@@ -1,6 +1,3 @@
-// Espelho dos contratos da API (backend/src/Domus.Api/Common/Contracts.cs).
-// Mantido a mao de proposito: o contrato e pequeno e assim ele fica explicito.
-
 export type RoundAvailability = 'Draft' | 'Scheduled' | 'Open' | 'Closed'
 export type RoundStatus = 'Draft' | 'Published'
 export type AttemptStatus = 'InProgress' | 'Completed'
@@ -194,8 +191,6 @@ export interface RoundDetail {
   serverNow: string
 }
 
-// ---------------------------------------------------------------- administracao
-
 export interface PodiumEntry {
   position: number
   displayName: string
@@ -246,7 +241,7 @@ export interface AdminRound {
   questions: AdminQuestion[]
   problems: string[]
   attemptCount: number
-  /** RN-10: rascunho, ou publicada que ainda não abriu. */
+
   canEdit: boolean
   canDelete: boolean
 }
@@ -264,7 +259,6 @@ export interface AdminParticipant {
   lastAttemptAt?: string | null
 }
 
-/** Devolvida uma única vez pelo endpoint de redefinição: não fica armazenada em texto claro. */
 export interface ResetPasswordResult {
   displayName: string
   temporaryPassword: string
@@ -317,10 +311,7 @@ export interface Overview {
   weeks: WeekParticipation[]
 }
 
-// ---------------------------------------------------------------- ferramentas de teste
-
 export interface ToolsDiagnostics {
-  /** Falso quando DevTools__Enabled não está ligado: as ações ficam bloqueadas. */
   enabled: boolean
   environment: string
   serverNowUtc: string

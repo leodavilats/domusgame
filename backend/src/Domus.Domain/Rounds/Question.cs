@@ -9,7 +9,6 @@ public enum QuestionMediaType
     Audio = 2
 }
 
-/// <summary>Alternativa de resposta. So faz sentido dentro de uma pergunta.</summary>
 public sealed class AnswerOption : Entity
 {
     private AnswerOption() : base() => Text = string.Empty;
@@ -31,10 +30,8 @@ public sealed class AnswerOption : Entity
     internal void SetOrder(int order) => Order = order;
 }
 
-/// <summary>Um rascunho de alternativa, usado ao criar ou substituir as alternativas de uma pergunta.</summary>
 public readonly record struct AnswerOptionDraft(string Text, bool IsCorrect);
 
-/// <summary>Pergunta de multipla escolha de uma rodada.</summary>
 public sealed class Question : Entity
 {
     public const int MinOptions = 2;
@@ -62,14 +59,12 @@ public sealed class Question : Entity
 
     public Guid RoundId { get; private set; }
 
-    /// <summary>Posição na rodada, contigua e iniciando em 1 (I-R4).</summary>
     public int Order { get; private set; }
 
     public string Text { get; private set; }
     public QuestionMediaType MediaType { get; private set; }
     public string? MediaUrl { get; private set; }
 
-    /// <summary>Exibida ao participante apenas depois do encerramento da rodada (RN-21).</summary>
     public string? Explanation { get; private set; }
 
     public IReadOnlyList<AnswerOption> Options => _options;
@@ -105,7 +100,6 @@ public sealed class Question : Entity
         ReplaceOptions(options);
     }
 
-    /// <summary>I-Q3: 2 a 5 alternativas, exatamente uma correta.</summary>
     internal void ReplaceOptions(IReadOnlyList<AnswerOptionDraft> options)
     {
         Guard.Requires(
@@ -132,7 +126,6 @@ public sealed class Question : Entity
     {
         var url = Guard.OptionalAbsoluteUrl(mediaUrl, "URL da midia", 500);
 
-        // I-Q2: midia declarada exige URL; sem midia, a URL e descartada.
         if (mediaType == QuestionMediaType.None) return (QuestionMediaType.None, null);
 
         Guard.Requires(url is not null, "Informe a URL da imagem ou do audio.");

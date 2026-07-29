@@ -2,17 +2,6 @@ using Npgsql;
 
 namespace Domus.Api.Common;
 
-/// <summary>
-/// Resolve a conexao com o Postgres a partir da configuracao.
-///
-/// Aceita duas formas, nesta ordem:
-///   1. ConnectionStrings__Postgres  - formato ADO.NET ("Host=...;Database=...")
-///   2. DATABASE_URL                 - URI "postgresql://usuário:senha@host:porta/banco"
-///      (formato que Railway, Render, Fly, Heroku e Neon expoem por padrao)
-///
-/// Não existe valor padrao em producao: sem configuracao a aplicacao falha imediatamente com
-/// uma mensagem clara, em vez de tentar um localhost que nunca vai existir dentro do container.
-/// </summary>
 public static class DatabaseConnection
 {
     public static string Resolve(IConfiguration configuration)
@@ -29,7 +18,6 @@ public static class DatabaseConnection
             "ou DATABASE_URL (formato postgresql://usuário:senha@host:5432/banco).");
     }
 
-    /// <summary>Descricao segura para log: host, porta e banco, nunca a senha.</summary>
     public static string Describe(string connectionString)
     {
         try
@@ -60,9 +48,6 @@ public static class DatabaseConnection
             Database = uri.AbsolutePath.Trim('/'),
             Username = Uri.UnescapeDataString(credentials[0]),
             Password = credentials.Length > 1 ? Uri.UnescapeDataString(credentials[1]) : string.Empty,
-
-            // Prefer cifra quando o servidor oferece TLS e continua funcionando quando não ha
-            // (caso do Postgres interno de algumas plataformas, em rede privada).
             SslMode = ParseSslMode(uri.Query)
         };
 

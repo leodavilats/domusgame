@@ -2,10 +2,6 @@ using Domus.Domain.Common;
 
 namespace Domus.Domain.Rounds;
 
-/// <summary>
-/// Parametros de pontuacao da rodada. Copiados para dentro da tentativa no inicio dela,
-/// para que o historico nunca mude se a rodada for reconfigurada (RN-28).
-/// </summary>
 public sealed class RoundScoringSettings
 {
     public const int DefaultPointsPerCorrectAnswer = 10;

@@ -40,7 +40,7 @@ export function AdminRoundEditorPage() {
   if (!round.data) return null
 
   const data = round.data
-  // RN-10: o servidor decide (rascunho, ou publicada que ainda não abriu).
+
   const editable = data.canEdit
 
   return (
@@ -87,8 +87,6 @@ export function AdminRoundEditorPage() {
     </div>
   )
 }
-
-// ---------------------------------------------------------------- lição
 
 function LessonEditor({
   round,
@@ -188,8 +186,6 @@ function LessonEditor({
     </Card>
   )
 }
-
-// ---------------------------------------------------------------- perguntas
 
 function QuestionsEditor({
   round,
@@ -448,9 +444,6 @@ function QuestionForm({
   )
 }
 
-// ---------------------------------------------------------------- publicacao
-
-/** Exclusao definitiva: so enquanto a rodada não abriu e não tem participações. */
 function DangerCard({ round }: { round: AdminRound }) {
   const navigate = useNavigate()
 
@@ -460,7 +453,6 @@ function DangerCard({ round }: { round: AdminRound }) {
   })
 
   if (!round.canDelete) {
-    // Sem o botao, mas com o motivo: silencio faria o admin procurar o que não existe.
     if (!round.canEdit) return null
 
     return (

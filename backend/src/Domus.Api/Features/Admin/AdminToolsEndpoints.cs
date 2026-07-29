@@ -12,8 +12,6 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Domus.Api.Features.Admin;
 
-// ---------------------------------------------------------------------- contratos
-
 public sealed record ToolsDiagnosticsDto(
     bool Enabled,
     string Environment,
@@ -38,16 +36,6 @@ public sealed record SimulateRequest(int Count);
 
 public sealed record ToolActionResultDto(string Message);
 
-/// <summary>
-/// Ferramentas de teste do painel administrativo.
-///
-/// **Desligadas por padrao.** Só existem com `DevTools__Enabled=true`, e as acoes destrutivas
-/// exigem uma frase de confirmacao no corpo da requisicao. O motivo e simples: um botao
-/// "limpar tudo" ao lado das telas de uso diario apaga o historico do GC em um toque errado.
-///
-/// O diagnostico e a auditoria continuam disponiveis mesmo com as ferramentas desligadas:
-/// sao leitura e ajudam a entender o estado do ambiente.
-/// </summary>
 public static class AdminToolsEndpoints
 {
     public const string ResetConfirmationPhrase = "LIMPAR";
@@ -66,8 +54,6 @@ public static class AdminToolsEndpoints
         group.MapDelete("/rounds/{id:guid}/my-attempt", DeleteMyAttemptAsync);
         group.MapPost("/reset", ResetAsync);
     }
-
-    // ------------------------------------------------------------------ leitura
 
     private static async Task<IResult> DiagnosticsAsync(
         IConfiguration configuration,
@@ -105,16 +91,6 @@ public static class AdminToolsEndpoints
         return Results.Ok(entries);
     }
 
-    // ------------------------------------------------------------------ temporada de teste
-
-    /// <summary>
-    /// Cria uma temporada com tres rodadas de um dia — uma encerrada, uma aberta e uma agendada —
-    /// para exercitar gabarito, ranking e contagem regressiva sem esperar uma semana.
-    ///
-    /// As perguntas cobrem as variacoes que a producao vai ter: 2 a 5 alternativas, sem midia,
-    /// com imagem e com audio. A midia e servida pelo proprio app (wwwroot), para nao depender
-    /// de link externo que pode sair do ar.
-    /// </summary>
     private static async Task<IResult> CreateTestSeasonAsync(
         HttpContext http,
         IConfiguration configuration,
@@ -136,7 +112,6 @@ public static class AdminToolsEndpoints
 
         db.Seasons.Add(season);
 
-        // Janelas de um dia, sem sobreposicao (RN-12).
         var rounds = new[]
         {
             BuildRound(season.Id, 1, "Rodada encerrada (para ver gabarito)", now.AddDays(-2), now.AddDays(-1), now, baseUrl),
@@ -183,7 +158,6 @@ public static class AdminToolsEndpoints
                 null),
             now);
 
-        // 1. simples, sem midia
         round.AddQuestion(
             "Quanto é 2 + 2?",
             QuestionMediaType.None, null,
@@ -196,7 +170,6 @@ public static class AdminToolsEndpoints
             ],
             now);
 
-        // 2. com imagem
         round.AddQuestion(
             "Na imagem, qual é a cor do sol desenhado?",
             QuestionMediaType.Image, $"{baseUrl}/exemplo-imagem.svg",
@@ -208,7 +181,6 @@ public static class AdminToolsEndpoints
             ],
             now);
 
-        // 3. com audio
         round.AddQuestion(
             "No áudio, quantas notas você ouve?",
             QuestionMediaType.Audio, $"{baseUrl}/exemplo-audio.wav",
@@ -220,7 +192,6 @@ public static class AdminToolsEndpoints
             ],
             now);
 
-        // 4. minimo de alternativas
         round.AddQuestion(
             "O céu, em um dia claro, é azul?",
             QuestionMediaType.None, null,
@@ -231,7 +202,6 @@ public static class AdminToolsEndpoints
             ],
             now);
 
-        // 5. maximo de alternativas
         round.AddQuestion(
             "Qual destes é um dia da semana?",
             QuestionMediaType.None, null,
@@ -248,8 +218,6 @@ public static class AdminToolsEndpoints
         round.Publish(now);
         return round;
     }
-
-    // ------------------------------------------------------------------ janela da rodada
 
     private static Task<IResult> OpenNowAsync(
         Guid id, IConfiguration configuration, CurrentUser currentUser,
@@ -299,12 +267,6 @@ public static class AdminToolsEndpoints
             : "Rodada encerrada agora. Gabarito e ranking liberados."));
     }
 
-    // ------------------------------------------------------------------ tentativas
-
-    /// <summary>
-    /// A tentativa é única (RN-14), o que torna testar o quiz duas vezes impossível sem isto.
-    /// Apaga apenas a tentativa de quem está pedindo.
-    /// </summary>
     private static async Task<IResult> DeleteMyAttemptAsync(
         Guid id,
         IConfiguration configuration,
@@ -325,7 +287,6 @@ public static class AdminToolsEndpoints
             : "Sua tentativa foi apagada. Você pode responder de novo."));
     }
 
-    /// <summary>Popula ranking e estatísticas com participações fictícias, usando as regras reais.</summary>
     private static async Task<IResult> SimulateAsync(
         Guid id,
         SimulateRequest request,
@@ -345,8 +306,6 @@ public static class AdminToolsEndpoints
 
         Guard.State(round.Questions.Count > 0, "A rodada não tem perguntas.");
 
-        // A simulação usa o instante em que a rodada esteve aberta, e não "agora": assim
-        // funciona também para uma rodada já encerrada.
         var startedAt = round.OpensAt.AddMinutes(1);
         Guard.State(startedAt < round.ClosesAt, "Janela da rodada muito curta para simular.");
 
@@ -365,7 +324,6 @@ public static class AdminToolsEndpoints
             db.Participants.Add(participant);
             await db.SaveChangesAsync(ct);
 
-            // Desempenhos variados para o ranking não ficar plano.
             var accuracy = 0.4 + (i % 7) * 0.1;
             var seconds = 3 + (i % 5) * 6;
 
@@ -412,12 +370,6 @@ public static class AdminToolsEndpoints
         return attempt;
     }
 
-    // ------------------------------------------------------------------ limpeza
-
-    /// <summary>
-    /// Tres escopos, do menos para o mais destrutivo. Administradores e a configuracao do GC
-    /// nunca sao apagados: sem eles ninguem entra no sistema para consertar o estrago.
-    /// </summary>
     private static async Task<IResult> ResetAsync(
         ResetRequest request,
         IConfiguration configuration,
@@ -428,8 +380,6 @@ public static class AdminToolsEndpoints
     {
         EnsureEnabled(configuration);
 
-        // Validar ANTES de apagar qualquer coisa: um escopo com erro de digitacao nao pode
-        // levar as tentativas embora no caminho.
         var scope = (request.Scope ?? string.Empty).Trim().ToLowerInvariant();
 
         if (scope is not ("attempts" or "content" or "all"))
@@ -448,7 +398,6 @@ public static class AdminToolsEndpoints
         var seasons = 0;
         var participants = 0;
 
-        // A ordem respeita as chaves estrangeiras: tentativas, depois conteudo, depois pessoas.
         var attempts = await db.Attempts.ExecuteDeleteAsync(ct);
 
         if (scope is "content" or "all")
@@ -472,7 +421,6 @@ public static class AdminToolsEndpoints
                     .Where(p => removable.Contains(p.Id))
                     .ExecuteDeleteAsync(ct);
 
-                // As credenciais e logins saem em cascata a partir de AspNetUsers.
                 await db.Users.Where(u => removable.Contains(u.Id)).ExecuteDeleteAsync(ct);
             }
         }
@@ -486,8 +434,6 @@ public static class AdminToolsEndpoints
 
         return Results.Ok(new ResetResultDto(scope, seasons, rounds, attempts, participants));
     }
-
-    // ------------------------------------------------------------------ apoio
 
     private static bool IsEnabled(IConfiguration configuration) =>
         configuration.GetValue("DevTools:Enabled", false);

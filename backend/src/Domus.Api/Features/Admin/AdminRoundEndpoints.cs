@@ -179,8 +179,6 @@ public static class AdminRoundEndpoints
 
         await EnsureWeekIsFreeAsync(db, round, ct);
 
-        // Editar a janela de uma rodada ja publicada pode criar sobreposicao (RN-12), o que
-        // antes so era verificado na publicacao.
         if (round.IsPublished) await EnsureWindowDoesNotOverlapAsync(db, round, ct);
 
         await db.SaveChangesAsync(ct);
@@ -202,8 +200,6 @@ public static class AdminRoundEndpoints
             round.IsEditableAt(queries.Now),
             "Rodada que já abriu não pode ser excluída.");
 
-        // Cinto e suspensorio: uma rodada agendada nao deveria ter tentativas, mas apagar
-        // participacoes por acidente e irreversivel.
         var attempts = await db.Attempts.AsNoTracking().CountAsync(a => a.RoundId == round.Id, ct);
         Guard.State(attempts == 0, "Esta rodada já tem participações e não pode ser excluída.");
 
@@ -238,7 +234,6 @@ public static class AdminRoundEndpoints
         return Results.Ok(round.ValidateForPublish());
     }
 
-    /// <summary>UC-24: valida o agregado e tambem as regras entre rodadas (RN-11, RN-12).</summary>
     private static async Task<IResult> PublishAsync(
         Guid id,
         CurrentUser currentUser,
@@ -287,8 +282,6 @@ public static class AdminRoundEndpoints
 
         return Results.Created($"/api/admin/rounds/{copy.Id}", await ToDetailAsync(db, queries, copy, ct));
     }
-
-    // ------------------------------------------------------------------ perguntas
 
     private static async Task<IResult> AddQuestionAsync(
         Guid id,
@@ -355,8 +348,6 @@ public static class AdminRoundEndpoints
         return Results.Ok(await ToDetailAsync(db, queries, round, ct));
     }
 
-    // ------------------------------------------------------------------ apoio
-
     private static IReadOnlyList<AnswerOptionDraft> ToDrafts(IReadOnlyList<OptionRequest>? options) =>
         options is null
             ? []
@@ -393,7 +384,6 @@ public static class AdminRoundEndpoints
             round.IsEditableAt(queries.Now) && attemptCount == 0);
     }
 
-    /// <summary>RN-11.</summary>
     private static async Task EnsureWeekIsFreeAsync(DomusDbContext db, Round round, CancellationToken ct)
     {
         var duplicated = await db.Rounds.AsNoTracking().AnyAsync(
@@ -405,7 +395,6 @@ public static class AdminRoundEndpoints
         }
     }
 
-    /// <summary>RN-12: garante que so exista uma rodada aberta por vez.</summary>
     private static async Task EnsureWindowDoesNotOverlapAsync(DomusDbContext db, Round round, CancellationToken ct)
     {
         var overlapping = await db.Rounds.AsNoTracking().AnyAsync(

@@ -30,7 +30,6 @@ public sealed class AttemptConfiguration : IEntityTypeConfiguration<Attempt>
         builder.Ignore(a => a.MaxPoints);
         builder.Ignore(a => a.NextQuestionOrder);
 
-        // RN-28: parametros congelados no inicio da tentativa.
         builder.OwnsOne(a => a.Scoring, scoring =>
         {
             scoring.Property(s => s.PointsPerCorrectAnswer).HasColumnName("Scoring_PointsPerCorrectAnswer").IsRequired();
@@ -57,7 +56,6 @@ public sealed class AttemptConfiguration : IEntityTypeConfiguration<Attempt>
             .HasForeignKey(a => a.ParticipantId)
             .OnDelete(DeleteBehavior.Restrict);
 
-        // RN-14 / RNF-04: a garantia real da tentativa única esta aqui, no banco.
         builder.HasIndex(a => new { a.RoundId, a.ParticipantId })
             .IsUnique()
             .HasDatabaseName("UX_Attempts_RoundParticipant");
@@ -99,7 +97,6 @@ public sealed class AttemptAnswerConfiguration : IEntityTypeConfiguration<Attemp
             .HasForeignKey(a => a.SelectedOptionId)
             .OnDelete(DeleteBehavior.Restrict);
 
-        // RNF-05: idempotencia do envio de resposta.
         builder.HasIndex(a => new { a.AttemptId, a.QuestionId })
             .IsUnique()
             .HasDatabaseName("UX_AttemptAnswers_AttemptQuestion");

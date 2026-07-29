@@ -4,11 +4,6 @@ using Xunit;
 
 namespace Domus.Api.Tests;
 
-/// <summary>
-/// As ferramentas de teste apagam dados. O que mais importa aqui e provar que elas ficam
-/// **trancadas** quando `DevTools__Enabled` nao esta ligado — e que a frase de confirmacao
-/// nao e decorativa.
-/// </summary>
 [Collection(ApiCollection.Name)]
 public class AdminToolsTests(ApiFixture fixture)
 {
@@ -28,7 +23,6 @@ public class AdminToolsTests(ApiFixture fixture)
         Assert.Equal(HttpStatusCode.Forbidden, limpar.StatusCode);
     }
 
-    /// <summary>Leitura continua liberada: e ela que explica por que as acoes nao funcionam.</summary>
     [Fact]
     public async Task Diagnostico_funciona_mesmo_desligado_e_informa_o_estado()
     {
@@ -78,7 +72,6 @@ public class AdminToolsTests(ApiFixture fixture)
         Assert.Contains("Open", disponibilidades);
         Assert.Contains("Scheduled", disponibilidades);
 
-        // A rodada aberta precisa trazer as variacoes de midia e de quantidade de alternativas.
         var abertaId = rounds.EnumerateArray()
             .First(r => r.GetProperty("round").GetProperty("availability").GetString() == "Open")
             .GetProperty("round").GetProperty("id").GetGuid();
@@ -92,7 +85,6 @@ public class AdminToolsTests(ApiFixture fixture)
         Assert.Contains(perguntas, q => q.GetProperty("options").GetArrayLength() == 2);
         Assert.Contains(perguntas, q => q.GetProperty("options").GetArrayLength() == 5);
 
-        // Toda pergunta segue a invariante de exatamente uma correta.
         Assert.All(perguntas, q => Assert.Single(
             q.GetProperty("options").EnumerateArray(),
             o => o.GetProperty("isCorrect").GetBoolean()));
@@ -137,7 +129,6 @@ public class AdminToolsTests(ApiFixture fixture)
         Assert.Equal(4, entradas.Count);
         Assert.All(entradas, e => Assert.True(e.GetProperty("totalPoints").GetInt32() >= 0));
 
-        // Desempenhos variados: o ranking nao pode sair todo empatado.
         var pontuacoes = entradas.Select(e => e.GetProperty("totalPoints").GetInt32()).Distinct().Count();
         Assert.True(pontuacoes > 1, "A simulação deveria gerar pontuações diferentes.");
     }
@@ -148,16 +139,13 @@ public class AdminToolsTests(ApiFixture fixture)
         var admin = await fixture.LoginAsToolsAdminAsync();
         var round = await RoundBuilder.CreateOpenRoundAsync(admin, "ferramentas-refazer", questionCount: 2);
 
-        // O admin responde a rodada.
         (await admin.PostAsync($"/api/rounds/{round.RoundId}/attempts", null)).EnsureSuccessStatusCode();
 
-        // Outra pessoa tambem.
         await admin.PostAsJsonAsync($"/api/admin/tools/rounds/{round.RoundId}/simulate", new { count = 2 });
 
         var apagar = await admin.DeleteAsync($"/api/admin/tools/rounds/{round.RoundId}/my-attempt");
         apagar.EnsureSuccessStatusCode();
 
-        // A minha saiu; as outras ficaram.
         var minha = await admin.GetAsync($"/api/rounds/{round.RoundId}/attempts/current");
         var detalhe = await (await admin.GetAsync($"/api/admin/rounds/{round.RoundId}")).ReadJsonAsync();
 
@@ -202,11 +190,6 @@ public class AdminToolsTests(ApiFixture fixture)
         Assert.Equal(2, detalhe.GetProperty("attemptCount").GetInt32());
     }
 
-    /// <summary>
-    /// Escopo mais brando de proposito: os outros apagariam o que os demais testes desta
-    /// colecao acabaram de criar. O comportamento de `content` e `all` esta coberto pela
-    /// validacao de escopo e pela verificacao de que administradores sobrevivem.
-    /// </summary>
     [Fact]
     public async Task Limpeza_de_tentativas_zera_participacoes_e_preserva_o_administrador()
     {
@@ -226,7 +209,6 @@ public class AdminToolsTests(ApiFixture fixture)
         var detalhe = await (await admin.GetAsync($"/api/admin/rounds/{round.RoundId}")).ReadJsonAsync();
         Assert.Equal(0, detalhe.GetProperty("attemptCount").GetInt32());
 
-        // O administrador continua de pe: a sessao ainda vale e a rodada segue existindo.
         var eu = await admin.GetAsync("/api/auth/me");
         Assert.Equal(HttpStatusCode.OK, eu.StatusCode);
     }

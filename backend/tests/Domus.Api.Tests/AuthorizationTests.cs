@@ -64,7 +64,6 @@ public class AuthorizationTests(ApiFixture fixture)
         Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
     }
 
-    /// <summary>RN-10: da abertura em diante a rodada e imutavel.</summary>
     [Fact]
     public async Task Rodada_aberta_nao_aceita_edicao()
     {
@@ -111,7 +110,6 @@ public class AuthorizationTests(ApiFixture fixture)
         Assert.Equal(HttpStatusCode.Conflict, duplicated.StatusCode);
     }
 
-    /// <summary>RN-12: garante que so exista uma rodada aberta por vez.</summary>
     [Fact]
     public async Task Publicacao_bloqueia_janela_sobreposta()
     {
@@ -167,7 +165,6 @@ public class AuthorizationTests(ApiFixture fixture)
         Assert.NotEqual(first, actives[0]);
     }
 
-    /// <summary>RN-10: rodada publicada que ainda nao abriu continua editavel.</summary>
     [Fact]
     public async Task Rodada_agendada_aceita_edicao_e_exclusao()
     {
@@ -184,7 +181,6 @@ public class AuthorizationTests(ApiFixture fixture)
         Assert.True(published.GetProperty("canEdit").GetBoolean());
         Assert.True(published.GetProperty("canDelete").GetBoolean());
 
-        // Editar titulo e janela de uma rodada agendada.
         var update = await admin.PutAsJsonAsync($"/api/admin/rounds/{roundId}", new
         {
             weekNumber = 1,
@@ -197,7 +193,6 @@ public class AuthorizationTests(ApiFixture fixture)
         });
         update.EnsureSuccessStatusCode();
 
-        // Acrescentar pergunta em rodada agendada.
         var question = await admin.PostAsJsonAsync($"/api/admin/rounds/{roundId}/questions", new
         {
             text = "Pergunta acrescentada apos publicar?",
@@ -217,7 +212,6 @@ public class AuthorizationTests(ApiFixture fixture)
         Assert.Equal(3, detail.GetProperty("questions").GetArrayLength());
         Assert.Equal("Published", detail.GetProperty("status").GetString());
 
-        // E excluir, ja que ninguem respondeu.
         var delete = await admin.DeleteAsync($"/api/admin/rounds/{roundId}");
         Assert.Equal(HttpStatusCode.NoContent, delete.StatusCode);
 
@@ -239,9 +233,6 @@ public class AuthorizationTests(ApiFixture fixture)
         Assert.Equal(HttpStatusCode.Conflict, delete.StatusCode);
     }
 
-    /// <summary>
-    /// Sem servico de e-mail, a redefinicao pelo admin e o unico caminho de recuperacao.
-    /// </summary>
     [Fact]
     public async Task Admin_redefine_senha_e_a_antiga_deixa_de_valer()
     {

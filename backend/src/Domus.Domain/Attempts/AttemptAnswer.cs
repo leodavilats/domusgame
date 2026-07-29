@@ -5,22 +5,13 @@ namespace Domus.Domain.Attempts;
 
 public enum AnswerOutcome
 {
-    /// <summary>Pergunta entregue, aguardando resposta.</summary>
     Pending = 0,
     Correct = 1,
     Incorrect = 2,
-
-    /// <summary>Enviada sem escolher alternativa (cronometro zerou no cliente).</summary>
     Blank = 3,
-
-    /// <summary>Prazo estourado: não pontua (RN-18).</summary>
     TimedOut = 4
 }
 
-/// <summary>
-/// Resposta de uma pergunta dentro de uma tentativa. Guarda o instante em que a pergunta foi
-/// entregue pelo servidor, o tempo gasto e os pontos calculados no momento do envio (RN-28).
-/// </summary>
 public sealed class AttemptAnswer : Entity
 {
     private AttemptAnswer() : base() { }
@@ -38,10 +29,8 @@ public sealed class AttemptAnswer : Entity
     public Guid AttemptId { get; private set; }
     public Guid QuestionId { get; private set; }
 
-    /// <summary>Denormalizado para ordenar a revisao sem join.</summary>
     public int QuestionOrder { get; private set; }
 
-    /// <summary>Relogio do servidor no instante da entrega (RNF-03).</summary>
     public DateTimeOffset ServedAt { get; private set; }
 
     public DateTimeOffset? AnsweredAt { get; private set; }
@@ -68,7 +57,6 @@ public sealed class AttemptAnswer : Entity
 
     internal void Resolve(Question question, Guid? selectedOptionId, DateTimeOffset now, RoundScoringSettings scoring)
     {
-        // I-A4: resposta resolvida e imutavel.
         Guard.State(IsPending, "Esta pergunta ja foi respondida.");
 
         var elapsed = ElapsedSince(now);
@@ -97,7 +85,6 @@ public sealed class AttemptAnswer : Entity
         SpeedBonus = ScoringPolicy.SpeedBonus(option.IsCorrect, elapsed, scoring);
     }
 
-    /// <summary>I-A7: tempo esgotado conta o limite cheio, para não premiar quem abandona (RN-29).</summary>
     internal void MarkTimedOut(DateTimeOffset now, RoundScoringSettings scoring)
     {
         if (!IsPending) return;

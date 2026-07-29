@@ -91,10 +91,6 @@ public static class AdminSeasonEndpoints
         return Results.Ok(ToDto(season, 0, 0));
     }
 
-    /// <summary>
-    /// RN-02. Desativamos a anterior em uma gravacao separada: o indice único parcial
-    /// não tolera duas temporadas ativas nem por um instante dentro da transacao.
-    /// </summary>
     private static async Task<IResult> ActivateAsync(
         Guid id,
         CurrentUser currentUser,
@@ -105,12 +101,9 @@ public static class AdminSeasonEndpoints
         var season = await LoadAsync(db, id, ct);
         if (season.Status == SeasonStatus.Active) return Results.Ok(ToDto(season, 0, 0));
 
-        // Criada fora da estrategia para que uma retentativa não gere duas linhas de auditoria.
         var audit = AuditLogEntry.Record(
             currentUser.Id, currentUser.DisplayName, AuditLogEntry.Actions.SeasonActivated, season.Name, clock.GetUtcNow());
 
-        // Com EnableRetryOnFailure, transacoes explicitas precisam rodar dentro da execution
-        // strategy - caso contrario o EF recusa a operação inteira.
         var strategy = db.Database.CreateExecutionStrategy();
 
         await strategy.ExecuteAsync(async () =>
@@ -134,7 +127,6 @@ public static class AdminSeasonEndpoints
         return Results.Ok(ToDto(season, 0, 0));
     }
 
-    /// <summary>UC-29: encerra e congela o pódio (RN-04).</summary>
     private static async Task<IResult> FinishAsync(
         Guid id,
         CurrentUser currentUser,
@@ -165,7 +157,6 @@ public static class AdminSeasonEndpoints
         return Results.Ok(ToDto(season, 0, 0));
     }
 
-    /// <summary>UC-30: CSV com BOM para abrir corretamente em planilha.</summary>
     private static async Task<IResult> ExportAsync(
         Guid id,
         CurrentUser currentUser,

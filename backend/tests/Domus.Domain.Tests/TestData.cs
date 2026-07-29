@@ -2,10 +2,9 @@ using Domus.Domain.Rounds;
 
 namespace Domus.Domain.Tests;
 
-/// <summary>Construtores de conveniencia para os testes de dominio.</summary>
 internal static class TestData
 {
-    public static readonly DateTimeOffset Sunday13h = new(2026, 8, 2, 16, 0, 0, TimeSpan.Zero);   // 13h de Brasilia
+    public static readonly DateTimeOffset Sunday13h = new(2026, 8, 2, 16, 0, 0, TimeSpan.Zero);
     public static readonly DateTimeOffset Saturday2359 = new(2026, 8, 9, 2, 59, 0, TimeSpan.Zero);
 
     public static Round PublishedRound(

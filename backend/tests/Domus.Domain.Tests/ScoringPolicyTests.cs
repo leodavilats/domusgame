@@ -4,10 +4,9 @@ using Xunit;
 
 namespace Domus.Domain.Tests;
 
-/// <summary>Tabela de verdade do doc 03, secao 5. Se algo aqui mudar, a regra de negocio mudou.</summary>
 public class ScoringPolicyTests
 {
-    private static readonly RoundScoringSettings Default = RoundScoringSettings.Default; // 10 / 5 / 45s
+    private static readonly RoundScoringSettings Default = RoundScoringSettings.Default;
 
     [Theory]
     [InlineData(0, 5)]
@@ -44,7 +43,7 @@ public class ScoringPolicyTests
     [Theory]
     [InlineData(44_999, true)]
     [InlineData(45_000, true)]
-    [InlineData(48_000, true)]   // tolerancia de rede de 3s (RN-17)
+    [InlineData(48_000, true)]
     [InlineData(48_001, false)]
     public void Tolerancia_de_rede_de_tres_segundos(long elapsedMs, bool within)
     {

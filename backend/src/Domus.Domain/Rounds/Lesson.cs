@@ -2,10 +2,6 @@ using Domus.Domain.Common;
 
 namespace Domus.Domain.Rounds;
 
-/// <summary>
-/// Conteúdo estudado na semana. Owned type da rodada (colunas na própria tabela Rounds).
-/// Pode estar vazio enquanto a rodada e rascunho; e obrigatorio para publicar (RN-08).
-/// </summary>
 public sealed class Lesson
 {
     private Lesson()
@@ -26,7 +22,6 @@ public sealed class Lesson
     public string Title { get; private set; }
     public string ScriptureReference { get; private set; }
 
-    /// <summary>Texto em markdown.</summary>
     public string Content { get; private set; }
 
     public string? ExternalUrl { get; private set; }

@@ -42,7 +42,6 @@ public static class AuthEndpoints
 
         var id = Guid.CreateVersion7();
 
-        // Valida o nome antes de criar credenciais, para não deixar usuário orfao.
         var participant = Participant.Register(id, request.DisplayName, null, clock.GetUtcNow());
 
         await EnsureDisplayNameIsFreeAsync(db, participant.NormalizedDisplayName, null, ct);
@@ -123,8 +122,6 @@ public static class AuthEndpoints
             participant.ShowInRanking, participant.IsAdmin, settings.GcName));
     }
 
-    // ------------------------------------------------------------------ apoio
-
     internal static async Task EnsureDisplayNameIsFreeAsync(
         DomusDbContext db,
         string normalizedDisplayName,
@@ -141,7 +138,6 @@ public static class AuthEndpoints
             throw new DomainValidationException("Já existe alguém com esse nome de exibição. Escolha outro.");
         }
     }
-
 
     private static string Translate(IdentityResult result)
     {

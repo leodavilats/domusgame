@@ -12,24 +12,20 @@ const items = [
   { to: '/perfil', label: 'Perfil', Icon: UserIcon, end: false },
 ]
 
-/** Trocar de tela deve começar do topo, e não na altura em que a anterior estava. */
 function useScrollToTopOnNavigate(pathname: string) {
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: 'instant' })
   }, [pathname])
 }
 
-/** Layout mobile-first: cabeçalho enxuto e navegação inferior ao alcance do polegar. */
 export function Layout() {
   const { me } = useSession()
   const location = useLocation()
 
   useScrollToTopOnNavigate(location.pathname)
 
-  // A tela do quiz ocupa a tela inteira: sem navegação para não tirar o foco.
   const immersive = location.pathname.includes('/quiz')
 
-  // O admin usa tabelas e listas largas; no celular a diferença não aparece.
   const wide = location.pathname.startsWith('/admin')
 
   return (

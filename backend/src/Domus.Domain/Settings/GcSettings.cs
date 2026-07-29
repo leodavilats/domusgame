@@ -2,10 +2,6 @@ using Domus.Domain.Common;
 
 namespace Domus.Domain.Settings;
 
-/// <summary>
-/// Configuracao do GC: nome exibido e codigo de convite. Tabela de linha única (Id = 1).
-/// Decisao consciente de não criar a entidade GC na v1 (doc 01, secao 8).
-/// </summary>
 public sealed class GcSettings
 {
     public const int SingletonId = 1;
@@ -46,13 +42,11 @@ public sealed class GcSettings
         InviteRotatedAt = now;
     }
 
-    /// <summary>Comparacao insensivel a caixa e a espacos (RN-34).</summary>
     public bool MatchesInvite(string? candidate) =>
         !string.IsNullOrWhiteSpace(candidate) && Normalize(candidate) == NormalizedInviteCode;
 
     public static string Normalize(string code) => code.Trim().ToUpperInvariant();
 
-    /// <summary>Gera um codigo legivel, sem caracteres ambiguos (0/O, 1/I).</summary>
     public static string GenerateCode(int length = 8)
     {
         const string alphabet = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";

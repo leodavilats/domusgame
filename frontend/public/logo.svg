@@ -1,28 +1,33 @@
-<?xml version="1.0" encoding="UTF-8"?>
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 420" role="img" aria-label="gc domus">
-
   <defs>
-    <linearGradient id="g" x1="0%" y1="0%" x2="100%" y2="0%">
+    <linearGradient id="domusArco" x1="0%" y1="0%" x2="100%" y2="0%">
       <stop offset="0%" stop-color="#00c8a0"/>
       <stop offset="50%" stop-color="#ff6b4a"/>
       <stop offset="100%" stop-color="#8a00d4"/>
     </linearGradient>
+    <linearGradient id="domusBase" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#00c8a0" stop-opacity="0.25"/>
+      <stop offset="50%" stop-color="#ff6b4a"/>
+      <stop offset="100%" stop-color="#8a00d4" stop-opacity="0.25"/>
+    </linearGradient>
   </defs>
 
-  <rect width="100%" height="100%" fill="#000"/>
+  <rect width="900" height="420" fill="#ffffff"/>
 
-  <!-- Telhado -->
-  <g stroke="url(#g)" stroke-width="10" fill="none" stroke-linecap="round">
-    <polyline points="160,165 450,70 740,165"/>
-    <polyline points="160,195 450,100 740,195"/>
-    <line x1="160" y1="165" x2="160" y2="195"/>
-    <line x1="740" y1="165" x2="740" y2="195"/>
+  <g stroke="url(#domusArco)" stroke-width="13" fill="none" stroke-linecap="round" stroke-linejoin="round">
+    <polyline points="152,190 450,72 748,190"/>
+    <polyline points="152,228 450,110 748,228"/>
+    <path d="M152 190 L152 228"/>
+    <path d="M748 190 L748 228"/>
   </g>
 
-  <text x="450" y="175" text-anchor="middle"
-        font-family="Arial, Helvetica, sans-serif" font-size="70" font-weight="700" fill="#ffffff">gc</text>
+  <text x="450" y="186" text-anchor="middle"
+        font-family="'Segoe UI', Arial, Helvetica, sans-serif"
+        font-size="60" font-weight="600" letter-spacing="6" fill="#000">gc</text>
 
-  <text x="450" y="305" text-anchor="middle"
-        font-family="Arial, Helvetica, sans-serif" font-size="145" font-weight="700" fill="#ffffff">domus</text>
+  <text x="450" y="322" text-anchor="middle"
+        font-family="'Segoe UI', Arial, Helvetica, sans-serif"
+        font-size="152" font-weight="700" letter-spacing="-3" fill="#000">domus</text>
 
+  <rect x="216" y="352" width="468" height="9" rx="4.5" fill="url(#domusBase)"/>
 </svg>

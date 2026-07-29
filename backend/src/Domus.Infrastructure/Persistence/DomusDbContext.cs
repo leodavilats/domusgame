@@ -9,10 +9,6 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Domus.Infrastructure.Persistence;
 
-/// <summary>
-/// Contexto único da aplicacao. Herda de IdentityUserContext (sem tabelas de role):
-/// o papel do usuário vive em Participants.Role e vira claim no login.
-/// </summary>
 public sealed class DomusDbContext(DbContextOptions<DomusDbContext> options)
     : IdentityUserContext<AppUser, Guid>(options)
 {

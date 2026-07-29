@@ -6,8 +6,6 @@ import type {
   TextareaHTMLAttributes,
 } from 'react'
 
-// ---------------------------------------------------------------- estrutura
-
 export function Card({ children, className = '' }: { children: ReactNode; className?: string }) {
   return (
     <section className={`rounded-2xl border border-slate-200 bg-white p-4 shadow-sm ${className}`}>
@@ -32,7 +30,7 @@ export function EmptyState({
 }: {
   title: string
   description?: string
-  /** Um estado vazio que diz o que fazer deve oferecer o caminho para fazer. */
+
   action?: ReactNode
 }) {
   return (
@@ -43,8 +41,6 @@ export function EmptyState({
     </Card>
   )
 }
-
-// ---------------------------------------------------------------- feedback
 
 export function Spinner({ label = 'Carregando...' }: { label?: string }) {
   return (
@@ -89,8 +85,6 @@ export function Badge({
     </span>
   )
 }
-
-// ---------------------------------------------------------------- formulario
 
 type ButtonProps = ButtonHTMLAttributes<HTMLButtonElement> & {
   variant?: 'primary' | 'secondary' | 'ghost' | 'danger'

@@ -7,10 +7,6 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Domus.Api.Common;
 
-/// <summary>
-/// Leituras compartilhadas entre features (o lado "query" do CQRS logico).
-/// Com dezenas de participantes, consulta direta resolve: nada de tabela materializada (RNF-12).
-/// </summary>
 public sealed class DomusQueries(DomusDbContext db, TimeProvider clock)
 {
     public DateTimeOffset Now => clock.GetUtcNow();
@@ -22,7 +18,6 @@ public sealed class DomusQueries(DomusDbContext db, TimeProvider clock)
     public Task<Season?> GetActiveSeasonAsync(CancellationToken ct = default) =>
         db.Seasons.AsNoTracking().SingleOrDefaultAsync(s => s.Status == SeasonStatus.Active, ct);
 
-    /// <summary>Rodada completa (perguntas e alternativas), rastreada para permitir escrita.</summary>
     public async Task<Round> GetRoundWithQuestionsAsync(Guid roundId, bool tracking, CancellationToken ct = default)
     {
         var query = db.Rounds
@@ -50,10 +45,6 @@ public sealed class DomusQueries(DomusDbContext db, TimeProvider clock)
         round.Scoring.MaxSpeedBonus,
         round.Scoring.QuestionTimeLimitSeconds);
 
-    /// <summary>
-    /// Rodada em destaque para o participante: a aberta; senao a ultima encerrada;
-    /// senao a proxima agendada.
-    /// </summary>
     public async Task<Round?> GetCurrentRoundAsync(Guid seasonId, CancellationToken ct = default)
     {
         var now = Now;
@@ -69,7 +60,6 @@ public sealed class DomusQueries(DomusDbContext db, TimeProvider clock)
             ?? published.OrderBy(r => r.OpensAt).FirstOrDefault();
     }
 
-    /// <summary>Rodadas encerradas consecutivas, da mais recente para tras, com participacao.</summary>
     public async Task<int> GetStreakAsync(Guid seasonId, Guid participantId, CancellationToken ct = default)
     {
         var now = Now;
@@ -98,8 +88,6 @@ public sealed class DomusQueries(DomusDbContext db, TimeProvider clock)
 
         return streak;
     }
-
-    // ------------------------------------------------------------------ rankings
 
     public async Task<RankingDto> GetRoundRankingAsync(Round round, Guid meId, CancellationToken ct = default)
     {
@@ -151,7 +139,6 @@ public sealed class DomusQueries(DomusDbContext db, TimeProvider clock)
 
         var byParticipant = totals.ToDictionary(t => t.ParticipantId);
 
-        // RN-33: quem não participou aparece com zero, não some do ranking.
         var participants = await db.Participants.AsNoTracking()
             .Where(p => !p.IsRemoved)
             .Select(p => new { p.Id, p.DisplayName, p.AvatarUrl, p.ShowInRanking })
@@ -189,7 +176,6 @@ public sealed class DomusQueries(DomusDbContext db, TimeProvider clock)
         {
             index++;
 
-            // Empate absoluto (mesmos pontos e mesmo tempo) compartilha a posição.
             var tied = previous is not null &&
                        previous.TotalPoints == row.TotalPoints &&
                        previous.TotalTimeMs == row.TotalTimeMs;
@@ -211,7 +197,6 @@ public sealed class DomusQueries(DomusDbContext db, TimeProvider clock)
 
         var me = entries.SingleOrDefault(e => e.IsMe);
 
-        // RN-22: quem optou por não aparecer some da lista publica, mas continua vendo sua posição.
         var hidden = ordered.Where(r => !r.ShowInRanking).Select(r => r.ParticipantId).ToHashSet();
         var visible = entries.Where(e => e.IsMe || !hidden.Contains(e.ParticipantId)).ToList();
 

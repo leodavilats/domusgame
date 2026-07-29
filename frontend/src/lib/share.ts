@@ -4,7 +4,6 @@ interface SharePayload {
   url?: string
 }
 
-/** UC-13: usa o compartilhamento nativo do celular; sem suporte, copia para a area de transferencia. */
 export async function share(payload: SharePayload): Promise<'shared' | 'copied' | 'failed'> {
   const url = payload.url ?? window.location.origin
 
@@ -13,7 +12,6 @@ export async function share(payload: SharePayload): Promise<'shared' | 'copied' 
       await navigator.share({ title: payload.title, text: payload.text, url })
       return 'shared'
     } catch {
-      // Usuário cancelou ou o navegador recusou: cai para a copia.
     }
   }
 

@@ -23,7 +23,6 @@ body {
   overscroll-behavior-y: none;
 }
 
-/* Area de toque confortavel no celular (RNF-13). */
 button,
 a[role='button'] {
   touch-action: manipulation;

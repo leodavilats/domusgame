@@ -22,7 +22,6 @@ public static class ProfileEndpoints
 
         group.MapPut("/", UpdateAsync);
 
-        // Exclusao exige corpo (confirmacao pelo nome) e Minimal API não infere corpo em DELETE.
         group.MapPost("/delete", DeleteAsync);
     }
 
@@ -40,7 +39,6 @@ public static class ProfileEndpoints
         var participant = await db.Participants.SingleOrDefaultAsync(p => p.Id == meId, ct)
             ?? throw NotFoundException.For("Participante");
 
-        // O corpo vem de JSON: trate como possivelmente ausente e deixe o dominio validar.
         var displayName = request.DisplayName ?? string.Empty;
 
         await AuthEndpoints.EnsureDisplayNameIsFreeAsync(db, Participant.Normalize(displayName), meId, ct);
@@ -48,7 +46,6 @@ public static class ProfileEndpoints
         participant.UpdateProfile(displayName, request.AvatarUrl, request.ShowInRanking);
         await db.SaveChangesAsync(ct);
 
-        // O nome de exibição vive no cookie: renova a sessão para refletir a mudanca.
         var user = await userManager.FindByIdAsync(meId.ToString());
         if (user is not null) await signInManager.RefreshSignInAsync(user);
 
@@ -59,7 +56,6 @@ public static class ProfileEndpoints
             participant.ShowInRanking, participant.IsAdmin, settings.GcName));
     }
 
-    /// <summary>RN-38: anonimiza e mantem o historico agregado das rodadas.</summary>
     private static async Task<IResult> DeleteAsync(
         DeleteAccountRequest request,
         CurrentUser currentUser,
@@ -92,7 +88,6 @@ public static class ProfileEndpoints
 
         await db.SaveChangesAsync(ct);
 
-        // Remove credenciais e logins externos; as tentativas continuam, sem vinculo pessoal.
         var user = await userManager.FindByIdAsync(meId.ToString());
         if (user is not null)
         {

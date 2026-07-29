@@ -7,18 +7,8 @@ interface ApiState<T> {
   error: string | null
 }
 
-/**
- * Cache em memória por rota, com estratégia *stale-while-revalidate*: ao voltar para uma tela
- * já visitada, o dado antigo aparece na hora e a atualização acontece por trás.
- *
- * Sem isso, trocar de aba mostra um spinner em cada navegação — o que, num celular com
- * conexão ruim, faz o app parecer travado mesmo estando correto.
- *
- * Vive no módulo de propósito: é cache de sessão, não estado persistido. Um reload limpa.
- */
 const cache = new Map<string, unknown>()
 
-/** Invalida rotas cujo caminho contenha o trecho informado (após uma escrita, por exemplo). */
 export function invalidateCache(pathFragment?: string) {
   if (!pathFragment) {
     cache.clear()
@@ -35,7 +25,6 @@ export function useApi<T>(path: string | null, deps: unknown[] = []): ApiState<T
 
   const [state, setState] = useState<ApiState<T>>({
     data: cached ?? null,
-    // Com dado em cache não há espera: a tela pinta e revalida em silêncio.
     loading: path !== null && cached === undefined,
     error: null,
   })
@@ -75,14 +64,12 @@ export function useApi<T>(path: string | null, deps: unknown[] = []): ApiState<T
 
         const message = error instanceof ApiError ? error.message : 'Erro inesperado.'
 
-        // Havendo dado em cache, mantemos a tela útil e não trocamos conteúdo por erro.
         setState((previous) => ({
           data: previous.data,
           loading: false,
           error: previous.data === null ? message : null,
         }))
       })
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [path, nonce, ...deps])
 
   const reload = useCallback(() => {
@@ -93,19 +80,12 @@ export function useApi<T>(path: string | null, deps: unknown[] = []): ApiState<T
   return { ...state, reload }
 }
 
-/** Executa uma ação de escrita, expondo estado de carregamento e erro para a tela. */
 export function useMutation<TArgs extends unknown[], TResult>(
   action: (...args: TArgs) => Promise<TResult>,
 ) {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
-  // `action` é recriada a cada render e fecha sobre o estado atual do formulário.
-  // Guardamos sempre a versão mais recente numa ref: assim `run` mantém identidade estável
-  // (não invalida memos de quem o recebe) sem nunca executar um closure velho.
-  //
-  // Um useCallback com lista de dependências vazia aqui congelaria a primeira renderização
-  // e enviaria os valores iniciais dos campos - vazios - em todo formulário do app.
   const latestAction = useRef(action)
   latestAction.current = action
 
@@ -116,7 +96,6 @@ export function useMutation<TArgs extends unknown[], TResult>(
     try {
       const result = await latestAction.current(...args)
 
-      // Uma escrita torna qualquer leitura em cache suspeita.
       invalidateCache()
 
       return result

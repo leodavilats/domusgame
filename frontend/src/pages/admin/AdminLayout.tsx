@@ -2,10 +2,6 @@ import { Suspense } from 'react'
 import { NavLink, Outlet } from 'react-router-dom'
 import { Spinner } from '../../components/ui'
 
-// A ordem segue o fluxo real de trabalho: temporada -> rodada -> pessoas.
-
-// Rotulos curtos: as quatro abas precisam caber lado a lado em uma tela de 360 px,
-// senão as últimas ficam escondidas fora do campo de visão.
 const tabs = [
   { to: '/admin', label: 'Geral', end: true },
   { to: '/admin/temporadas', label: 'Temporadas', end: false },
@@ -34,7 +30,6 @@ export function AdminLayout() {
         ))}
       </nav>
 
-      {/* Cada tela do admin chega em seu proprio chunk; a barra de abas fica no lugar. */}
       <Suspense fallback={<Spinner />}>
         <Outlet />
       </Suspense>

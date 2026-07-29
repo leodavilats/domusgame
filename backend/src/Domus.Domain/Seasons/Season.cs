@@ -4,17 +4,11 @@ namespace Domus.Domain.Seasons;
 
 public enum SeasonStatus
 {
-    /// <summary>Criada, ainda não e a temporada corrente.</summary>
     Draft = 0,
-
-    /// <summary>Temporada corrente. No maximo uma por vez (RN-02, indice único parcial).</summary>
     Active = 1,
-
-    /// <summary>Encerrada, com pódio congelado (RN-04).</summary>
     Finished = 2
 }
 
-/// <summary>Colocado do pódio, congelado no encerramento da temporada (RN-04).</summary>
 public sealed class SeasonPodiumEntry : Entity
 {
     private SeasonPodiumEntry() : base() => DisplayName = string.Empty;
@@ -38,10 +32,8 @@ public sealed class SeasonPodiumEntry : Entity
     public long TotalTimeMs { get; private set; }
 }
 
-/// <summary>Candidato ao pódio, ja ordenado pelo servico de ranking.</summary>
 public readonly record struct PodiumCandidate(Guid ParticipantId, string DisplayName, int TotalPoints, long TotalTimeMs);
 
-/// <summary>Periodo de competicao que agrupa rodadas e define o ranking premiado.</summary>
 public sealed class Season : Entity
 {
     public const int MaxPodiumPositions = 3;
@@ -77,7 +69,6 @@ public sealed class Season : Entity
 
     public void Update(string name, DateOnly startsOn, DateOnly endsOn)
     {
-        // I-S3: temporada encerrada e imutavel.
         Guard.State(!IsFinished, "Temporada encerrada não pode ser alterada.");
 
         ValidatePeriod(startsOn, endsOn);
@@ -92,17 +83,12 @@ public sealed class Season : Entity
         Status = SeasonStatus.Active;
     }
 
-    /// <summary>Volta para rascunho quando outra temporada assume o lugar de ativa.</summary>
     public void Deactivate()
     {
         Guard.State(!IsFinished, "Temporada encerrada não pode ser desativada.");
         Status = SeasonStatus.Draft;
     }
 
-    /// <summary>
-    /// I-S4: encerra a temporada e congela o pódio. Os candidatos devem chegar
-    /// ja ordenados pelo criterio de desempate (RN-31).
-    /// </summary>
     public void Finish(DateTimeOffset now, IEnumerable<PodiumCandidate> orderedCandidates)
     {
         Guard.State(!IsFinished, "Temporada ja esta encerrada.");

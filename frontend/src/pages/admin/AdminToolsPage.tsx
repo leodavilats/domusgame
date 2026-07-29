@@ -79,7 +79,6 @@ export function AdminToolsPage() {
       {reset.error ? <ErrorBox message={reset.error} /> : null}
       {removeMyAttempt.error ? <ErrorBox message={removeMyAttempt.error} /> : null}
 
-      {/* --------------------------------------------------- diagnóstico */}
       <Card>
         <div className="mb-3 flex items-center justify-between gap-2">
           <h2 className="text-sm font-semibold text-slate-700">Diagnóstico</h2>
@@ -115,7 +114,6 @@ export function AdminToolsPage() {
         )}
       </Card>
 
-      {/* --------------------------------------------------- temporada de teste */}
       <Card>
         <h2 className="text-sm font-semibold text-slate-700">Temporada de teste</h2>
         <p className="mt-1 text-xs text-slate-500">
@@ -134,7 +132,6 @@ export function AdminToolsPage() {
         </Button>
       </Card>
 
-      {/* --------------------------------------------------- ações por rodada */}
       <Card>
         <h2 className="text-sm font-semibold text-slate-700">Ações em uma rodada</h2>
 
@@ -225,7 +222,6 @@ export function AdminToolsPage() {
         </div>
       </Card>
 
-      {/* --------------------------------------------------- limpeza */}
       <Card className="border-red-200">
         <h2 className="text-sm font-semibold text-red-700">Limpar dados</h2>
 
@@ -266,7 +262,6 @@ export function AdminToolsPage() {
         </div>
       </Card>
 
-      {/* --------------------------------------------------- auditoria */}
       <Card>
         <h2 className="mb-2 text-sm font-semibold text-slate-700">Últimas ações registradas</h2>
 

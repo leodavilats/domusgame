@@ -10,7 +10,6 @@ namespace Domus.Api.Tests;
 [Collection(ApiCollection.Name)]
 public class ParticipationTests(ApiFixture fixture)
 {
-    /// <summary>RNF-02: o requisito de seguranca mais importante do projeto.</summary>
     [Fact]
     public async Task Rodada_aberta_nunca_revela_o_gabarito()
     {
@@ -41,8 +40,6 @@ public class ParticipationTests(ApiFixture fixture)
             Assert.DoesNotContain("explanation", body, StringComparison.OrdinalIgnoreCase);
         }
 
-        // A pergunta corrente traz seus proprios ids (inclusive o da correta, sem marcacao),
-        // mas o gabarito das demais perguntas nunca pode aparecer.
         var leaked = correctIds.Count(id => startBody.Contains(id.ToString(), StringComparison.OrdinalIgnoreCase));
         Assert.True(leaked <= 1, $"Ids corretos expostos: {leaked}");
     }
@@ -61,7 +58,6 @@ public class ParticipationTests(ApiFixture fixture)
         Assert.Equal(HttpStatusCode.Forbidden, ranking.StatusCode);
     }
 
-    /// <summary>RN-14 / RNF-04: duplo clique não pode gerar duas tentativas.</summary>
     [Fact]
     public async Task Tentativa_e_unica_mesmo_com_requisicoes_simultaneas()
     {
@@ -82,7 +78,6 @@ public class ParticipationTests(ApiFixture fixture)
         Assert.Equal(1, await db.Attempts.CountAsync(a => a.RoundId == round.RoundId));
     }
 
-    /// <summary>RNF-05: reenvio da mesma resposta não repontua.</summary>
     [Fact]
     public async Task Reenvio_da_mesma_resposta_e_idempotente()
     {

@@ -3,10 +3,6 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace Domus.Api.Common;
 
-/// <summary>
-/// Traduz excecoes de dominio para ProblemDetails com o status correto.
-/// O dominio nunca conhece HTTP; a traducao acontece so aqui.
-/// </summary>
 public sealed class ExceptionHandlingMiddleware(RequestDelegate next, ILogger<ExceptionHandlingMiddleware> logger)
 {
     public async Task InvokeAsync(HttpContext context)

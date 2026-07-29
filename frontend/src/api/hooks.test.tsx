@@ -3,17 +3,8 @@ import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/re
 import { afterEach, describe, expect, it } from 'vitest'
 import { invalidateCache, useApi, useMutation } from './hooks'
 
-// Sem `globals: true`, o cleanup automatico do Testing Library nao e registrado.
 afterEach(cleanup)
 
-/**
- * Regressao: `run` chegou a ser memoizado com lista de dependencias vazia, o que congelava
- * o closure da primeira renderizacao. Na pratica, TODO formulario do app enviava os valores
- * iniciais dos campos (vazios) em vez do que a pessoa tinha digitado - e o servidor respondia
- * "E-mail ou senha invalidos" sem nenhuma pista do motivo.
- *
- * Os testes de API nao pegam isso: o defeito esta no lado do navegador.
- */
 function FormularioDeTeste({ onSubmit }: { onSubmit: (value: string) => void }) {
   const [valor, setValor] = useState('')
 
@@ -88,10 +79,6 @@ describe('useMutation', () => {
   })
 })
 
-/**
- * O cache existe para que voltar a uma tela ja visitada nao mostre spinner de novo.
- * Sem ele, cada troca de aba parecia travamento em conexao ruim.
- */
 describe('useApi', () => {
   const originalFetch = globalThis.fetch
 
@@ -121,11 +108,9 @@ describe('useApi', () => {
     await waitFor(() => expect(screen.getByText('do servidor')).toBeTruthy())
     primeira.unmount()
 
-    // Segunda montagem: o valor precisa aparecer de imediato, sem estado de carregando.
     render(<Tela />)
     expect(screen.getByText('do servidor')).toBeTruthy()
 
-    // E ainda assim revalida por trás.
     await waitFor(() => expect(chamadas).toBe(2))
   })
 })

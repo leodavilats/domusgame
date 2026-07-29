@@ -22,8 +22,6 @@ using Microsoft.EntityFrameworkCore;
 var builder = WebApplication.CreateBuilder(args);
 var configuration = builder.Configuration;
 
-// ---------------------------------------------------------------- servicos
-
 var connectionString = DatabaseConnection.Resolve(configuration);
 
 builder.Services.AddDomusPersistence(connectionString);
@@ -37,9 +35,7 @@ builder.Services
     .AddIdentityCore<AppUser>(options =>
     {
         options.User.RequireUniqueEmail = true;
-        // A interface promete "minimo de 8 caracteres" e nada mais. Exigir maiuscula, digito
-        // ou simbolo sem dizer produz erro que o usuario nao entende - e o publico aqui e um
-        // grupo de 30 pessoas, nao um alvo de ataque em massa.
+
         options.Password.RequiredLength = 8;
         options.Password.RequireNonAlphanumeric = false;
         options.Password.RequireUppercase = false;
@@ -67,7 +63,6 @@ builder.Services.ConfigureApplicationCookie(options =>
     options.ExpireTimeSpan = TimeSpan.FromDays(60);
     options.SlidingExpiration = true;
 
-    // A API responde status, nunca redireciona para tela de login.
     options.Events.OnRedirectToLogin = context =>
     {
         context.Response.StatusCode = StatusCodes.Status401Unauthorized;
@@ -91,19 +86,14 @@ builder.Services.ConfigureHttpJsonOptions(options =>
     options.SerializerOptions.Converters.Add(new JsonStringEnumConverter());
 });
 
-// Atras de proxy (Railway, Render, Fly, Caddy) a requisição chega como HTTP.
-// Sem isto o cookie de sessão sairia sem a flag Secure mesmo com o site em HTTPS.
 builder.Services.Configure<ForwardedHeadersOptions>(options =>
 {
     options.ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto;
 
-    // Em PaaS o proxy não tem IP fixo conhecido; a rede da plataforma e a fronteira de confianca.
     options.KnownIPNetworks.Clear();
     options.KnownProxies.Clear();
 });
 
-// Limites configuraveis: os padroes servem a producao, e os testes de integracao (que batem
-// no login dezenas de vezes a partir do mesmo IP) sobem o teto por configuracao.
 var authPermitLimit = configuration.GetValue("RateLimiting:AuthPermitLimit", 12);
 var answersPermitLimit = configuration.GetValue("RateLimiting:AnswersPermitLimit", 60);
 
@@ -122,18 +112,11 @@ builder.Services.AddRateLimiter(options =>
 
 var app = builder.Build();
 
-// ---------------------------------------------------------------- pipeline
-
-// Precisa vir antes de tudo: define esquema e IP reais da requisição.
 app.UseForwardedHeaders();
 
 app.UseMiddleware<ExceptionHandlingMiddleware>();
 app.UseDefaultFiles();
 
-// O Vite gera nomes com hash de conteudo (index-AbC123.js), entao o arquivo nunca muda:
-// pode ser cacheado para sempre. Sem isto o navegador revalida em toda visita e paga uma
-// ida e volta na rede antes de renderizar. O index.html, ao contrario, precisa ser sempre
-// revalidado - e ele que aponta para os assets novos depois de um deploy.
 var staticFiles = new StaticFileOptions
 {
     OnPrepareResponse = context =>
@@ -178,10 +161,7 @@ admin.MapAdminToolsEndpoints();
 
 app.MapGet("/api/health", () => Results.Ok(new { status = "ok" }));
 
-// O SPA cuida das rotas que não sao /api.
 app.MapFallbackToFile("index.html", staticFiles);
-
-// ---------------------------------------------------------------- banco
 
 await InitializeDatabaseAsync(app);
 
@@ -199,8 +179,6 @@ static async Task InitializeDatabaseAsync(WebApplication app)
     await using var scope = app.Services.CreateAsyncScope();
     var db = scope.ServiceProvider.GetRequiredService<DomusDbContext>();
 
-    // Bancos gerenciados podem estar acordando quando o container sobe. Esperamos um pouco
-    // antes de desistir, em vez de entrar em crash loop.
     await WaitForDatabaseAsync(db, logger);
 
     if (configuration.GetValue("Database:ApplyMigrationsOnStartup", app.Environment.IsDevelopment()))
@@ -211,8 +189,6 @@ static async Task InitializeDatabaseAsync(WebApplication app)
         }
         else
         {
-            // Ainda não ha migrations geradas: cria o esquema a partir do modelo para o
-            // projeto rodar de imediato. Em producao, gere as migrations (ver README).
             logger.LogWarning(
                 "Nenhuma migration encontrada. Criando o esquema com EnsureCreated. " +
                 "Gere as migrations antes de ir para producao.");
@@ -262,5 +238,4 @@ static async Task WaitForDatabaseAsync(DomusDbContext db, ILogger logger)
     }
 }
 
-/// <summary>Exposto para os testes de integracao (WebApplicationFactory).</summary>
 public partial class Program;

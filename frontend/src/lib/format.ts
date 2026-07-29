@@ -1,4 +1,3 @@
-// RNF-09: o servidor guarda tudo em UTC; a interface sempre mostra horario de Brasilia.
 const TIME_ZONE = 'America/Sao_Paulo'
 
 const dateTimeFormatter = new Intl.DateTimeFormat('pt-BR', {
@@ -35,7 +34,6 @@ export function formatWeekday(value: string | Date): string {
   return weekdayFormatter.format(new Date(value))
 }
 
-/** Duracao amigavel a partir de milissegundos (ex.: "3min 12s"). */
 export function formatDuration(ms: number): string {
   const totalSeconds = Math.max(0, Math.round(ms / 1000))
   const minutes = Math.floor(totalSeconds / 60)
@@ -45,7 +43,6 @@ export function formatDuration(ms: number): string {
   return `${minutes}min ${seconds.toString().padStart(2, '0')}s`
 }
 
-/** Contagem regressiva em formato compacto (ex.: "2d 4h", "12min"). */
 export function formatCountdown(targetIso: string, nowMs: number): string {
   const remaining = new Date(targetIso).getTime() - nowMs
   if (remaining <= 0) return 'agora'
@@ -61,9 +58,6 @@ export function formatCountdown(targetIso: string, nowMs: number): string {
   return `${seconds}s`
 }
 
-// ---------------------------------------------------------------- entrada de datas (admin)
-
-/** Converte um instante ISO para o valor esperado por <input type="datetime-local"> (fuso do aparelho). */
 export function toLocalInput(iso: string | Date): string {
   const date = new Date(iso)
   const pad = (value: number) => String(value).padStart(2, '0')
@@ -73,12 +67,10 @@ export function toLocalInput(iso: string | Date): string {
   )}`
 }
 
-/** Converte o valor do input (horario local do administrador) para ISO com fuso. */
 export function fromLocalInput(value: string): string {
   return new Date(value).toISOString()
 }
 
-/** Janela padrao sugerida: proximo domingo 13h ate o sabado seguinte 23h59 (RN-06). */
 export function suggestedWindow(): { opensAt: string; closesAt: string } {
   const opens = new Date()
   const daysUntilSunday = (7 - opens.getDay()) % 7 || 7

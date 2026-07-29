@@ -2,7 +2,6 @@ using Domus.Domain.Common;
 
 namespace Domus.Domain.Settings;
 
-/// <summary>Acoes administrativas registradas para auditoria (RNF-08). Append-only.</summary>
 public sealed class AuditLogEntry : Entity
 {
     public static class Actions

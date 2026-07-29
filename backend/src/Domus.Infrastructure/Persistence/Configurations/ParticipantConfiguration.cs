@@ -30,11 +30,9 @@ public sealed class ParticipantConfiguration : IEntityTypeConfiguration<Particip
 
         builder.Ignore(p => p.IsAdmin);
 
-        // I-P1: nome de exibição único (e o que aparece no ranking).
         builder.HasIndex(p => p.NormalizedDisplayName).IsUnique();
         builder.HasIndex(p => p.IsRemoved);
 
-        // Chave compartilhada: Participants.Id -> AspNetUsers.Id.
         builder.HasOne<AppUser>()
             .WithOne()
             .HasForeignKey<Participant>(p => p.Id)

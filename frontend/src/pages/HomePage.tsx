@@ -12,7 +12,6 @@ export function HomePage() {
   const { data, loading, error, reload } = useApi<Dashboard>('/api/dashboard')
   const [now, setNow] = useState(() => Date.now())
 
-  // Contagem regressiva viva na tela inicial.
   useEffect(() => {
     const timer = window.setInterval(() => setNow(Date.now()), 1000)
     return () => window.clearInterval(timer)

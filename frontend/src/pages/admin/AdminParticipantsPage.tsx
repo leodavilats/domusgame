@@ -24,8 +24,6 @@ export function AdminParticipantsPage() {
     participants.reload()
   })
 
-  // Sem serviço de e-mail não existe "esqueci minha senha": o admin gera uma senha
-  // temporária e repassa pelo grupo. Ela aparece uma única vez.
   const [temporary, setTemporary] = useState<ResetPasswordResult | null>(null)
 
   const resetPassword = useMutation(async (id: string) => {

@@ -34,7 +34,6 @@ public sealed class RoundConfiguration : IEntityTypeConfiguration<Round>
         builder.Ignore(r => r.IsPublished);
         builder.Ignore(r => r.MaxPoints);
 
-        // Lição como owned type: colunas na própria tabela, sem join.
         builder.OwnsOne(r => r.Lesson, lesson =>
         {
             lesson.Property(l => l.Title).HasColumnName("Lesson_Title").HasMaxLength(160).IsRequired();
@@ -66,7 +65,6 @@ public sealed class RoundConfiguration : IEntityTypeConfiguration<Round>
             .HasForeignKey(r => r.SeasonId)
             .OnDelete(DeleteBehavior.Restrict);
 
-        // RN-11: uma rodada por semana em cada temporada.
         builder.HasIndex(r => new { r.SeasonId, r.WeekNumber }).IsUnique();
         builder.HasIndex(r => new { r.SeasonId, r.Status, r.OpensAt });
         builder.HasIndex(r => new { r.Status, r.OpensAt, r.ClosesAt });

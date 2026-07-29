@@ -26,7 +26,6 @@ public sealed record AdminParticipantDto(
 
 public sealed record ChangeRoleRequest(ParticipantRole Role);
 
-/// <summary>A senha temporaria e devolvida uma unica vez, para o admin repassar.</summary>
 public sealed record ResetPasswordResult(string DisplayName, string TemporaryPassword);
 
 public sealed record InviteDto(string GcName, string InviteCode, DateTimeOffset RotatedAt, int MemberCount);
@@ -153,11 +152,6 @@ public static class AdminManagementEndpoints
         return Results.NoContent();
     }
 
-    /// <summary>
-    /// Sem servico de e-mail, "esqueci minha senha" nao existe. O admin gera uma senha
-    /// temporaria e repassa pelo grupo. Ela e mostrada uma unica vez: nao fica guardada em
-    /// lugar nenhum em texto claro.
-    /// </summary>
     private static async Task<IResult> ResetPasswordAsync(
         Guid id,
         CurrentUser currentUser,
@@ -185,7 +179,6 @@ public static class AdminManagementEndpoints
                 $"Nao foi possivel redefinir a senha: {string.Join("; ", result.Errors.Select(e => e.Description))}");
         }
 
-        // Uma conta bloqueada por tentativas erradas continuaria bloqueada com a senha nova.
         await userManager.ResetAccessFailedCountAsync(user);
         await userManager.SetLockoutEndDateAsync(user, null);
 
@@ -198,10 +191,6 @@ public static class AdminManagementEndpoints
         return Results.Ok(new ResetPasswordResult(participant.DisplayName, temporary));
     }
 
-    /// <summary>
-    /// Precisa ser ditada por telefone ou lida num grupo de WhatsApp: silabas pronunciaveis
-    /// mais quatro digitos, sem caracteres ambiguos. Ex.: "tamu-4729".
-    /// </summary>
     private static string GenerateTemporaryPassword()
     {
         const string consonants = "bcdfgjklmnprstvz";
@@ -251,8 +240,6 @@ public static class AdminManagementEndpoints
         var members = await db.Participants.AsNoTracking().CountAsync(p => !p.IsRemoved, ct);
         return Results.Ok(new InviteDto(settings.GcName, settings.InviteCode, settings.InviteRotatedAt, members));
     }
-
-    // ------------------------------------------------------------------ estatisticas
 
     private static async Task<IResult> RoundStatsAsync(
         Guid id,

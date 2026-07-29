@@ -20,10 +20,6 @@ public static class AttemptEndpoints
         attempts.MapGet("/{attemptId:guid}/result", ResultAsync);
     }
 
-    /// <summary>
-    /// UC-05. Idempotente: se ja existe tentativa, devolve o estado dela em vez de erro.
-    /// A tentativa única e garantida pelo indice do banco (RNF-04), não por este if.
-    /// </summary>
     private static async Task<IResult> StartAsync(
         Guid roundId,
         CurrentUser currentUser,
@@ -51,7 +47,6 @@ public static class AttemptEndpoints
         }
         catch (DbUpdateException)
         {
-            // Corrida entre dois cliques: a segunda gravacao perde e reaproveitamos a primeira.
             db.ChangeTracker.Clear();
 
             var winner = await LoadAttemptAsync(db, roundId, meId, ct)
@@ -63,7 +58,6 @@ public static class AttemptEndpoints
         return Results.Ok(ToState(attempt, round, now));
     }
 
-    /// <summary>UC-07: retomada.</summary>
     private static async Task<IResult> CurrentAsync(
         Guid roundId,
         CurrentUser currentUser,
@@ -82,7 +76,6 @@ public static class AttemptEndpoints
         return Results.Ok(await AdvanceAsync(db, attempt, round, now, ct));
     }
 
-    /// <summary>UC-06: o único lugar onde pontos sao atribuidos.</summary>
     private static async Task<IResult> SubmitAsync(
         Guid attemptId,
         SubmitAnswerRequest request,
@@ -116,7 +109,6 @@ public static class AttemptEndpoints
             next is null ? null : ToQuestion(attempt, next, now)));
     }
 
-    /// <summary>UC-08.</summary>
     private static async Task<IResult> ResultAsync(
         Guid attemptId,
         CurrentUser currentUser,
@@ -136,7 +128,6 @@ public static class AttemptEndpoints
 
         var round = await queries.GetRoundWithQuestionsAsync(attempt.RoundId, tracking: false, ct);
 
-        // Se a rodada fechou enquanto a pessoa estava fora, consolidamos agora (RN-20).
         attempt.CompleteIfRoundClosed(round, now);
         await db.SaveChangesAsync(ct);
 
@@ -162,14 +153,11 @@ public static class AttemptEndpoints
             position));
     }
 
-    // ------------------------------------------------------------------ apoio
-
     private static Task<Attempt?> LoadAttemptAsync(DomusDbContext db, Guid roundId, Guid meId, CancellationToken ct) =>
         db.Attempts
             .Include(a => a.Answers)
             .SingleOrDefaultAsync(a => a.RoundId == roundId && a.ParticipantId == meId, ct);
 
-    /// <summary>Expira pendencias, entrega a pergunta corrente e persiste o que mudou.</summary>
     private static async Task<AttemptStateDto> AdvanceAsync(
         DomusDbContext db,
         Attempt attempt,
@@ -205,10 +193,6 @@ public static class AttemptEndpoints
             current);
     }
 
-    /// <summary>
-    /// RNF-02: este e o único mapeamento de pergunta usado durante a tentativa e ele não
-    /// tem como expor a alternativa correta - o DTO simplesmente não tem esse campo.
-    /// </summary>
     private static AttemptQuestionDto ToQuestion(Attempt attempt, ServedQuestion served, DateTimeOffset now)
     {
         var options = OptionShuffler.ShuffleFor(attempt.Id, served.Question)

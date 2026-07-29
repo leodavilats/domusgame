@@ -49,7 +49,7 @@ public class AttemptTests
         var again = attempt.ServeCurrentQuestion(round, During.AddSeconds(10))!;
 
         Assert.Equal(first.Question.Id, again.Question.Id);
-        Assert.Equal(first.ServedAt, again.ServedAt);   // cronometro não reinicia
+        Assert.Equal(first.ServedAt, again.ServedAt);
         Assert.Single(attempt.Answers);
     }
 
@@ -62,7 +62,7 @@ public class AttemptTests
 
         attempt.Submit(round, served.Question.Id, TestData.CorrectOptionOf(round, 1).Id, During.AddSeconds(15));
 
-        Assert.Equal(13, attempt.TotalPoints);   // 10 + 3
+        Assert.Equal(13, attempt.TotalPoints);
         Assert.Equal(1, attempt.CorrectCount);
         Assert.Equal(15_000, attempt.TotalTimeMs);
         Assert.True(attempt.IsFinished);
@@ -107,7 +107,7 @@ public class AttemptTests
         Assert.True(result.TimedOut);
         Assert.Equal(AnswerOutcome.TimedOut, attempt.Answers[0].Outcome);
         Assert.Equal(0, attempt.TotalPoints);
-        Assert.Equal(45_000, attempt.TotalTimeMs);   // I-A7: custo cheio no desempate
+        Assert.Equal(45_000, attempt.TotalTimeMs);
     }
 
     [Fact]
@@ -121,7 +121,7 @@ public class AttemptTests
         var repeat = attempt.Submit(round, served.Question.Id, TestData.WrongOptionOf(round, 1).Id, During.AddSeconds(6));
 
         Assert.Equal(first.AnswerId, repeat.AnswerId);
-        Assert.Equal(14, attempt.TotalPoints);       // não repontuou
+        Assert.Equal(14, attempt.TotalPoints);
         Assert.Single(attempt.Answers);
     }
 
@@ -158,7 +158,6 @@ public class AttemptTests
         var attempt = Attempt.Start(round, Participant, During);
         attempt.ServeCurrentQuestion(round, During);
 
-        // volta 10 minutos depois
         var resumed = attempt.ServeCurrentQuestion(round, During.AddMinutes(10));
 
         Assert.Equal(AnswerOutcome.TimedOut, attempt.Answers[0].Outcome);
@@ -212,7 +211,7 @@ public class AttemptTests
         var other = round.QuestionAtOrder(1)!;
         var repeated = attempt.Submit(round, other.Id, null, During.AddSeconds(2));
 
-        Assert.Equal(AnswerOutcome.Correct, attempt.Answers[0].Outcome);   // continua imutavel
+        Assert.Equal(AnswerOutcome.Correct, attempt.Answers[0].Outcome);
         Assert.True(repeated.AttemptFinished);
     }
 

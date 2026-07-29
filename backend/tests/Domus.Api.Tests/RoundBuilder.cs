@@ -5,11 +5,6 @@ namespace Domus.Api.Tests;
 
 internal sealed record PreparedRound(Guid SeasonId, Guid RoundId, int QuestionCount);
 
-/// <summary>
-/// Monta cenarios usando apenas o contrato publico da API.
-/// Cada cenario cria a própria temporada: rodadas publicadas na mesma temporada não podem
-/// ter janelas sobrepostas (RN-12), e os testes desta colecao compartilham o mesmo banco.
-/// </summary>
 internal static class RoundBuilder
 {
     public static async Task<Guid> CreateSeasonAsync(HttpClient admin, string name, bool activate = false)
@@ -111,7 +106,6 @@ internal static class RoundBuilder
         return response;
     }
 
-    /// <summary>O id correto vem do painel administrativo - o participante nunca recebe essa informacao.</summary>
     public static async Task<Guid> CorrectOptionIdAsync(HttpClient admin, Guid roundId, Guid questionId)
     {
         var detail = await (await admin.GetAsync($"/api/admin/rounds/{roundId}")).ReadJsonAsync();

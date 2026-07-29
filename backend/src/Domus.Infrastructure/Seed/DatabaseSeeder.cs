@@ -11,10 +11,6 @@ using Microsoft.Extensions.Logging;
 
 namespace Domus.Infrastructure.Seed;
 
-/// <summary>
-/// Seed idempotente: pode rodar em todo start sem duplicar nada.
-/// Cria a configuracao do GC, o administrador inicial e, opcionalmente, dados de demonstracao.
-/// </summary>
 public sealed class DatabaseSeeder(
     DomusDbContext db,
     UserManager<AppUser> userManager,
@@ -25,11 +21,8 @@ public sealed class DatabaseSeeder(
     {
         var now = clock.GetUtcNow();
 
-        // Essencial: sem a configuracao do GC não ha codigo de convite nem cadastro.
         await SeedSettingsAsync(options, now, cancellationToken);
 
-        // Conveniencia: uma falha aqui e registrada, mas não pode derrubar a aplicacao em
-        // producao - seria um crash loop permanente por causa de um dado de bootstrap.
         await TryAsync("administrador inicial", () => SeedAdminAsync(options, now, cancellationToken));
 
         if (options.IncludeDemoData)
@@ -68,7 +61,6 @@ public sealed class DatabaseSeeder(
             return;
         }
 
-        // O nome pode ser ajustado por configuracao; o codigo so muda por ação explicita do admin.
         if (settings.GcName != options.GcName && !string.IsNullOrWhiteSpace(options.GcName))
         {
             settings.Rename(options.GcName);
@@ -97,8 +89,6 @@ public sealed class DatabaseSeeder(
             return;
         }
 
-        // O nome de exibição e único. Verificamos antes de criar credenciais para não deixar
-        // um usuário orfao nem quebrar o start por causa de um nome ja usado.
         var normalized = Participant.Normalize(options.AdminDisplayName);
         if (await db.Participants.AnyAsync(p => p.NormalizedDisplayName == normalized, ct))
         {
@@ -131,17 +121,10 @@ public sealed class DatabaseSeeder(
         logger.LogInformation("Administrador inicial criado: {Email}", options.AdminEmail);
     }
 
-    /// <summary>
-    /// Admin__Password e a fonte da verdade para a conta de bootstrap: se a variavel mudar,
-    /// a senha do administrador acompanha. Sem isso, alterar a variavel depois do primeiro
-    /// deploy nao teria efeito nenhum - e o administrador ficaria trancado do lado de fora
-    /// sem nenhuma pista do motivo.
-    /// </summary>
     private async Task SyncAdminPasswordAsync(AppUser user, string password)
     {
         if (await userManager.CheckPasswordAsync(user, password))
         {
-            // Ja e a senha configurada: nada a fazer.
             await ClearLockoutAsync(user);
             return;
         }
@@ -191,8 +174,6 @@ public sealed class DatabaseSeeder(
         await db.SaveChangesAsync(ct);
     }
 
-    // ------------------------------------------------------------------ demonstracao
-
     private async Task SeedDemoAsync(DateTimeOffset now, CancellationToken ct)
     {
         if (await db.Seasons.AnyAsync(ct))
@@ -222,7 +203,6 @@ public sealed class DatabaseSeeder(
 
         var participants = await CreateDemoParticipantsAsync(now, ct);
 
-        // Tentativas na rodada encerrada, com desempenhos diferentes para o ranking ficar interessante.
         var profiles = new[] { (0.9, 4), (1.0, 8), (0.6, 12), (0.75, 20), (0.4, 30), (1.0, 25) };
 
         for (var i = 0; i < participants.Count; i++)
@@ -231,7 +211,6 @@ public sealed class DatabaseSeeder(
             db.Attempts.Add(SimulateAttempt(closed, participants[i].Id, closed.OpensAt.AddHours(6 + i), accuracy, secondsPerQuestion));
         }
 
-        // Metade do grupo ja respondeu a rodada aberta.
         for (var i = 0; i < participants.Count / 2; i++)
         {
             var (accuracy, secondsPerQuestion) = profiles[i % profiles.Length];
@@ -316,10 +295,6 @@ public sealed class DatabaseSeeder(
         return created;
     }
 
-    /// <summary>
-    /// Reproduz uma participacao usando as regras reais do dominio (nada de pontuacao fabricada),
-    /// para que os dados de demonstracao sejam consistentes com o que o app calcula.
-    /// </summary>
     private static Attempt SimulateAttempt(
         Round round,
         Guid participantId,
@@ -336,7 +311,6 @@ public sealed class DatabaseSeeder(
             var served = attempt.ServeCurrentQuestion(round, cursor);
             if (served is null) break;
 
-            // Determinístico: usa o indice para decidir acerto, sem depender de aleatoriedade.
             var shouldHit = (index % 10) < (int)Math.Round(accuracy * 10);
             var option = shouldHit
                 ? served.Question.CorrectOption

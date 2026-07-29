@@ -29,7 +29,6 @@ export function AdminRoundsPage() {
   const [maxSpeedBonus, setBonus] = useState(5)
   const [questionTimeLimitSeconds, setTimeLimit] = useState(45)
 
-  // Sugere a próxima semana livre.
   useEffect(() => {
     if (!rounds.data || rounds.data.length === 0) return
     setWeekNumber(Math.max(...rounds.data.map((item) => item.round.weekNumber)) + 1)

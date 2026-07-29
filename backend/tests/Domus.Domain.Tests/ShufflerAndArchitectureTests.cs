@@ -47,17 +47,12 @@ public class OptionShufflerTests
             if (!other.SequenceEqual(reference)) different++;
         }
 
-        // Com 3 alternativas, a chance de 30 sorteios sairem todos iguais e desprezivel.
         Assert.True(different > 10, $"Embaralhamento pouco variado: {different}/30");
     }
 }
 
 public class ArchitectureTests
 {
-    /// <summary>
-    /// Doc 05, secao 4: a camada de dominio não pode conhecer EF Core, ASP.NET nem Identity.
-    /// Se alguém adicionar a referencia por conveniencia, este teste falha.
-    /// </summary>
     [Fact]
     public void Dominio_nao_depende_de_infraestrutura()
     {

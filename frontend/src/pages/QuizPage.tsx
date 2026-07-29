@@ -19,7 +19,6 @@ export function QuizPage() {
   const [error, setError] = useState<string | null>(null)
   const [sending, setSending] = useState(false)
 
-  // Diferenca entre o relogio do servidor e o do aparelho (RNF-03: o servidor manda).
   const clockOffset = useRef(0)
   const submitting = useRef(false)
 
@@ -34,7 +33,6 @@ export function QuizPage() {
 
       applyQuestion(state.currentQuestion)
     },
-    // eslint-disable-next-line react-hooks/exhaustive-deps
     [navigate],
   )
 
@@ -113,7 +111,6 @@ export function QuizPage() {
     [attemptId, question, navigate],
   )
 
-  // Cronometro: sempre calculado a partir do prazo do servidor.
   useEffect(() => {
     if (stage !== 'question' || !question) return
 
@@ -197,7 +194,6 @@ export function QuizPage() {
           </span>
         </div>
 
-        {/* Progresso no quiz: quantas perguntas já ficaram para trás. Só cresce. */}
         <div
           className="h-1.5 overflow-hidden rounded-full bg-slate-200"
           role="progressbar"
@@ -209,8 +205,6 @@ export function QuizPage() {
           <div className="h-full rounded-full bg-brand-500 transition-all" style={{ width: `${progress}%` }} />
         </div>
 
-        {/* Tempo desta pergunta: só diminui. Antes as duas coisas dividiam a mesma barra,
-            e o usuário não sabia o que estava olhando. */}
         <div className="h-1.5 overflow-hidden rounded-full bg-slate-200">
           <div
             className={`h-full rounded-full ${urgent ? 'bg-red-500' : 'bg-slate-400'}`}
@@ -316,8 +310,6 @@ function RulesCard({
           Estou pronto, começar
         </Button>
 
-        {/* A tentativa é única: quem chegou aqui por engano precisa de uma saída
-            que não seja o botão "voltar" do navegador. */}
         <Button full variant="secondary" onClick={onCancel}>
           Ainda não — voltar
         </Button>

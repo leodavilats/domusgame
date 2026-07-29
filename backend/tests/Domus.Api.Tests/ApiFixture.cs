@@ -7,10 +7,6 @@ using Xunit;
 
 namespace Domus.Api.Tests;
 
-/// <summary>
-/// Sobe um Postgres real em container e a API completa. Exige Docker em execucao;
-/// no CI o servico ja esta disponivel.
-/// </summary>
 public sealed class ApiFixture : IAsyncLifetime
 {
     public const string InviteCode = "TESTE123";
@@ -25,10 +21,6 @@ public sealed class ApiFixture : IAsyncLifetime
 
     public WebApplicationFactory<Program> Factory { get; private set; } = default!;
 
-    /// <summary>
-    /// Segunda instancia da aplicacao, sobre o mesmo banco, com DevTools__Enabled=true.
-    /// Precisamos das duas para provar que o portao funciona nos dois estados.
-    /// </summary>
     public WebApplicationFactory<Program> ToolsFactory { get; private set; } = default!;
 
     public async Task InitializeAsync()
@@ -39,7 +31,6 @@ public sealed class ApiFixture : IAsyncLifetime
 
         ToolsFactory = Configure(new WebApplicationFactory<Program>(), toolsEnabled: true);
 
-        // Forca o start da aplicacao (cria o esquema e roda o seed).
         using var client = Factory.CreateClient();
         var health = await client.GetAsync("/api/health");
         health.EnsureSuccessStatusCode();
@@ -58,15 +49,12 @@ public sealed class ApiFixture : IAsyncLifetime
             builder.UseSetting("Admin:DisplayName", "Administrador");
             builder.UseSetting("DevTools:Enabled", toolsEnabled ? "true" : "false");
 
-            // A suite faz dezenas de logins e cadastros a partir do mesmo IP; o rate limit
-            // de producao (12/min) derrubaria os testes sem indicar nenhum defeito real.
             builder.UseSetting("RateLimiting:AuthPermitLimit", "10000");
             builder.UseSetting("RateLimiting:AnswersPermitLimit", "10000");
         });
 
     public async Task DisposeAsync()
     {
-        // A inicializacao pode ter falhado antes de criar a factory; não mascare o erro original.
         if (Factory is not null) await Factory.DisposeAsync();
         if (ToolsFactory is not null) await ToolsFactory.DisposeAsync();
         await _postgres.DisposeAsync();
@@ -74,7 +62,6 @@ public sealed class ApiFixture : IAsyncLifetime
 
     public HttpClient CreateClient() => Factory.CreateClient();
 
-    /// <summary>Administrador logado na instancia com as ferramentas de teste ligadas.</summary>
     public async Task<HttpClient> LoginAsToolsAdminAsync()
     {
         var client = ToolsFactory.CreateClient();

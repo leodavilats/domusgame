@@ -15,8 +15,6 @@ import { RankingPage } from './pages/RankingPage'
 import { HistoryPage } from './pages/HistoryPage'
 import { ProfilePage } from './pages/ProfilePage'
 
-// A área administrativa é usada por uma pessoa; os outros 30 não precisam baixá-la.
-// O `lazy` a tira do pacote principal e ela só chega quando o admin abre /admin.
 const AdminLayout = lazy(() => import('./pages/admin/AdminLayout').then((m) => ({ default: m.AdminLayout })))
 const AdminHomePage = lazy(() => import('./pages/admin/AdminHomePage').then((m) => ({ default: m.AdminHomePage })))
 const AdminSeasonsPage = lazy(() => import('./pages/admin/AdminSeasonsPage').then((m) => ({ default: m.AdminSeasonsPage })))

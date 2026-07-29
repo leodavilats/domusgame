@@ -1,9 +1,3 @@
-/**
- * Ícones da navegação em SVG, não emoji.
- *
- * Emoji renderiza diferente em cada sistema, muda de tamanho sem controle e não acompanha a
- * cor do estado ativo — `currentColor` resolve os três problemas de uma vez.
- */
 interface IconProps {
   className?: string
 }

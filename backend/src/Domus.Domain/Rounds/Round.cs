@@ -8,20 +8,14 @@ public enum RoundStatus
     Published = 1
 }
 
-/// <summary>Estado derivado do relogio (RN-07). Nunca e persistido.</summary>
 public enum RoundAvailability
 {
-    /// <summary>Rascunho: invisivel para participantes (RN-09).</summary>
     Draft = 0,
     Scheduled = 1,
     Open = 2,
     Closed = 3
 }
 
-/// <summary>
-/// Desafio de uma semana: licao, perguntas, janela de disponibilidade e parametros de pontuacao.
-/// Toda mutacao exige status rascunho (RN-10).
-/// </summary>
 public sealed class Round : Entity
 {
     private readonly List<Question> _questions = [];
@@ -71,14 +65,12 @@ public sealed class Round : Entity
 
     public IReadOnlyList<Question> Questions => _questions;
 
-    /// <summary>Perguntas na ordem de apresentacao. Use sempre este acesso em regras de negocio.</summary>
     public IReadOnlyList<Question> OrderedQuestions => [.. _questions.OrderBy(q => q.Order)];
 
     public bool IsDraft => Status == RoundStatus.Draft;
 
     public bool IsPublished => Status == RoundStatus.Published;
 
-    /// <summary>I-R7: teto de pontos da rodada (RN-27).</summary>
     public int MaxPoints => _questions.Count * Scoring.MaxPointsPerQuestion;
 
     public static Round CreateDraft(
@@ -91,9 +83,6 @@ public sealed class Round : Entity
         DateTimeOffset now) =>
         new(seasonId, weekNumber, title, opensAt, closesAt, scoring, now);
 
-    // ---------------------------------------------------------------- disponibilidade
-
-    /// <summary>I-R6 / RN-07: liberacao e encerramento automaticos, derivados do relogio.</summary>
     public RoundAvailability AvailabilityAt(DateTimeOffset now)
     {
         if (Status == RoundStatus.Draft) return RoundAvailability.Draft;
@@ -105,18 +94,10 @@ public sealed class Round : Entity
 
     public bool IsClosedAt(DateTimeOffset now) => AvailabilityAt(now) == RoundAvailability.Closed;
 
-    /// <summary>RN-21: gabarito, explicacoes e ranking so apos o encerramento.</summary>
     public bool IsAnswerRevealedAt(DateTimeOffset now) => IsClosedAt(now);
 
-    /// <summary>
-    /// RN-10: rascunho e sempre editavel, e rodada publicada continua editavel **enquanto nao
-    /// abriu**. Da abertura em diante ela e imutavel: ha respostas e pontuacao em jogo, e mudar
-    /// enunciado, gabarito ou parametros no meio do caminho tornaria as tentativas incomparaveis.
-    /// </summary>
     public bool IsEditableAt(DateTimeOffset now) =>
         IsDraft || AvailabilityAt(now) == RoundAvailability.Scheduled;
-
-    // ------------------------------------------------- mutacoes (rascunho ou publicada agendada)
 
     public void UpdateDetails(int weekNumber, string title, DateTimeOffset now)
     {
@@ -180,7 +161,6 @@ public sealed class Round : Entity
         Renumber();
     }
 
-    /// <summary>Move a pergunta uma posição para cima (-1) ou para baixo (+1), mantendo a ordem contigua.</summary>
     public void MoveQuestion(Guid questionId, int offset, DateTimeOffset now)
     {
         EnsureEditable(now);
@@ -203,9 +183,6 @@ public sealed class Round : Entity
         }
     }
 
-    // ---------------------------------------------------------------- publicacao
-
-    /// <summary>I-R5 / RN-08: lista dos problemas que impedem a publicacao. Vazia = pode publicar.</summary>
     public IReadOnlyList<string> ValidateForPublish()
     {
         var problems = new List<string>();
@@ -253,7 +230,6 @@ public sealed class Round : Entity
         PublishedAt = now;
     }
 
-    /// <summary>Copia perguntas e parametros para um novo rascunho (UC-25).</summary>
     public Round DuplicateAsDraft(int weekNumber, DateTimeOffset opensAt, DateTimeOffset closesAt, DateTimeOffset now)
     {
         var copy = new Round(SeasonId, weekNumber, Title, opensAt, closesAt, Scoring.Copy(), now);
@@ -272,14 +248,6 @@ public sealed class Round : Entity
         return copy;
     }
 
-    /// <summary>
-    /// ESCAPE HATCH DE TESTE. Desloca a janela ignorando RN-10, para que o painel de
-    /// ferramentas possa abrir ou encerrar uma rodada na hora sem esperar o relogio.
-    ///
-    /// Nenhum fluxo de produto chama isto: o unico caminho e o grupo /api/admin/tools, que
-    /// so existe quando DevTools__Enabled esta ligado. O nome e deliberadamente feio para
-    /// que apareca em qualquer revisao e nao seja confundido com UpdateWindow.
-    /// </summary>
     public void OverrideWindowForTesting(DateTimeOffset opensAt, DateTimeOffset closesAt)
     {
         ValidateWindow(opensAt, closesAt);

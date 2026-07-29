@@ -6,7 +6,6 @@ namespace Domus.Domain.Tests;
 
 public class RoundTests
 {
-    /// <summary>Antes da abertura: rascunho e rodada agendada sao editaveis.</summary>
     private static readonly DateTimeOffset Now = TestData.Sunday13h.AddDays(-1);
 
     [Fact]
@@ -46,7 +45,6 @@ public class RoundTests
         Assert.True(round.IsAnswerRevealedAt(TestData.Saturday2359.AddMinutes(1)));
     }
 
-    /// <summary>RN-10: publicada mas ainda agendada continua editavel.</summary>
     [Fact]
     public void Rodada_publicada_e_editavel_enquanto_nao_abriu()
     {
@@ -64,10 +62,9 @@ public class RoundTests
         Assert.Equal(2, round.WeekNumber);
         Assert.Equal("Titulo corrigido", round.Title);
         Assert.Equal(4, round.Questions.Count);
-        Assert.True(round.IsPublished);   // segue publicada: abre sozinha no horario
+        Assert.True(round.IsPublished);
     }
 
-    /// <summary>RN-10: da abertura em diante e imutavel - ha respostas em jogo.</summary>
     [Fact]
     public void Rodada_aberta_nao_pode_mais_ser_alterada()
     {
