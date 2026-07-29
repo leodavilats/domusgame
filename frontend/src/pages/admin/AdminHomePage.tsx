@@ -15,7 +15,7 @@ export function AdminHomePage() {
 
   return (
     <div className="space-y-4">
-      <PageTitle subtitle={data.seasonName ?? 'Nenhuma temporada ativa'}>Visao geral</PageTitle>
+      <PageTitle subtitle={data.seasonName ?? 'Nenhuma temporada ativa'}>Visão geral</PageTitle>
 
       <div className="grid grid-cols-2 gap-2">
         <Tile label="Participantes" value={data.participantCount} />

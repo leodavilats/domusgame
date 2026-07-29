@@ -35,7 +35,8 @@ um desenvolvedor. **Simplicidade é requisito**, não preguiça: ver `docs/05-ar
 3. Tentativa única garantida por índice no banco (`RNF-04`).
 4. Envio de resposta idempotente por `(AttemptId, QuestionId)` (`RNF-05`).
 5. Pontuação calculada e persistida no envio, com parâmetros congelados na tentativa (`RN-28`).
-6. Rodada publicada é imutável (`RN-10`).
+6. Rodada é imutável **a partir da abertura** (`RN-10`). Antes disso — rascunho ou publicada
+   ainda agendada — o admin pode editar e excluir; a exclusão exige zero participações.
 
 Ao mexer em qualquer uma delas, o teste correspondente em `tests/` deve ser atualizado junto —
 e provavelmente a regra em `docs/01-requisitos.md` também.

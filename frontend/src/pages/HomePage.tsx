@@ -27,13 +27,13 @@ export function HomePage() {
   return (
     <div className="space-y-4">
       <PageTitle subtitle={data.season ? data.season.name : 'Nenhuma temporada em andamento'}>
-        Ola, {me?.displayName.split(' ')[0]}!
+        Olá, {me?.displayName.split(' ')[0]}!
       </PageTitle>
 
       <div className="grid grid-cols-3 gap-2">
         <StatTile label="Pontos" value={stats.seasonPoints} />
-        <StatTile label="Posicao" value={stats.position ? `${stats.position}o` : '-'} />
-        <StatTile label="Sequencia" value={`${stats.streak}🔥`} />
+        <StatTile label="Posição" value={stats.position ? `${stats.position}o` : '-'} />
+        <StatTile label="Sequência" value={`${stats.streak}🔥`} />
       </div>
 
       {!data.season ? (

@@ -6,6 +6,9 @@ namespace Domus.Domain.Tests;
 
 public class RoundTests
 {
+    /// <summary>Antes da abertura: rascunho e rodada agendada sao editaveis.</summary>
+    private static readonly DateTimeOffset Now = TestData.Sunday13h.AddDays(-1);
+
     [Fact]
     public void Rascunho_nao_fica_disponivel_para_participante()
     {
@@ -43,16 +46,63 @@ public class RoundTests
         Assert.True(round.IsAnswerRevealedAt(TestData.Saturday2359.AddMinutes(1)));
     }
 
+    /// <summary>RN-10: publicada mas ainda agendada continua editavel.</summary>
     [Fact]
-    public void Rodada_publicada_nao_pode_ser_alterada()
+    public void Rodada_publicada_e_editavel_enquanto_nao_abriu()
     {
         var round = TestData.PublishedRound();
 
-        Assert.Throws<DomainRuleException>(() => round.UpdateDetails(2, "Outro titulo"));
-        Assert.Throws<DomainRuleException>(() => round.SetLesson(Lesson.Empty()));
+        Assert.True(round.IsEditableAt(Now));
+        Assert.Equal(RoundAvailability.Scheduled, round.AvailabilityAt(Now));
+
+        round.UpdateDetails(2, "Titulo corrigido", Now);
+        round.SetLesson(Lesson.Create("Outra licao", "Joao 3.16", "Novo conteudo.", null), Now);
+
+        round.AddQuestion("Nova?", QuestionMediaType.None, null, null,
+            [new AnswerOptionDraft("a", true), new AnswerOptionDraft("b", false)], Now);
+
+        Assert.Equal(2, round.WeekNumber);
+        Assert.Equal("Titulo corrigido", round.Title);
+        Assert.Equal(4, round.Questions.Count);
+        Assert.True(round.IsPublished);   // segue publicada: abre sozinha no horario
+    }
+
+    /// <summary>RN-10: da abertura em diante e imutavel - ha respostas em jogo.</summary>
+    [Fact]
+    public void Rodada_aberta_nao_pode_mais_ser_alterada()
+    {
+        var round = TestData.PublishedRound();
+        var duringRound = TestData.Sunday13h.AddHours(1);
+
+        Assert.False(round.IsEditableAt(duringRound));
+
+        Assert.Throws<DomainRuleException>(() => round.UpdateDetails(2, "Outro titulo", duringRound));
+        Assert.Throws<DomainRuleException>(() => round.SetLesson(Lesson.Empty(), duringRound));
         Assert.Throws<DomainRuleException>(() =>
             round.AddQuestion("Nova?", QuestionMediaType.None, null, null,
-                [new AnswerOptionDraft("a", true), new AnswerOptionDraft("b", false)]));
+                [new AnswerOptionDraft("a", true), new AnswerOptionDraft("b", false)], duringRound));
+        Assert.Throws<DomainRuleException>(() =>
+            round.RemoveQuestion(round.QuestionAtOrder(1)!.Id, duringRound));
+        Assert.Throws<DomainRuleException>(() =>
+            round.UpdateWindow(TestData.Sunday13h, TestData.Saturday2359, duringRound));
+    }
+
+    [Fact]
+    public void Rodada_encerrada_nao_volta_a_ser_editavel()
+    {
+        var round = TestData.PublishedRound();
+
+        Assert.False(round.IsEditableAt(TestData.Saturday2359.AddMinutes(1)));
+    }
+
+    [Fact]
+    public void Rascunho_e_editavel_em_qualquer_instante()
+    {
+        var round = TestData.DraftRound();
+
+        Assert.True(round.IsEditableAt(Now));
+        Assert.True(round.IsEditableAt(TestData.Sunday13h.AddHours(1)));
+        Assert.True(round.IsEditableAt(TestData.Saturday2359.AddDays(30)));
     }
 
     [Fact]
@@ -90,11 +140,11 @@ public class RoundTests
 
         Assert.Throws<DomainValidationException>(() =>
             round.AddQuestion("Duas certas?", QuestionMediaType.None, null, null,
-                [new AnswerOptionDraft("a", true), new AnswerOptionDraft("b", true)]));
+                [new AnswerOptionDraft("a", true), new AnswerOptionDraft("b", true)], Now));
 
         Assert.Throws<DomainValidationException>(() =>
             round.AddQuestion("Nenhuma certa?", QuestionMediaType.None, null, null,
-                [new AnswerOptionDraft("a", false), new AnswerOptionDraft("b", false)]));
+                [new AnswerOptionDraft("a", false), new AnswerOptionDraft("b", false)], Now));
     }
 
     [Fact]
@@ -104,7 +154,7 @@ public class RoundTests
 
         Assert.Throws<DomainValidationException>(() =>
             round.AddQuestion("Uma so?", QuestionMediaType.None, null, null,
-                [new AnswerOptionDraft("a", true)]));
+                [new AnswerOptionDraft("a", true)], Now));
 
         Assert.Throws<DomainValidationException>(() =>
             round.AddQuestion("Seis?", QuestionMediaType.None, null, null,
@@ -112,7 +162,7 @@ public class RoundTests
                 new AnswerOptionDraft("a", true), new AnswerOptionDraft("b", false),
                 new AnswerOptionDraft("c", false), new AnswerOptionDraft("d", false),
                 new AnswerOptionDraft("e", false), new AnswerOptionDraft("f", false)
-            ]));
+            ], Now));
     }
 
     [Fact]
@@ -122,11 +172,11 @@ public class RoundTests
 
         Assert.Throws<DomainValidationException>(() =>
             round.AddQuestion("Com imagem?", QuestionMediaType.Image, null, null,
-                [new AnswerOptionDraft("a", true), new AnswerOptionDraft("b", false)]));
+                [new AnswerOptionDraft("a", true), new AnswerOptionDraft("b", false)], Now));
 
         Assert.Throws<DomainValidationException>(() =>
             round.AddQuestion("Com imagem?", QuestionMediaType.Image, "arquivo.png", null,
-                [new AnswerOptionDraft("a", true), new AnswerOptionDraft("b", false)]));
+                [new AnswerOptionDraft("a", true), new AnswerOptionDraft("b", false)], Now));
     }
 
     [Fact]
@@ -135,7 +185,7 @@ public class RoundTests
         var round = TestData.DraftRound(questionCount: 4);
         var second = round.QuestionAtOrder(2)!;
 
-        round.RemoveQuestion(second.Id);
+        round.RemoveQuestion(second.Id, Now);
 
         Assert.Equal([1, 2, 3], round.OrderedQuestions.Select(q => q.Order).ToArray());
     }
@@ -146,7 +196,7 @@ public class RoundTests
         var round = TestData.DraftRound(questionCount: 3);
         var first = round.QuestionAtOrder(1)!;
 
-        round.MoveQuestion(first.Id, 1);
+        round.MoveQuestion(first.Id, 1, Now);
 
         Assert.Equal(2, first.Order);
         Assert.Equal([1, 2, 3], round.OrderedQuestions.Select(q => q.Order).ToArray());
@@ -158,7 +208,7 @@ public class RoundTests
         var round = TestData.DraftRound(questionCount: 2);
         var first = round.QuestionAtOrder(1)!;
 
-        round.MoveQuestion(first.Id, -1);
+        round.MoveQuestion(first.Id, -1, Now);
 
         Assert.Equal(1, first.Order);
     }

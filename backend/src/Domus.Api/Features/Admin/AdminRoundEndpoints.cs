@@ -56,7 +56,8 @@ public sealed record AdminRoundListItemDto(
     RoundSummaryDto Round,
     RoundStatus Status,
     int AttemptCount,
-    bool CanEdit);
+    bool CanEdit,
+    bool CanDelete);
 
 public sealed record AdminRoundDto(
     RoundSummaryDto Round,
@@ -64,7 +65,9 @@ public sealed record AdminRoundDto(
     LessonDto Lesson,
     IReadOnlyList<AdminQuestionDto> Questions,
     IReadOnlyList<string> Problems,
-    int AttemptCount);
+    int AttemptCount,
+    bool CanEdit,
+    bool CanDelete);
 
 public static class AdminRoundEndpoints
 {
@@ -115,7 +118,9 @@ public static class AdminRoundEndpoints
             queries.ToSummary(round),
             round.Status,
             attemptCounts.SingleOrDefault(c => c.RoundId == round.Id)?.Count ?? 0,
-            round.IsDraft));
+            round.IsEditableAt(queries.Now),
+            round.IsEditableAt(queries.Now) &&
+                (attemptCounts.SingleOrDefault(c => c.RoundId == round.Id)?.Count ?? 0) == 0));
 
         return Results.Ok(items);
     }
@@ -167,12 +172,17 @@ public static class AdminRoundEndpoints
     {
         var round = await queries.GetRoundWithQuestionsAsync(id, tracking: true, ct);
 
-        round.UpdateDetails(request.WeekNumber, request.Title);
-        round.UpdateWindow(request.OpensAt.ToUniversalTime(), request.ClosesAt.ToUniversalTime());
+        round.UpdateDetails(request.WeekNumber, request.Title, queries.Now);
+        round.UpdateWindow(request.OpensAt.ToUniversalTime(), request.ClosesAt.ToUniversalTime(), queries.Now);
         round.UpdateScoring(RoundScoringSettings.Create(
-            request.PointsPerCorrectAnswer, request.MaxSpeedBonus, request.QuestionTimeLimitSeconds));
+            request.PointsPerCorrectAnswer, request.MaxSpeedBonus, request.QuestionTimeLimitSeconds), queries.Now);
 
         await EnsureWeekIsFreeAsync(db, round, ct);
+
+        // Editar a janela de uma rodada ja publicada pode criar sobreposicao (RN-12), o que
+        // antes so era verificado na publicacao.
+        if (round.IsPublished) await EnsureWindowDoesNotOverlapAsync(db, round, ct);
+
         await db.SaveChangesAsync(ct);
 
         return Results.Ok(await ToDetailAsync(db, queries, round, ct));
@@ -188,7 +198,14 @@ public static class AdminRoundEndpoints
     {
         var round = await queries.GetRoundWithQuestionsAsync(id, tracking: true, ct);
 
-        Guard.State(round.IsDraft, "Somente rascunhos podem ser excluidos.");
+        Guard.State(
+            round.IsEditableAt(queries.Now),
+            "Rodada que já abriu não pode ser excluída.");
+
+        // Cinto e suspensorio: uma rodada agendada nao deveria ter tentativas, mas apagar
+        // participacoes por acidente e irreversivel.
+        var attempts = await db.Attempts.AsNoTracking().CountAsync(a => a.RoundId == round.Id, ct);
+        Guard.State(attempts == 0, "Esta rodada já tem participações e não pode ser excluída.");
 
         db.Rounds.Remove(round);
         db.AuditLogs.Add(AuditLogEntry.Record(
@@ -209,7 +226,7 @@ public static class AdminRoundEndpoints
         var round = await queries.GetRoundWithQuestionsAsync(id, tracking: true, ct);
 
         round.SetLesson(Lesson.Create(
-            request.Title, request.ScriptureReference, request.Content, request.ExternalUrl));
+            request.Title, request.ScriptureReference, request.Content, request.ExternalUrl), queries.Now);
 
         await db.SaveChangesAsync(ct);
         return Results.Ok(await ToDetailAsync(db, queries, round, ct));
@@ -283,7 +300,7 @@ public static class AdminRoundEndpoints
         var round = await queries.GetRoundWithQuestionsAsync(id, tracking: true, ct);
 
         round.AddQuestion(
-            request.Text, request.MediaType, request.MediaUrl, request.Explanation, ToDrafts(request.Options));
+            request.Text, request.MediaType, request.MediaUrl, request.Explanation, ToDrafts(request.Options), queries.Now);
 
         await db.SaveChangesAsync(ct);
         return Results.Ok(await ToDetailAsync(db, queries, round, ct));
@@ -300,7 +317,8 @@ public static class AdminRoundEndpoints
         var round = await queries.GetRoundWithQuestionsAsync(id, tracking: true, ct);
 
         round.UpdateQuestion(
-            questionId, request.Text, request.MediaType, request.MediaUrl, request.Explanation, ToDrafts(request.Options));
+            questionId, request.Text, request.MediaType, request.MediaUrl, request.Explanation,
+            ToDrafts(request.Options), queries.Now);
 
         await db.SaveChangesAsync(ct);
         return Results.Ok(await ToDetailAsync(db, queries, round, ct));
@@ -315,7 +333,7 @@ public static class AdminRoundEndpoints
     {
         var round = await queries.GetRoundWithQuestionsAsync(id, tracking: true, ct);
 
-        round.RemoveQuestion(questionId);
+        round.RemoveQuestion(questionId, queries.Now);
 
         await db.SaveChangesAsync(ct);
         return Results.Ok(await ToDetailAsync(db, queries, round, ct));
@@ -331,7 +349,7 @@ public static class AdminRoundEndpoints
     {
         var round = await queries.GetRoundWithQuestionsAsync(id, tracking: true, ct);
 
-        round.MoveQuestion(questionId, request.Offset);
+        round.MoveQuestion(questionId, request.Offset, queries.Now);
 
         await db.SaveChangesAsync(ct);
         return Results.Ok(await ToDetailAsync(db, queries, round, ct));
@@ -370,7 +388,9 @@ public static class AdminRoundEndpoints
                 round.Lesson.Title, round.Lesson.ScriptureReference, round.Lesson.Content, round.Lesson.ExternalUrl),
             questions,
             round.ValidateForPublish(),
-            attemptCount);
+            attemptCount,
+            round.IsEditableAt(queries.Now),
+            round.IsEditableAt(queries.Now) && attemptCount == 0);
     }
 
     /// <summary>RN-11.</summary>

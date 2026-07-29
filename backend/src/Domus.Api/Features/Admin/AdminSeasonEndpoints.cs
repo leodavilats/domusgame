@@ -134,7 +134,7 @@ public static class AdminSeasonEndpoints
         return Results.Ok(ToDto(season, 0, 0));
     }
 
-    /// <summary>UC-29: encerra e congela o podio (RN-04).</summary>
+    /// <summary>UC-29: encerra e congela o pódio (RN-04).</summary>
     private static async Task<IResult> FinishAsync(
         Guid id,
         CurrentUser currentUser,
@@ -177,7 +177,7 @@ public static class AdminSeasonEndpoints
         var ranking = await queries.GetSeasonRankingAsync(season, currentUser.RequireAdminId(), ct);
 
         var csv = new StringBuilder();
-        csv.AppendLine("Posicao;Nome;Pontos;Tempo total (s);Rodadas respondidas");
+        csv.AppendLine("Posição;Nome;Pontos;Tempo total (s);Rodadas respondidas");
 
         foreach (var entry in ranking.Entries)
         {

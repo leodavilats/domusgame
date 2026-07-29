@@ -62,7 +62,7 @@ public sealed class Question : Entity
 
     public Guid RoundId { get; private set; }
 
-    /// <summary>Posicao na rodada, contigua e iniciando em 1 (I-R4).</summary>
+    /// <summary>Posição na rodada, contigua e iniciando em 1 (I-R4).</summary>
     public int Order { get; private set; }
 
     public string Text { get; private set; }

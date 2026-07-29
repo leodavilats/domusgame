@@ -210,7 +210,7 @@ public sealed class DatabaseSeeder(
         season.Activate();
         db.Seasons.Add(season);
 
-        var closed = BuildRound(season.Id, 1, "A graca que transforma", "Efesios 2.1-10",
+        var closed = BuildRound(season.Id, 1, "A graça que transforma", "Efesios 2.1-10",
             now.AddDays(-14), now.AddDays(-8), now.AddDays(-15));
         var open = BuildRound(season.Id, 2, "Oracao que persevera", "Lucas 18.1-8",
             now.AddDays(-2), now.AddDays(4), now.AddDays(-3));
@@ -257,7 +257,7 @@ public sealed class DatabaseSeeder(
             reference,
             $"## {title}\n\nEstudo da semana {week} baseado em **{reference}**.\n\n" +
             "Leia o texto antes de responder ao desafio. As perguntas seguem a ordem do estudo.",
-            null));
+            null), createdAt);
 
         for (var i = 1; i <= 8; i++)
         {
@@ -271,7 +271,8 @@ public sealed class DatabaseSeeder(
                     new AnswerOptionDraft($"Alternativa incorreta A da pergunta {i}", false),
                     new AnswerOptionDraft($"Alternativa incorreta B da pergunta {i}", false),
                     new AnswerOptionDraft($"Alternativa incorreta C da pergunta {i}", false)
-                ]);
+                ],
+                createdAt);
         }
 
         round.Publish(createdAt);

@@ -189,7 +189,7 @@ public sealed class DomusQueries(DomusDbContext db, TimeProvider clock)
         {
             index++;
 
-            // Empate absoluto (mesmos pontos e mesmo tempo) compartilha a posicao.
+            // Empate absoluto (mesmos pontos e mesmo tempo) compartilha a posição.
             var tied = previous is not null &&
                        previous.TotalPoints == row.TotalPoints &&
                        previous.TotalTimeMs == row.TotalTimeMs;
@@ -211,7 +211,7 @@ public sealed class DomusQueries(DomusDbContext db, TimeProvider clock)
 
         var me = entries.SingleOrDefault(e => e.IsMe);
 
-        // RN-22: quem optou por não aparecer some da lista publica, mas continua vendo sua posicao.
+        // RN-22: quem optou por não aparecer some da lista publica, mas continua vendo sua posição.
         var hidden = ordered.Where(r => !r.ShowInRanking).Select(r => r.ParticipantId).ToHashSet();
         var visible = entries.Where(e => e.IsMe || !hidden.Contains(e.ParticipantId)).ToList();
 

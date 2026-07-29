@@ -52,7 +52,7 @@ export function HistoryPage() {
 
             <div className="flex shrink-0 gap-3 text-sm font-semibold text-brand-600">
               {round.availability !== 'Scheduled' && (
-                <Link to={`/rodadas/${round.id}/licao`}>Licao</Link>
+                <Link to={`/rodadas/${round.id}/licao`}>Lição</Link>
               )}
               {round.availability === 'Closed' && (
                 <Link to={`/rodadas/${round.id}/revisao`}>Gabarito</Link>

@@ -64,8 +64,9 @@ public class AuthorizationTests(ApiFixture fixture)
         Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
     }
 
+    /// <summary>RN-10: da abertura em diante a rodada e imutavel.</summary>
     [Fact]
-    public async Task Rodada_publicada_nao_aceita_edicao()
+    public async Task Rodada_aberta_nao_aceita_edicao()
     {
         var admin = await fixture.LoginAsAdminAsync();
         var round = await RoundBuilder.CreateOpenRoundAsync(admin, "edicao", questionCount: 2);
@@ -164,5 +165,77 @@ public class AuthorizationTests(ApiFixture fixture)
         Assert.Single(actives);
         Assert.Equal(second, actives[0]);
         Assert.NotEqual(first, actives[0]);
+    }
+
+    /// <summary>RN-10: rodada publicada que ainda nao abriu continua editavel.</summary>
+    [Fact]
+    public async Task Rodada_agendada_aceita_edicao_e_exclusao()
+    {
+        var admin = await fixture.LoginAsAdminAsync();
+        var seasonId = await RoundBuilder.CreateSeasonAsync(admin, "Temporada agendada editavel");
+        var now = DateTimeOffset.UtcNow;
+
+        var roundId = await RoundBuilder.CreateDraftRoundAsync(admin, seasonId, 1, now.AddDays(3), now.AddDays(9));
+        await RoundBuilder.FillAsync(admin, roundId, 2);
+        (await RoundBuilder.PublishAsync(admin, roundId)).EnsureSuccessStatusCode();
+
+        var published = await (await admin.GetAsync($"/api/admin/rounds/{roundId}")).ReadJsonAsync();
+        Assert.Equal("Scheduled", published.GetProperty("round").GetProperty("availability").GetString());
+        Assert.True(published.GetProperty("canEdit").GetBoolean());
+        Assert.True(published.GetProperty("canDelete").GetBoolean());
+
+        // Editar titulo e janela de uma rodada agendada.
+        var update = await admin.PutAsJsonAsync($"/api/admin/rounds/{roundId}", new
+        {
+            weekNumber = 1,
+            title = "Titulo corrigido depois de publicar",
+            opensAt = now.AddDays(4),
+            closesAt = now.AddDays(10),
+            pointsPerCorrectAnswer = 10,
+            maxSpeedBonus = 5,
+            questionTimeLimitSeconds = 45
+        });
+        update.EnsureSuccessStatusCode();
+
+        // Acrescentar pergunta em rodada agendada.
+        var question = await admin.PostAsJsonAsync($"/api/admin/rounds/{roundId}/questions", new
+        {
+            text = "Pergunta acrescentada apos publicar?",
+            mediaType = "None",
+            mediaUrl = (string?)null,
+            explanation = (string?)null,
+            options = new[]
+            {
+                new { text = "A", isCorrect = true },
+                new { text = "B", isCorrect = false }
+            }
+        });
+        question.EnsureSuccessStatusCode();
+
+        var detail = await (await admin.GetAsync($"/api/admin/rounds/{roundId}")).ReadJsonAsync();
+        Assert.Equal("Titulo corrigido depois de publicar", detail.GetProperty("round").GetProperty("title").GetString());
+        Assert.Equal(3, detail.GetProperty("questions").GetArrayLength());
+        Assert.Equal("Published", detail.GetProperty("status").GetString());
+
+        // E excluir, ja que ninguem respondeu.
+        var delete = await admin.DeleteAsync($"/api/admin/rounds/{roundId}");
+        Assert.Equal(HttpStatusCode.NoContent, delete.StatusCode);
+
+        var gone = await admin.GetAsync($"/api/admin/rounds/{roundId}");
+        Assert.Equal(HttpStatusCode.NotFound, gone.StatusCode);
+    }
+
+    [Fact]
+    public async Task Rodada_aberta_nao_pode_ser_excluida()
+    {
+        var admin = await fixture.LoginAsAdminAsync();
+        var round = await RoundBuilder.CreateOpenRoundAsync(admin, "exclusao-bloqueada", questionCount: 1);
+
+        var detail = await (await admin.GetAsync($"/api/admin/rounds/{round.RoundId}")).ReadJsonAsync();
+        Assert.False(detail.GetProperty("canEdit").GetBoolean());
+        Assert.False(detail.GetProperty("canDelete").GetBoolean());
+
+        var delete = await admin.DeleteAsync($"/api/admin/rounds/{round.RoundId}");
+        Assert.Equal(HttpStatusCode.Conflict, delete.StatusCode);
     }
 }

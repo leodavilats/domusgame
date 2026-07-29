@@ -47,7 +47,7 @@ export function ResultPage() {
         <dl className="mt-6 grid grid-cols-3 gap-2 text-center">
           <Metric label="Acertos" value={`${data.correctCount}/${data.questionCount}`} />
           <Metric label="Tempo" value={formatDuration(data.totalTimeMs)} />
-          <Metric label="Posicao" value={data.position ? `${data.position}o` : '—'} />
+          <Metric label="Posição" value={data.position ? `${data.position}o` : '—'} />
         </dl>
       </Card>
 

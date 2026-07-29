@@ -10,11 +10,11 @@ public enum SeasonStatus
     /// <summary>Temporada corrente. No maximo uma por vez (RN-02, indice único parcial).</summary>
     Active = 1,
 
-    /// <summary>Encerrada, com podio congelado (RN-04).</summary>
+    /// <summary>Encerrada, com pódio congelado (RN-04).</summary>
     Finished = 2
 }
 
-/// <summary>Colocado do podio, congelado no encerramento da temporada (RN-04).</summary>
+/// <summary>Colocado do pódio, congelado no encerramento da temporada (RN-04).</summary>
 public sealed class SeasonPodiumEntry : Entity
 {
     private SeasonPodiumEntry() : base() => DisplayName = string.Empty;
@@ -23,7 +23,7 @@ public sealed class SeasonPodiumEntry : Entity
         : base(NewId())
     {
         SeasonId = seasonId;
-        Position = Guard.InRange(position, 1, 3, "Posicao do podio");
+        Position = Guard.InRange(position, 1, 3, "Posição do pódio");
         ParticipantId = candidate.ParticipantId;
         DisplayName = Guard.Text(candidate.DisplayName, "Nome", Participants.Participant.DisplayNameMaxLength);
         TotalPoints = candidate.TotalPoints;
@@ -38,7 +38,7 @@ public sealed class SeasonPodiumEntry : Entity
     public long TotalTimeMs { get; private set; }
 }
 
-/// <summary>Candidato ao podio, ja ordenado pelo servico de ranking.</summary>
+/// <summary>Candidato ao pódio, ja ordenado pelo servico de ranking.</summary>
 public readonly record struct PodiumCandidate(Guid ParticipantId, string DisplayName, int TotalPoints, long TotalTimeMs);
 
 /// <summary>Periodo de competicao que agrupa rodadas e define o ranking premiado.</summary>
@@ -100,7 +100,7 @@ public sealed class Season : Entity
     }
 
     /// <summary>
-    /// I-S4: encerra a temporada e congela o podio. Os candidatos devem chegar
+    /// I-S4: encerra a temporada e congela o pódio. Os candidatos devem chegar
     /// ja ordenados pelo criterio de desempate (RN-31).
     /// </summary>
     public void Finish(DateTimeOffset now, IEnumerable<PodiumCandidate> orderedCandidates)

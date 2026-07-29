@@ -108,32 +108,40 @@ public sealed class Round : Entity
     /// <summary>RN-21: gabarito, explicacoes e ranking so apos o encerramento.</summary>
     public bool IsAnswerRevealedAt(DateTimeOffset now) => IsClosedAt(now);
 
-    // ---------------------------------------------------------------- mutacoes (rascunho)
+    /// <summary>
+    /// RN-10: rascunho e sempre editavel, e rodada publicada continua editavel **enquanto nao
+    /// abriu**. Da abertura em diante ela e imutavel: ha respostas e pontuacao em jogo, e mudar
+    /// enunciado, gabarito ou parametros no meio do caminho tornaria as tentativas incomparaveis.
+    /// </summary>
+    public bool IsEditableAt(DateTimeOffset now) =>
+        IsDraft || AvailabilityAt(now) == RoundAvailability.Scheduled;
 
-    public void UpdateDetails(int weekNumber, string title)
+    // ------------------------------------------------- mutacoes (rascunho ou publicada agendada)
+
+    public void UpdateDetails(int weekNumber, string title, DateTimeOffset now)
     {
-        EnsureDraft();
+        EnsureEditable(now);
         WeekNumber = Guard.InRange(weekNumber, 1, 999, "Numero da semana");
         Title = Guard.Text(title, "Titulo da rodada", 120);
     }
 
-    public void UpdateWindow(DateTimeOffset opensAt, DateTimeOffset closesAt)
+    public void UpdateWindow(DateTimeOffset opensAt, DateTimeOffset closesAt, DateTimeOffset now)
     {
-        EnsureDraft();
+        EnsureEditable(now);
         ValidateWindow(opensAt, closesAt);
         OpensAt = opensAt;
         ClosesAt = closesAt;
     }
 
-    public void UpdateScoring(RoundScoringSettings scoring)
+    public void UpdateScoring(RoundScoringSettings scoring, DateTimeOffset now)
     {
-        EnsureDraft();
+        EnsureEditable(now);
         Scoring = scoring;
     }
 
-    public void SetLesson(Lesson lesson)
+    public void SetLesson(Lesson lesson, DateTimeOffset now)
     {
-        EnsureDraft();
+        EnsureEditable(now);
         Lesson = lesson;
     }
 
@@ -142,9 +150,10 @@ public sealed class Round : Entity
         QuestionMediaType mediaType,
         string? mediaUrl,
         string? explanation,
-        IReadOnlyList<AnswerOptionDraft> options)
+        IReadOnlyList<AnswerOptionDraft> options,
+        DateTimeOffset now)
     {
-        EnsureDraft();
+        EnsureEditable(now);
 
         var question = Question.Create(Id, _questions.Count + 1, text, mediaType, mediaUrl, explanation, options);
         _questions.Add(question);
@@ -157,23 +166,24 @@ public sealed class Round : Entity
         QuestionMediaType mediaType,
         string? mediaUrl,
         string? explanation,
-        IReadOnlyList<AnswerOptionDraft> options)
+        IReadOnlyList<AnswerOptionDraft> options,
+        DateTimeOffset now)
     {
-        EnsureDraft();
+        EnsureEditable(now);
         RequireQuestion(questionId).Update(text, mediaType, mediaUrl, explanation, options);
     }
 
-    public void RemoveQuestion(Guid questionId)
+    public void RemoveQuestion(Guid questionId, DateTimeOffset now)
     {
-        EnsureDraft();
+        EnsureEditable(now);
         _questions.Remove(RequireQuestion(questionId));
         Renumber();
     }
 
-    /// <summary>Move a pergunta uma posicao para cima (-1) ou para baixo (+1), mantendo a ordem contigua.</summary>
-    public void MoveQuestion(Guid questionId, int offset)
+    /// <summary>Move a pergunta uma posição para cima (-1) ou para baixo (+1), mantendo a ordem contigua.</summary>
+    public void MoveQuestion(Guid questionId, int offset, DateTimeOffset now)
     {
-        EnsureDraft();
+        EnsureEditable(now);
         Guard.Requires(offset is -1 or 1, "Movimento inválido.");
 
         var ordered = OrderedQuestions.ToList();
@@ -255,7 +265,8 @@ public sealed class Round : Entity
                 .Select(o => new AnswerOptionDraft(o.Text, o.IsCorrect))
                 .ToList();
 
-            copy.AddQuestion(question.Text, question.MediaType, question.MediaUrl, question.Explanation, options);
+            copy.AddQuestion(
+                question.Text, question.MediaType, question.MediaUrl, question.Explanation, options, now);
         }
 
         return copy;
@@ -266,8 +277,10 @@ public sealed class Round : Entity
 
     public Question? QuestionAtOrder(int order) => _questions.SingleOrDefault(q => q.Order == order);
 
-    private void EnsureDraft() =>
-        Guard.State(IsDraft, "Rodada publicada não pode ser alterada.");
+    private void EnsureEditable(DateTimeOffset now) =>
+        Guard.State(
+            IsEditableAt(now),
+            "Rodada que já abriu não pode ser alterada.");
 
     private void Renumber()
     {

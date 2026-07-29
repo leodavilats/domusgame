@@ -110,7 +110,7 @@ export function AdminSeasonsPage() {
               <Button
                 variant="danger"
                 onClick={() => {
-                  if (window.confirm('Encerrar a temporada e congelar o podio dos 3 primeiros?')) {
+                  if (window.confirm('Encerrar a temporada e congelar o pódio dos 3 primeiros?')) {
                     void finish.run(season.id)
                   }
                 }}

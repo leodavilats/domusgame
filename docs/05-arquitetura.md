@@ -182,7 +182,7 @@ Todas as rotas sob `/api`. Autenticação por cookie. Erros em `ProblemDetails`.
 | `POST` | `/seasons/{id}/finish` | encerrar e congelar pódio (UC-29) |
 | `GET` | `/seasons/{id}/export` | CSV do ranking (UC-30) |
 | `GET`/`POST` | `/rounds` | listar / criar rascunho (UC-21) |
-| `GET`/`PUT`/`DELETE` | `/rounds/{id}` | detalhe / editar / excluir rascunho |
+| `GET`/`PUT`/`DELETE` | `/rounds/{id}` | detalhe / editar / excluir — permitido enquanto a rodada não abriu e não tem participações (RN-10) |
 | `PUT` | `/rounds/{id}/lesson` | lição (UC-22) |
 | `POST` | `/rounds/{id}/questions` | criar pergunta + alternativas (UC-23) |
 | `PUT`/`DELETE` | `/rounds/{id}/questions/{qid}` | editar / remover |

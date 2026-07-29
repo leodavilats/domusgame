@@ -236,6 +236,7 @@ export interface AdminRoundListItem {
   status: RoundStatus
   attemptCount: number
   canEdit: boolean
+  canDelete: boolean
 }
 
 export interface AdminRound {
@@ -245,6 +246,9 @@ export interface AdminRound {
   questions: AdminQuestion[]
   problems: string[]
   attemptCount: number
+  /** RN-10: rascunho, ou publicada que ainda nao abriu. */
+  canEdit: boolean
+  canDelete: boolean
 }
 
 export interface AdminParticipant {

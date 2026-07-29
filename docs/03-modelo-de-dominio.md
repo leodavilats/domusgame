@@ -149,7 +149,7 @@ Questions: List<Question>
 | --- | --- |
 | I-R1 | `WeekNumber ≥ 1`; `Title` obrigatório (≤ 120) |
 | I-R2 | `OpensAt < ClosesAt` |
-| I-R3 | Qualquer mutação (lição, perguntas, janela, parâmetros) exige `Status == Draft` (RN-10) |
+| I-R3 | Qualquer mutação (lição, perguntas, janela, parâmetros) exige `IsEditableAt(now)`: `Draft`, ou `Published` ainda não aberta (RN-10) |
 | I-R4 | `Questions` sempre com `Order` contíguo iniciando em 1 |
 | I-R5 | `Publish(now)` exige: lição completa, ≥ 1 pergunta, cada pergunta com 2–5 alternativas e exatamente 1 correta, `OpensAt < ClosesAt` (RN-08) |
 | I-R6 | `AvailabilityAt(now)`: `now < OpensAt` → `Scheduled`; `≤ ClosesAt` → `Open`; senão `Closed`. `Draft` nunca é `Open` para participante (RN-07, RN-09) |
@@ -157,7 +157,11 @@ Questions: List<Question>
 
 Métodos: `UpdateDetails`, `UpdateWindow`, `UpdateScoring`, `SetLesson`, `AddQuestion`,
 `UpdateQuestion`, `RemoveQuestion`, `MoveQuestion`, `ValidateForPublish() → IReadOnlyList<string>`,
-`Publish(now)`, `AvailabilityAt(now)`, `IsAnswerRevealedAt(now)`.
+`Publish(now)`, `AvailabilityAt(now)`, `IsAnswerRevealedAt(now)`, `IsEditableAt(now)`.
+
+> Todo mutador recebe `DateTimeOffset now`: a permissão de editar depende do relógio, não só do
+> status persistido. A exclusão da rodada é do serviço de aplicação, que combina `IsEditableAt(now)`
+> com a ausência de tentativas — o agregado `Round` não conhece `Attempt`.
 
 > Semana única (RN-11) e janelas não sobrepostas (RN-12) são regras **entre** rodadas: validadas no
 > serviço de aplicação com consulta ao banco + índice único em `(SeasonId, WeekNumber)`.

@@ -38,7 +38,6 @@ mensurável.
 - Múltiplos GCs / multi-tenant
 - Sorteio de brindes (a premiação é por mérito: top 3)
 - Recálculo de pontuação por correção de gabarito
-- Edição de rodada já publicada
 - Modo treino / responder rodadas antigas
 - Peso ou dificuldade por pergunta
 - Penalidade por resposta errada
@@ -111,9 +110,12 @@ optar por ficar fora do ranking (ele conhece o gabarito). Ver RN-22.
   pergunta**, cada pergunta tiver **2 a 5 alternativas** com **exatamente uma correta**, e
   `OpensAt < ClosesAt`.
 - **RN-09** — Rodada em `Draft` é invisível para participantes.
-- **RN-10** — Depois de publicada, a rodada **não pode ser editada nem despublicada**. Correção só
-  é possível enquanto está em `Draft`. (Consequência aceita: um erro de gabarito publicado
-  permanece; não há recálculo na v1.)
+- **RN-10** — A rodada é editável enquanto **não abriu**: sempre em `Draft` e também em
+  `Published` enquanto `now < OpensAt` (estado *Agendada*). **A partir da abertura ela é
+  imutável** — há respostas e pontuação em jogo, e mudar enunciado, gabarito ou parâmetros no
+  meio do caminho tornaria as tentativas incomparáveis entre si.
+  (Consequência aceita: um erro de gabarito percebido **depois** da abertura permanece; não há
+  recálculo na v1.)
 - **RN-11** — Não pode haver duas rodadas com o mesmo número de semana na mesma temporada.
 - **RN-12** — Rodadas publicadas de uma mesma temporada **não podem ter janelas sobrepostas**
   (garante "uma rodada aberta por vez").

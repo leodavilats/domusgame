@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Link, useParams } from 'react-router-dom'
+import { Link, useNavigate, useParams } from 'react-router-dom'
 import { api } from '../../api/client'
 import { useApi, useMutation } from '../../api/hooks'
 import type { AdminQuestion, AdminRound, QuestionMediaType } from '../../api/types'
@@ -40,7 +40,8 @@ export function AdminRoundEditorPage() {
   if (!round.data) return null
 
   const data = round.data
-  const editable = data.status === 'Draft'
+  // RN-10: o servidor decide (rascunho, ou publicada que ainda nao abriu).
+  const editable = data.canEdit
 
   return (
     <div className="space-y-4">
@@ -65,7 +66,7 @@ export function AdminRoundEditorPage() {
 
         {!editable && (
           <p className="mt-3 rounded-xl bg-amber-50 p-3 text-sm text-amber-900">
-            Rodada publicada não pode ser editada. Corrija antes de publicar (RN-10).
+            Esta rodada já abriu e não pode mais ser alterada: há respostas e pontuação em jogo.
           </p>
         )}
 
@@ -82,6 +83,7 @@ export function AdminRoundEditorPage() {
       <LessonEditor round={data} editable={editable} onSaved={round.reload} />
       <QuestionsEditor round={data} editable={editable} onChanged={round.reload} />
       <PublishCard round={data} onPublished={round.reload} />
+      <DangerCard round={data} />
     </div>
   )
 }
@@ -447,6 +449,51 @@ function QuestionForm({
 }
 
 // ---------------------------------------------------------------- publicacao
+
+/** Exclusao definitiva: so enquanto a rodada nao abriu e nao tem participacoes. */
+function DangerCard({ round }: { round: AdminRound }) {
+  const navigate = useNavigate()
+
+  const remove = useMutation(async () => {
+    await api.del(`/api/admin/rounds/${round.round.id}`)
+    navigate('/admin/rodadas', { replace: true })
+  })
+
+  if (!round.canDelete) {
+    // Sem o botao, mas com o motivo: silencio faria o admin procurar o que nao existe.
+    if (!round.canEdit) return null
+
+    return (
+      <Card>
+        <p className="text-xs text-slate-500">
+          Esta rodada já tem {round.attemptCount} participação(ões) e por isso não pode ser excluída.
+        </p>
+      </Card>
+    )
+  }
+
+  return (
+    <Card className="border-red-200">
+      <h2 className="text-sm font-semibold text-red-700">Excluir rodada</h2>
+      <p className="mt-1 text-xs text-slate-600">
+        Apaga a rodada, a lição e as perguntas. Só é possível porque ela ainda não abriu.
+      </p>
+
+      {remove.error ? <div className="mt-2"><ErrorBox message={remove.error} /></div> : null}
+
+      <Button
+        variant="danger"
+        className="mt-3"
+        loading={remove.loading}
+        onClick={() => {
+          if (window.confirm('Excluir esta rodada? A ação não pode ser desfeita.')) void remove.run()
+        }}
+      >
+        Excluir rodada
+      </Button>
+    </Card>
+  )
+}
 
 function PublishCard({ round, onPublished }: { round: AdminRound; onPublished: () => void }) {
   const [previewing, setPreviewing] = useState(false)

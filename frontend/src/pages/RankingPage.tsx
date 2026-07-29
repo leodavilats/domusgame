@@ -101,7 +101,7 @@ function RankingList({ ranking }: { ranking: Ranking }) {
 
       {meOutsideList && (
         <Card className="border-brand-300 bg-brand-50">
-          <p className="mb-2 text-xs font-semibold uppercase text-brand-700">Sua posicao</p>
+          <p className="mb-2 text-xs font-semibold uppercase text-brand-700">Sua posição</p>
           <ul>
             <Row entry={meOutsideList} />
           </ul>

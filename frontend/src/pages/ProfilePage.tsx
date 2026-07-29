@@ -38,7 +38,7 @@ export function ProfilePage() {
 
   return (
     <div className="space-y-4">
-      <PageTitle subtitle="Como Você aparece para o restante do GC">Meu perfil</PageTitle>
+      <PageTitle subtitle="Como você aparece para o restante do GC">Meu perfil</PageTitle>
 
       <Card>
         <form
@@ -81,7 +81,7 @@ export function ProfilePage() {
             <span className="text-sm text-slate-700">
               Aparecer no ranking publico
               <span className="block text-xs text-slate-500">
-                Desmarcado, Você continua pontuando e vendo sua posicao, mas não aparece na lista.
+                Desmarcado, Você continua pontuando e vendo sua posição, mas não aparece na lista.
               </span>
             </span>
           </label>

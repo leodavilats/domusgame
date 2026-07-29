@@ -25,16 +25,20 @@ internal static class TestData
         DateTimeOffset? opensAt = null,
         DateTimeOffset? closesAt = null)
     {
+        var createdAt = (opensAt ?? Sunday13h).AddDays(-1);
+
         var round = Round.CreateDraft(
             Guid.CreateVersion7(),
             weekNumber: 1,
-            title: "Semana 1 - A graca",
+            title: "Semana 1 - A graça",
             opensAt: opensAt ?? Sunday13h,
             closesAt: closesAt ?? Saturday2359,
             scoring: scoring ?? RoundScoringSettings.Default,
-            now: (opensAt ?? Sunday13h).AddDays(-1));
+            now: createdAt);
 
-        round.SetLesson(Lesson.Create("A graca de Deus", "Efesios 2.1-10", "Conteúdo da licao.", null));
+        round.SetLesson(
+            Lesson.Create("A graça de Deus", "Efesios 2.1-10", "Conteúdo da licao.", null),
+            createdAt);
 
         for (var i = 1; i <= questionCount; i++)
         {
@@ -47,7 +51,8 @@ internal static class TestData
                     new AnswerOptionDraft($"Certa {i}", true),
                     new AnswerOptionDraft($"Errada {i}a", false),
                     new AnswerOptionDraft($"Errada {i}b", false)
-                ]);
+                ],
+                createdAt);
         }
 
         return round;

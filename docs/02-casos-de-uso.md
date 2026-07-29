@@ -236,7 +236,7 @@ rodada em rascunho ou agendada **não** é exibida (RN-09).
 
 ## UC-23 — Gerenciar perguntas e alternativas
 
-**Pré-condição:** rodada em `Draft` (RN-10)
+**Pré-condição:** rodada ainda não aberta — `Draft` ou `Published` agendada (RN-10)
 
 1. Admin adiciona pergunta: enunciado, mídia opcional (tipo + URL), explicação.
 2. Adiciona de 2 a 5 alternativas e marca **exatamente uma** como correta (RN-08).
@@ -244,7 +244,7 @@ rodada em rascunho ou agendada **não** é exibida (RN-09).
 
 **Exceções**
 - **E1** Nenhuma ou mais de uma alternativa correta → validação impede salvar.
-- **E2** Rodada publicada → 409 ("rodada publicada não pode ser editada").
+- **E2** Rodada já aberta → 409 ("rodada que já abriu não pode ser alterada").
 
 ---
 
