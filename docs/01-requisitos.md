@@ -61,8 +61,8 @@ mensurável.
 | **Participante** | Membro de uma sala. Responde rodadas, vê sua pontuação, histórico e rankings **da sua sala**. |
 | **Administrador** | Tudo do participante, mais: gerencia temporadas, rodadas, lições, perguntas e vê estatísticas **da sua sala**. |
 
-Decisão: o administrador **também pode participar**, mas sua pontuação é sinalizada e ele pode
-optar por ficar fora do ranking (ele conhece o gabarito). Ver RN-22.
+Decisão: o administrador **também pode participar**, e sua pontuação é sinalizada como tal (ele
+conhece o gabarito). Ver RN-22.
 
 ---
 
@@ -147,9 +147,10 @@ optar por ficar fora do ranking (ele conhece o gabarito). Ver RN-22.
   efetivamente respondido.
 - **RN-21** — O **gabarito, as explicações e as respostas dos outros participantes** só são
   visíveis após `ClosesAt`. Nenhum endpoint retorna `IsCorrect` de alternativas antes disso.
-- **RN-22** — O participante escolhe se aparece no ranking público (`ShowInRanking`). Quem opta por
-  não aparecer continua acumulando pontos e vê sua própria posição, mas não é listado para os
-  outros.
+- **RN-22** — **Todo membro da sala aparece no ranking.** Não existe opt-out: o ranking de um grupo
+  de 30 pessoas que já conversam entre si não fica mais confortável com ausências, fica confuso —
+  quem sumiu da lista continua pontuando e a soma deixa de fechar para quem olha.
+  *(Regra revisada: a versão anterior tinha `ShowInRanking` por participante, editável no perfil.)*
 
 ### 5.4 Pontuação
 
@@ -200,7 +201,8 @@ optar por ficar fora do ranking (ele conhece o gabarito). Ver RN-22.
 - **RN-35** — O administrador pode gerar um novo código da sala, invalidando o anterior. Quem já
   entrou **continua dentro**: o código controla a entrada, não a permanência.
 - **RN-36** — O participante tem um **nome de exibição** obrigatório (é o que aparece no ranking).
-  Foto é opcional (informada por URL).
+  A **foto vem da conta do Google** e não é editável no app: sem upload e sem campo de URL, quem
+  quiser trocar troca no Google. Quem entra com e-mail e senha fica com as iniciais.
 - **RN-37** — Não coletamos data de nascimento, telefone nem endereço. O único dado pessoal
   obrigatório é nome de exibição + e-mail (identidade da conta).
 - **RN-38** — O participante pode excluir sua conta. Suas tentativas são anonimizadas (o histórico
@@ -241,7 +243,7 @@ optar por ficar fora do ranking (ele conhece o gabarito). Ver RN-22.
 | RF-01 | Cadastrar-se com e-mail + senha ou com a conta do Google, sem código de convite (RN-34). |
 | RF-16 | Entrar em uma sala com o código de convite e ver a partir daí o conteúdo do GC (RN-41, RN-42). |
 | RF-02 | Autenticar-se e manter sessão em sessões longas no celular. |
-| RF-03 | Editar perfil: nome de exibição, foto (URL), preferência de aparecer no ranking. |
+| RF-03 | Editar o perfil: **nome de exibição**. A foto vem do Google (RN-36) e o ranking não tem opt-out (RN-22). |
 | RF-04 | Ver a home com: rodada da semana (estado e contagem regressiva), sua pontuação na temporada, sua posição no ranking e seu streak de participação. |
 | RF-05 | Ler a lição da semana (título, referência bíblica, texto e link externo). |
 | RF-06 | Iniciar a tentativa da rodada aberta, após tela de aviso das regras (tentativa única, tempo por pergunta, sem voltar). |
@@ -304,7 +306,7 @@ optar por ficar fora do ranking (ele conhece o gabarito). Ver RN-22.
 | 24 | Cadastro | Cadastro aberto; o código de convite passou a ser a porta da **sala**, não do cadastro | Conta e pertencimento são coisas diferentes: separá-las abre caminho para vários GCs sem mudar o login |
 | 25 | Login | **E-mail/senha** (ASP.NET Core Identity) **+ Google** | Sem infraestrutura de e-mail (magic link exigiria SMTP). O Google entrou depois, a pedido do dono do produto: elimina a senha esquecida, que era o suporte manual mais frequente |
 | 26–27 | Faixa etária / menores | Não coletar data de nascimento; sem ranking por idade | Menos dado pessoal, menos risco LGPD, menos tela |
-| 28 | Identidade pública | Nome de exibição obrigatório, foto opcional, opt-out do ranking | Simples e respeitoso |
+| 28 | Identidade pública | Nome de exibição obrigatório; foto vinda do Google; **sem** opt-out do ranking | Uma decisão a menos para o participante e um ranking que fecha a conta. Revisto depois da v1: o opt-out existia e foi retirado |
 | 29 | Notificações | Nenhuma automática na v1; divulgação pelo grupo de WhatsApp + contagem regressiva na home | Push/e-mail/WhatsApp custam infraestrutura para 30 pessoas que já têm grupo |
 | 30 | Compartilhamento | Web Share API com texto + link (card em imagem fica no backlog) | 90% do valor com 5% do esforço |
 | 31 | PWA | Instalável, exige conexão para responder | Integridade do cronômetro |
@@ -361,7 +363,7 @@ optar por ficar fora do ranking (ele conhece o gabarito). Ver RN-22.
 | Erro de gabarito publicado | Injustiça sem correção possível (RN-10) | Pré-visualização obrigatória antes de publicar + validação de publicação |
 | Perda de conexão no meio do quiz | Participante perde pontos | Resposta persistida pergunta a pergunta; tentativa retomável (RN-19) |
 | Participante esquece de responder | Queda na participação | Contagem regressiva na home; painel do admin lista quem falta; lembrete manual no grupo |
-| Administrador competindo com acesso ao gabarito | Desconfiança | Sinalização e opção de ficar fora do ranking (RN-22) |
+| Administrador competindo com acesso ao gabarito | Desconfiança | Sinalização do papel na lista de pessoas e nas estatísticas (RN-22) |
 | Baixa adesão inicial | Projeto morre | v1 enxuta: se o ciclo semanal funcionar, gamificação avançada entra depois |
 
 ---

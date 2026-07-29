@@ -117,7 +117,6 @@ public sealed class DatabaseSeeder(
         db.Participants.Add(Participant.Register(
             user.Id,
             options.AdminDisplayName,
-            avatarUrl: null,
             now,
             ParticipantRole.Admin));
 
@@ -166,7 +165,7 @@ public sealed class DatabaseSeeder(
         if (participant is null)
         {
             db.Participants.Add(Participant.Register(
-                userId, options.AdminDisplayName, null, now, ParticipantRole.Admin));
+                userId, options.AdminDisplayName, now, ParticipantRole.Admin));
         }
         else if (!participant.IsAdmin)
         {
@@ -306,7 +305,7 @@ public sealed class DatabaseSeeder(
                 if (!result.Succeeded) continue;
             }
 
-            var participant = Participant.Register(user.Id, names[i], null, now.AddDays(-20 + i));
+            var participant = Participant.Register(user.Id, names[i], now.AddDays(-20 + i));
             db.Participants.Add(participant);
             await db.SaveChangesAsync(ct);
 

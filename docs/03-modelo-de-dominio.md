@@ -193,15 +193,17 @@ AnswerOption: Id, QuestionId, Order, Text, IsCorrect
 ### `Participant`
 
 ```
-Id (mesmo id do usuário de identidade), DisplayName, AvatarUrl?, ShowInRanking,
+Id (mesmo id do usuário de identidade), DisplayName, AvatarUrl?,
 Role, JoinedAt, IsRemoved
 ```
 
 | Invariante | Regra |
 | --- | --- |
 | I-P1 | `DisplayName` obrigatório, 2–40 caracteres, único (case-insensitive) |
-| I-P2 | `Anonymize()` define `DisplayName = "Participante removido"`, limpa avatar, `IsRemoved = true`, `ShowInRanking = false` (RN-38) |
-| I-P3 | Participante removido não pode ser promovido nem autenticar |
+| I-P2 | `Anonymize()` define `DisplayName = "Participante removido"`, limpa avatar, `IsRemoved = true` (RN-38) |
+| I-P3 | Participante removido não pode ser promovido, autenticar nem receber foto |
+| I-P4 | `UpdateProfile(displayName)` altera **só** o nome. A foto tem um único escritor, `SetPhoto`, chamado no retorno do Google (RN-36) |
+| I-P5 | `SetPhoto` exige URL absoluta de até 500 caracteres, ou `null` para limpar |
 
 > `Participant` é domínio puro. As credenciais ficam em `AppUser` (ASP.NET Core Identity), na
 > infraestrutura, compartilhando a mesma chave primária. O domínio nunca conhece Identity.

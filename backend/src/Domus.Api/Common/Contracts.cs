@@ -9,7 +9,6 @@ public sealed record MeDto(
     Guid Id,
     string DisplayName,
     string? AvatarUrl,
-    bool ShowInRanking,
     bool IsAdmin,
     MyRoomSummaryDto? Room);
 

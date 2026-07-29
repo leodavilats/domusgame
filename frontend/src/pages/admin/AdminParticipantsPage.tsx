@@ -104,9 +104,6 @@ export function AdminParticipantsPage() {
                     {participant.displayName}{' '}
                     {participant.role === 'Admin' && <Badge tone="info">admin</Badge>}
                     {participant.isRemoved && <Badge tone="neutral">removido</Badge>}
-                    {!participant.showInRanking && !participant.isRemoved && (
-                      <Badge tone="neutral">fora do ranking</Badge>
-                    )}
                   </p>
                   <p className="text-xs text-slate-500">
                     {participant.seasonPoints} pts · {participant.roundsPlayed} rodada(s) · entrou em{' '}

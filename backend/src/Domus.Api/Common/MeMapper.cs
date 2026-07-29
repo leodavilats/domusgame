@@ -15,7 +15,6 @@ public static class MeMapper
             participant.Id,
             participant.DisplayName,
             participant.AvatarUrl,
-            participant.ShowInRanking,
             participant.IsAdmin,
             room is null ? null : new MyRoomSummaryDto(room.Id, room.Name));
     }

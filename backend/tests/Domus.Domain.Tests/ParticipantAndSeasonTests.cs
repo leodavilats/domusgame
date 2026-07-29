@@ -11,13 +11,13 @@ public class ParticipantTests
     private static readonly DateTimeOffset Now = new(2026, 8, 1, 12, 0, 0, TimeSpan.Zero);
 
     [Fact]
-    public void Registro_normaliza_nome_e_entra_no_ranking()
+    public void Registro_normaliza_nome_e_nasce_sem_foto()
     {
-        var participant = Participant.Register(Guid.CreateVersion7(), "  Leonardo  ", null, Now);
+        var participant = Participant.Register(Guid.CreateVersion7(), "  Leonardo  ", Now);
 
         Assert.Equal("Leonardo", participant.DisplayName);
         Assert.Equal("LEONARDO", participant.NormalizedDisplayName);
-        Assert.True(participant.ShowInRanking);
+        Assert.Null(participant.AvatarUrl);
         Assert.False(participant.IsAdmin);
     }
 
@@ -28,28 +28,43 @@ public class ParticipantTests
     public void Nome_invalido_e_recusado(string name)
     {
         Assert.Throws<DomainValidationException>(() =>
-            Participant.Register(Guid.CreateVersion7(), name, null, Now));
+            Participant.Register(Guid.CreateVersion7(), name, Now));
     }
 
     [Fact]
     public void Foto_precisa_ser_url_absoluta()
     {
-        Assert.Throws<DomainValidationException>(() =>
-            Participant.Register(Guid.CreateVersion7(), "Leonardo", "foto.png", Now));
+        var participant = Participant.Register(Guid.CreateVersion7(), "Leonardo", Now);
+
+        Assert.Throws<DomainValidationException>(() => participant.SetPhoto("foto.png"));
     }
 
     [Fact]
-    public void Exclusao_anonimiza_e_tira_do_ranking()
+    public void Foto_aceita_url_absoluta_e_pode_ser_limpa()
     {
-        var participant = Participant.Register(Guid.CreateVersion7(), "Leonardo", null, Now, ParticipantRole.Admin);
+        var participant = Participant.Register(Guid.CreateVersion7(), "Leonardo", Now);
+
+        participant.SetPhoto("https://lh3.googleusercontent.com/a/foto=s96-c");
+        Assert.Equal("https://lh3.googleusercontent.com/a/foto=s96-c", participant.AvatarUrl);
+
+        participant.SetPhoto(null);
+        Assert.Null(participant.AvatarUrl);
+    }
+
+    [Fact]
+    public void Exclusao_anonimiza_e_apaga_a_foto()
+    {
+        var participant = Participant.Register(Guid.CreateVersion7(), "Leonardo", Now, ParticipantRole.Admin);
+        participant.SetPhoto("https://exemplo.local/foto.png");
 
         participant.Anonymize();
 
         Assert.True(participant.IsRemoved);
         Assert.Equal(Participant.RemovedDisplayName, participant.DisplayName);
-        Assert.False(participant.ShowInRanking);
+        Assert.Null(participant.AvatarUrl);
         Assert.False(participant.IsAdmin);
         Assert.Throws<DomainRuleException>(() => participant.ChangeRole(ParticipantRole.Admin));
+        Assert.Throws<DomainRuleException>(() => participant.SetPhoto("https://exemplo.local/outra.png"));
     }
 }
 

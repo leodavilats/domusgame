@@ -40,7 +40,7 @@ public static class AuthEndpoints
         CancellationToken ct)
     {
         var id = Guid.CreateVersion7();
-        var participant = Participant.Register(id, request.DisplayName, null, clock.GetUtcNow());
+        var participant = Participant.Register(id, request.DisplayName, clock.GetUtcNow());
 
         await EnsureDisplayNameIsFreeAsync(db, participant.NormalizedDisplayName, null, ct);
 
@@ -174,7 +174,7 @@ public static class AuthEndpoints
         Participant participant;
         try
         {
-            participant = Participant.Register(id, displayName, null, clock.GetUtcNow());
+            participant = Participant.Register(id, displayName, clock.GetUtcNow());
         }
         catch (DomainValidationException)
         {
@@ -216,7 +216,7 @@ public static class AuthEndpoints
 
         try
         {
-            participant.UpdateProfile(participant.DisplayName, photo, participant.ShowInRanking);
+            participant.SetPhoto(photo);
             await db.SaveChangesAsync(ct);
         }
         catch (DomainValidationException)

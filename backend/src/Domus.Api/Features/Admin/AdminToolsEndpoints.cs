@@ -366,7 +366,7 @@ public static class AdminToolsEndpoints
             var result = await userManager.CreateAsync(user, "Teste12345");
             if (!result.Succeeded) continue;
 
-            var participant = Participant.Register(user.Id, $"Teste {suffix}", null, now);
+            var participant = Participant.Register(user.Id, $"Teste {suffix}", now);
             db.Participants.Add(participant);
             await db.SaveChangesAsync(ct);
 

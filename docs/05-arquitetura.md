@@ -183,7 +183,7 @@ Todas as rotas sob `/api`. Autenticação por cookie. Erros em `ProblemDetails`.
 | `GET` | `/api/attempts/{id}/result` | resultado (sem gabarito se aberta) (UC-08) |
 | `GET` | `/api/rankings/round/{roundId}` | ranking semanal (UC-10) |
 | `GET` | `/api/rankings/season` | `?seasonId=` (default: ativa) (UC-10) |
-| `PUT` | `/api/profile` | `{ displayName, avatarUrl, showInRanking }` (UC-12) |
+| `PUT` | `/api/profile` | `{ displayName }` — único campo editável (UC-12, RN-22, RN-36) |
 | `POST` | `/api/profile/delete` | anonimiza a conta (UC-12) — `POST` porque a confirmação vai no corpo |
 
 ### Administrador (`/api/admin/*`, exige claim `role=Admin`)

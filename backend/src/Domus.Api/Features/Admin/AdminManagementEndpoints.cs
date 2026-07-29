@@ -16,7 +16,6 @@ public sealed record AdminParticipantDto(
     string DisplayName,
     string? AvatarUrl,
     ParticipantRole Role,
-    bool ShowInRanking,
     bool IsRemoved,
     DateTimeOffset JoinedAt,
     int SeasonPoints,
@@ -122,7 +121,7 @@ public static class AdminManagementEndpoints
         {
             var stat = stats.SingleOrDefault(s => s.ParticipantId == p.Id);
             return new AdminParticipantDto(
-                p.Id, p.DisplayName, p.AvatarUrl, p.Role, p.ShowInRanking, p.IsRemoved, p.JoinedAt,
+                p.Id, p.DisplayName, p.AvatarUrl, p.Role, p.IsRemoved, p.JoinedAt,
                 stat?.Points ?? 0, stat?.Rounds ?? 0, stat?.Last);
         });
 

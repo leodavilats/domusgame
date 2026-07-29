@@ -10,7 +10,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Domus.Api.Features.Profile;
 
-public sealed record UpdateProfileRequest(string DisplayName, string? AvatarUrl, bool ShowInRanking);
+public sealed record UpdateProfileRequest(string DisplayName);
 
 public sealed record DeleteAccountRequest(string Confirmation);
 
@@ -43,7 +43,7 @@ public static class ProfileEndpoints
 
         await AuthEndpoints.EnsureDisplayNameIsFreeAsync(db, Participant.Normalize(displayName), meId, ct);
 
-        participant.UpdateProfile(displayName, request.AvatarUrl, request.ShowInRanking);
+        participant.UpdateProfile(displayName);
         await db.SaveChangesAsync(ct);
 
         var user = await userManager.FindByIdAsync(meId.ToString());

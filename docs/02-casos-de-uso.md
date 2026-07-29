@@ -44,7 +44,7 @@ só aparece depois, para entrar na sala (UC-14).
 **Fluxo principal**
 1. Visitante acessa `/cadastro`.
 2. Informa nome de exibição, e-mail e senha — ou escolhe "Criar conta com o Google".
-3. Sistema cria a conta com papel `Participant` e `ShowInRanking = true`, **sem sala**.
+3. Sistema cria a conta com papel `Participant`, **sem sala** e sem foto.
 4. Sistema autentica e redireciona para o painel inicial, que oferece entrar em uma sala.
 
 **Exceções**
@@ -204,7 +204,8 @@ rodada em rascunho ou agendada **não** é exibida (RN-09).
 2. **Semana**: só de rodadas encerradas; ordena por pontos ↓, tempo total ↑ (RN-30).
 3. **Temporada**: soma dos pontos das rodadas encerradas; desempate por tempo acumulado (RN-31).
 4. Cada linha mostra posição, nome de exibição, foto, pontos e tempo. A linha do próprio usuário é destacada e sempre visível, mesmo fora do top exibido.
-5. Quem optou por não aparecer é omitido da lista, mas vê sua própria posição real (RN-22).
+5. **Todos os membros da sala aparecem** — não há como se omitir (RN-22). Contas excluídas aparecem
+   como "Participante removido" nas rodadas em que participaram (RN-38).
 
 ---
 
@@ -218,7 +219,8 @@ rodada em rascunho ou agendada **não** é exibida (RN-09).
 
 ## UC-12 — Editar perfil / excluir conta
 
-1. Participante altera nome de exibição, URL da foto e a preferência de aparecer no ranking.
+1. Participante altera o **nome de exibição** — o único campo editável. A foto é a da conta do
+   Google (RN-36) e o ranking não tem opt-out (RN-22).
 2. Para excluir a conta, confirma digitando o nome de exibição.
 3. Sistema anonimiza: `DisplayName = "Participante removido"`, e-mail e credenciais apagados, tentativas preservadas sem vínculo pessoal (RN-38).
 

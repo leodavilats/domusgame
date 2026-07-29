@@ -22,7 +22,6 @@ export interface Me {
   id: string
   displayName: string
   avatarUrl?: string | null
-  showInRanking: boolean
   isAdmin: boolean
   room?: MyRoomSummary | null
 }
@@ -263,7 +262,6 @@ export interface AdminParticipant {
   displayName: string
   avatarUrl?: string | null
   role: ParticipantRole
-  showInRanking: boolean
   isRemoved: boolean
   joinedAt: string
   seasonPoints: number

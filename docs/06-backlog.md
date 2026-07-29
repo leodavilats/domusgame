@@ -117,7 +117,7 @@ trocasse de trimestre.
 | 4.5 | `GET /attempts/{id}/result` | sem gabarito com rodada aberta |
 | 4.6 | `GET /rounds`, `GET /rounds/{id}` | histórico e lição |
 | 4.7 | `GET /rounds/{id}/review` | 403 com rodada aberta; gabarito completo depois |
-| 4.8 | `GET /rankings/round/{id}`, `/rankings/season` | desempate por tempo; `ShowInRanking` respeitado |
+| 4.8 | `GET /rankings/round/{id}`, `/rankings/season` | desempate por tempo; todos os membros da sala listados (RN-22) |
 | 4.9 | **Teste anti-vazamento** de todas as rotas de rodada aberta | nenhuma resposta contém a alternativa correta |
 | 4.10 | Teste de concorrência: 2 `POST /attempts` simultâneos | uma tentativa no banco, sem 500 |
 
@@ -188,6 +188,9 @@ trocasse de trimestre.
 | 10.5 | Escopo por sala em **toda** leitura e escrita, inclusive por id | rodada/temporada de outra sala = 404 |
 | 10.6 | Remoção da senha temporária (rota, tela e regra) | nenhuma senha de terceiro trafega |
 | 10.7 | Front: cadastro sem código, `/sala`, painel vazio, nome da sala no cabeçalho | fluxo cadastro → entrar na sala → desafio |
+| 10.8 | Foto adotada do Google nos três caminhos do callback | claim `picture` mapeada; não sobrescreve foto existente |
+| 10.9 | Ferramenta "Sair da sala" | remove só a própria filiação e devolve o código para voltar |
+| 10.10 | Perfil só com nome: foto do Google e `ShowInRanking` removidos | migration derruba a coluna; ranking lista todos |
 
 ## Épico 9 — Fechamento
 

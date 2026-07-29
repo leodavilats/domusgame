@@ -23,7 +23,6 @@ public sealed class ParticipantConfiguration : IEntityTypeConfiguration<Particip
             .IsRequired();
 
         builder.Property(p => p.AvatarUrl).HasMaxLength(500);
-        builder.Property(p => p.ShowInRanking).IsRequired();
         builder.Property(p => p.Role).IsRequired();
         builder.Property(p => p.JoinedAt).IsRequired();
         builder.Property(p => p.IsRemoved).IsRequired();

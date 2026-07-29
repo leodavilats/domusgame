@@ -4,26 +4,20 @@ import { api } from '../api/client'
 import { useMutation } from '../api/hooks'
 import type { Me } from '../api/types'
 import { useSession } from '../auth/SessionContext'
-import { Button, Card, ErrorBox, Field, Input, PageTitle } from '../components/ui'
+import { Avatar, Button, Card, ErrorBox, Field, Input, PageTitle } from '../components/ui'
 
 export function ProfilePage() {
   const { me, setMe, logout } = useSession()
   const navigate = useNavigate()
 
   const [displayName, setDisplayName] = useState(me?.displayName ?? '')
-  const [avatarUrl, setAvatarUrl] = useState(me?.avatarUrl ?? '')
-  const [showInRanking, setShowInRanking] = useState(me?.showInRanking ?? true)
   const [saved, setSaved] = useState(false)
 
   const [confirmingDelete, setConfirmingDelete] = useState(false)
   const [confirmation, setConfirmation] = useState('')
 
   const save = useMutation(async () => {
-    const updated = await api.put<Me>('/api/profile', {
-      displayName,
-      avatarUrl: avatarUrl.trim() === '' ? null : avatarUrl.trim(),
-      showInRanking,
-    })
+    const updated = await api.put<Me>('/api/profile', { displayName })
 
     setMe(updated)
     setSaved(true)
@@ -52,6 +46,15 @@ export function ProfilePage() {
           {save.error ? <ErrorBox message={save.error} /> : null}
           {saved ? <p className="rounded-xl bg-emerald-50 p-3 text-sm text-emerald-800">Perfil atualizado.</p> : null}
 
+          <div className="flex items-center gap-3 rounded-xl bg-slate-50 p-3">
+            <Avatar name={me?.displayName ?? '?'} url={me?.avatarUrl} size={48} />
+            <p className="text-xs text-slate-600">
+              {me?.avatarUrl
+                ? 'Sua foto vem da sua conta do Google. Para trocar, troque a foto por lá.'
+                : 'Entre com o Google para que sua foto apareça aqui e no ranking.'}
+            </p>
+          </div>
+
           <Field label="Nome de exibição" hint="É o nome que aparece no ranking.">
             <Input
               required
@@ -61,30 +64,6 @@ export function ProfilePage() {
               onChange={(event) => setDisplayName(event.target.value)}
             />
           </Field>
-
-          <Field label="Foto (URL)" hint="Opcional. Deve começar com https://">
-            <Input
-              type="url"
-              value={avatarUrl}
-              placeholder="https://..."
-              onChange={(event) => setAvatarUrl(event.target.value)}
-            />
-          </Field>
-
-          <label className="flex items-center gap-3 rounded-xl bg-slate-50 p-3">
-            <input
-              type="checkbox"
-              className="h-5 w-5"
-              checked={showInRanking}
-              onChange={(event) => setShowInRanking(event.target.checked)}
-            />
-            <span className="text-sm text-slate-700">
-              Aparecer no ranking público
-              <span className="block text-xs text-slate-500">
-                Desmarcado, você continua pontuando e vendo sua posição, mas não aparece na lista.
-              </span>
-            </span>
-          </label>
 
           <Button type="submit" full loading={save.loading}>
             Salvar

@@ -143,7 +143,6 @@ public sealed class DomusQueries(DomusDbContext db, TimeProvider clock)
                     p.Id,
                     p.DisplayName,
                     p.AvatarUrl,
-                    p.ShowInRanking,
                     a.TotalPoints,
                     a.TotalTimeMs
                 })
@@ -151,7 +150,7 @@ public sealed class DomusQueries(DomusDbContext db, TimeProvider clock)
 
         var rows = raw
             .Select(r => new RankingRow(
-                r.Id, r.DisplayName, r.AvatarUrl, r.ShowInRanking, r.TotalPoints, r.TotalTimeMs, 1))
+                r.Id, r.DisplayName, r.AvatarUrl, r.TotalPoints, r.TotalTimeMs, 1))
             .ToList();
 
         return Build($"Semana {round.WeekNumber}", "round", rows, meId);
@@ -187,7 +186,7 @@ public sealed class DomusQueries(DomusDbContext db, TimeProvider clock)
 
         var participants = await db.Participants.AsNoTracking()
             .Where(p => !p.IsRemoved && memberIds.Contains(p.Id))
-            .Select(p => new { p.Id, p.DisplayName, p.AvatarUrl, p.ShowInRanking })
+            .Select(p => new { p.Id, p.DisplayName, p.AvatarUrl })
             .ToListAsync(ct);
 
         var rows = participants
@@ -195,7 +194,7 @@ public sealed class DomusQueries(DomusDbContext db, TimeProvider clock)
             {
                 byParticipant.TryGetValue(p.Id, out var total);
                 return new RankingRow(
-                    p.Id, p.DisplayName, p.AvatarUrl, p.ShowInRanking,
+                    p.Id, p.DisplayName, p.AvatarUrl,
                     total?.TotalPoints ?? 0,
                     total?.TotalTimeMs ?? 0,
                     total?.RoundsPlayed ?? 0);
@@ -243,17 +242,13 @@ public sealed class DomusQueries(DomusDbContext db, TimeProvider clock)
 
         var me = entries.SingleOrDefault(e => e.IsMe);
 
-        var hidden = ordered.Where(r => !r.ShowInRanking).Select(r => r.ParticipantId).ToHashSet();
-        var visible = entries.Where(e => e.IsMe || !hidden.Contains(e.ParticipantId)).ToList();
-
-        return new RankingDto(scope, title, visible, me);
+        return new RankingDto(scope, title, entries, me);
     }
 
     private sealed record RankingRow(
         Guid ParticipantId,
         string DisplayName,
         string? AvatarUrl,
-        bool ShowInRanking,
         int TotalPoints,
         long TotalTimeMs,
         int RoundsPlayed);

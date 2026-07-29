@@ -166,8 +166,7 @@ Checks: `CK_Rounds_Window` (`ClosesAt > OpensAt`), `CK_Rounds_Scoring`
 | `Id` | `uuid` | não | PK — **mesmo id** de `AspNetUsers.Id` |
 | `DisplayName` | `varchar(40)` | não | |
 | `NormalizedDisplayName` | `varchar(40)` | não | `UPPER(DisplayName)`, único (I-P1) |
-| `AvatarUrl` | `varchar(500)` | sim | |
-| `ShowInRanking` | `boolean` | não | default `true` |
+| `AvatarUrl` | `varchar(500)` | sim | vem da conta do Google; não editável no app (RN-36) |
 | `Role` | `int` | não | 0 = Participant, 1 = Admin |
 | `JoinedAt` | `timestamptz` | não | |
 | `IsRemoved` | `boolean` | não | default `false` |
@@ -268,7 +267,7 @@ ORDER  BY position;
 **Ranking da temporada** (RN-31/RN-33)
 
 ```sql
-SELECT p."Id", p."DisplayName", p."ShowInRanking",
+SELECT p."Id", p."DisplayName",
        COALESCE(SUM(a."TotalPoints"), 0) AS points,
        COALESCE(SUM(a."TotalTimeMs"), 0) AS time_ms,
        COUNT(a."Id")                     AS rounds_played,

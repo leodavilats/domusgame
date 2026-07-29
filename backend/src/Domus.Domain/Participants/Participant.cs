@@ -20,14 +20,12 @@ public sealed class Participant : Entity
         NormalizedDisplayName = string.Empty;
     }
 
-    private Participant(Guid id, string displayName, string? avatarUrl, ParticipantRole role, DateTimeOffset now)
+    private Participant(Guid id, string displayName, ParticipantRole role, DateTimeOffset now)
         : base(id)
     {
         DisplayName = ValidateDisplayName(displayName);
         NormalizedDisplayName = Normalize(DisplayName);
-        AvatarUrl = Guard.OptionalAbsoluteUrl(avatarUrl, "Foto", 500);
         Role = role;
-        ShowInRanking = true;
         JoinedAt = now;
     }
 
@@ -36,8 +34,6 @@ public sealed class Participant : Entity
     public string NormalizedDisplayName { get; private set; }
 
     public string? AvatarUrl { get; private set; }
-
-    public bool ShowInRanking { get; private set; }
 
     public ParticipantRole Role { get; private set; }
 
@@ -50,22 +46,25 @@ public sealed class Participant : Entity
     public static Participant Register(
         Guid id,
         string displayName,
-        string? avatarUrl,
         DateTimeOffset now,
         ParticipantRole role = ParticipantRole.Participant)
     {
         Guard.Requires(id != Guid.Empty, "Identificador do participante inválido.");
-        return new Participant(id, displayName, avatarUrl, role, now);
+        return new Participant(id, displayName, role, now);
     }
 
-    public void UpdateProfile(string displayName, string? avatarUrl, bool showInRanking)
+    public void UpdateProfile(string displayName)
     {
         Guard.State(!IsRemoved, "Conta removida não pode ser alterada.");
 
         DisplayName = ValidateDisplayName(displayName);
         NormalizedDisplayName = Normalize(DisplayName);
+    }
+
+    public void SetPhoto(string? avatarUrl)
+    {
+        Guard.State(!IsRemoved, "Conta removida não pode ser alterada.");
         AvatarUrl = Guard.OptionalAbsoluteUrl(avatarUrl, "Foto", 500);
-        ShowInRanking = showInRanking;
     }
 
     public void ChangeRole(ParticipantRole role)
@@ -80,7 +79,6 @@ public sealed class Participant : Entity
 
         IsRemoved = true;
         Role = ParticipantRole.Participant;
-        ShowInRanking = false;
         AvatarUrl = null;
         DisplayName = RemovedDisplayName;
         NormalizedDisplayName = Normalize($"{RemovedDisplayName} {Id:N}");
