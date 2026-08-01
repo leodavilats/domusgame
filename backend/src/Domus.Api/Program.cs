@@ -32,6 +32,7 @@ builder.Services.AddSingleton(TimeProvider.System);
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddScoped<CurrentUser>();
 builder.Services.AddScoped<DomusQueries>();
+builder.Services.AddScoped<BadgeEvaluator>();
 builder.Services.AddProblemDetails();
 
 builder.Services

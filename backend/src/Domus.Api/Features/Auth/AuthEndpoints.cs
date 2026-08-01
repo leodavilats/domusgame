@@ -36,6 +36,7 @@ public static class AuthEndpoints
         UserManager<AppUser> userManager,
         SignInManager<AppUser> signInManager,
         DomusQueries queries,
+        BadgeEvaluator badges,
         TimeProvider clock,
         CancellationToken ct)
     {
@@ -58,7 +59,7 @@ public static class AuthEndpoints
 
         await signInManager.SignInAsync(user, isPersistent: true);
 
-        return Results.Ok(await MeMapper.BuildAsync(participant, queries, ct));
+        return Results.Ok(await MeMapper.BuildAsync(participant, queries, badges, ct));
     }
 
     private static async Task<IResult> LoginAsync(
@@ -67,6 +68,7 @@ public static class AuthEndpoints
         UserManager<AppUser> userManager,
         SignInManager<AppUser> signInManager,
         DomusQueries queries,
+        BadgeEvaluator badges,
         CancellationToken ct)
     {
         const string invalid = "E-mail ou senha invalidos.";
@@ -87,7 +89,7 @@ public static class AuthEndpoints
                 : invalid);
         }
 
-        return Results.Ok(await MeMapper.BuildAsync(participant, queries, ct));
+        return Results.Ok(await MeMapper.BuildAsync(participant, queries, badges, ct));
     }
 
     private static async Task<IResult> LogoutAsync(SignInManager<AppUser> signInManager)
@@ -100,6 +102,7 @@ public static class AuthEndpoints
         CurrentUser currentUser,
         DomusDbContext db,
         DomusQueries queries,
+        BadgeEvaluator badges,
         CancellationToken ct)
     {
         var id = currentUser.RequireId();
@@ -107,7 +110,7 @@ public static class AuthEndpoints
         var participant = await db.Participants.AsNoTracking().SingleOrDefaultAsync(p => p.Id == id, ct)
             ?? throw new UnauthorizedException();
 
-        return Results.Ok(await MeMapper.BuildAsync(participant, queries, ct));
+        return Results.Ok(await MeMapper.BuildAsync(participant, queries, badges, ct));
     }
 
     private static async Task<IResult> GoogleStartAsync(

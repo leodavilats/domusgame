@@ -18,12 +18,18 @@ export interface MyRoom {
   memberCount: number
 }
 
+export interface EarnedBadge {
+  code: string
+  earnedAt: string
+}
+
 export interface Me {
   id: string
   displayName: string
   avatarUrl?: string | null
   isAdmin: boolean
   room?: MyRoomSummary | null
+  badges: EarnedBadge[]
 }
 
 export interface RoundSummary {
@@ -105,6 +111,7 @@ export interface AttemptResult {
   totalTimeMs: number
   answersRevealed: boolean
   position?: number | null
+  newlyAwardedBadges: string[]
 }
 
 export interface ReviewOption {

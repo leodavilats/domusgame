@@ -30,6 +30,7 @@ public static class ProfileEndpoints
         CurrentUser currentUser,
         DomusDbContext db,
         DomusQueries queries,
+        BadgeEvaluator badges,
         SignInManager<AppUser> signInManager,
         UserManager<AppUser> userManager,
         CancellationToken ct)
@@ -49,7 +50,7 @@ public static class ProfileEndpoints
         var user = await userManager.FindByIdAsync(meId.ToString());
         if (user is not null) await signInManager.RefreshSignInAsync(user);
 
-        return Results.Ok(await MeMapper.BuildAsync(participant, queries, ct));
+        return Results.Ok(await MeMapper.BuildAsync(participant, queries, badges, ct));
     }
 
     private static async Task<IResult> DeleteAsync(

@@ -5,6 +5,7 @@ import { useMutation } from '../api/hooks'
 import type { Me } from '../api/types'
 import { useSession } from '../auth/SessionContext'
 import { Avatar, Badge, Button, Callout, Card, ErrorBox, Field, Input, PageTitle } from '../components/ui'
+import { BadgeGrid } from '../components/badges/BadgeGrid'
 
 export function ProfilePage() {
   const { me, setMe, logout } = useSession()
@@ -54,6 +55,16 @@ export function ProfilePage() {
             ? 'Sua foto vem da sua conta do Google — para trocar, troque por lá.'
             : 'Entre com o Google para que sua foto apareça aqui e no ranking.'}
         </p>
+      </Card>
+
+      <Card>
+        <h2 className="text-sm font-semibold text-slate-700">Selos</h2>
+        <p className="mt-1 text-xs leading-relaxed text-slate-500">
+          Marcas conquistadas ao longo da jornada. Passe o mouse ou toque para ver o critério.
+        </p>
+        <div className="mt-3">
+          <BadgeGrid badges={me?.badges ?? []} />
+        </div>
       </Card>
 
       <Card>

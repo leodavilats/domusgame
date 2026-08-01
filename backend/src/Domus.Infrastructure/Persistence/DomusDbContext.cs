@@ -1,4 +1,5 @@
 using Domus.Domain.Attempts;
+using Domus.Domain.Badges;
 using Domus.Domain.Participants;
 using Domus.Domain.Rooms;
 using Domus.Domain.Rounds;
@@ -24,6 +25,7 @@ public sealed class DomusDbContext(DbContextOptions<DomusDbContext> options)
     public DbSet<Room> Rooms => Set<Room>();
     public DbSet<RoomMembership> RoomMemberships => Set<RoomMembership>();
     public DbSet<AuditLogEntry> AuditLogs => Set<AuditLogEntry>();
+    public DbSet<ParticipantBadge> ParticipantBadges => Set<ParticipantBadge>();
 
     protected override void OnModelCreating(ModelBuilder builder)
     {

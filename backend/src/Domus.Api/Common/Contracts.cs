@@ -5,12 +5,15 @@ namespace Domus.Api.Common;
 
 public sealed record MyRoomSummaryDto(Guid Id, string Name);
 
+public sealed record EarnedBadgeDto(string Code, DateTimeOffset EarnedAt);
+
 public sealed record MeDto(
     Guid Id,
     string DisplayName,
     string? AvatarUrl,
     bool IsAdmin,
-    MyRoomSummaryDto? Room);
+    MyRoomSummaryDto? Room,
+    IReadOnlyList<EarnedBadgeDto> Badges);
 
 public sealed record RoundSummaryDto(
     Guid Id,
@@ -79,7 +82,8 @@ public sealed record AttemptResultDto(
     int QuestionCount,
     long TotalTimeMs,
     bool AnswersRevealed,
-    int? Position);
+    int? Position,
+    IReadOnlyList<string> NewlyAwardedBadges);
 
 public sealed record ReviewQuestionDto(
     Guid QuestionId,

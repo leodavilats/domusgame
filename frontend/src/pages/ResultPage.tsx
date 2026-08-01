@@ -4,6 +4,7 @@ import { useNavigate, useParams } from 'react-router-dom'
 import { useApi } from '../api/hooks'
 import type { AttemptResult } from '../api/types'
 import { Button, Callout, Card, ErrorBox, Spinner, StatTile } from '../components/ui'
+import { BADGE_CATALOG, BadgeDefs, BadgeIcon } from '../components/badges/BadgeIcon'
 import { formatDuration } from '../lib/format'
 import { buildScoreMessage, share } from '../lib/share'
 import { useSession } from '../auth/SessionContext'
@@ -81,6 +82,27 @@ export function ResultPage() {
           <StatTile label="Posição" value={data.position ? `${data.position}º` : '—'} />
         </dl>
       </Card>
+
+      {data.newlyAwardedBadges.length > 0 && (
+        <Card className="animate-rise">
+          <BadgeDefs />
+          <p className="text-xs font-semibold uppercase tracking-wide text-brand-600">Novo selo conquistado!</p>
+          <div className="mt-2 flex flex-wrap gap-4">
+            {data.newlyAwardedBadges.map((code) => {
+              const info = BADGE_CATALOG[code]
+              if (!info) return null
+
+              return (
+                <div key={code} className="flex flex-col items-center gap-1 text-center">
+                  <BadgeIcon code={code} className="h-16 w-16" />
+                  <p className="text-xs font-semibold text-slate-700">{info.nome}</p>
+                  <p className="text-[11px] text-slate-500">{info.versiculo}</p>
+                </div>
+              )
+            })}
+          </div>
+        </Card>
+      )}
 
       {data.status === 'InProgress' && (
         <Callout tone="warning" title="Sua tentativa ainda está em andamento">

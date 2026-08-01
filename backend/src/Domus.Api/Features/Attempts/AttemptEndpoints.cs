@@ -114,6 +114,7 @@ public static class AttemptEndpoints
         CurrentUser currentUser,
         DomusDbContext db,
         DomusQueries queries,
+        BadgeEvaluator badges,
         CancellationToken ct)
     {
         var meId = currentUser.RequireId();
@@ -140,6 +141,17 @@ public static class AttemptEndpoints
             position = ranking.Me?.Position;
         }
 
+        IReadOnlyList<string> newlyAwarded = [];
+        if (attempt.IsFinished)
+        {
+            var room = await queries.GetMyRoomAsync(meId, ct);
+            if (room is not null)
+            {
+                var codes = await badges.EvaluateAndAwardAsync(room.Id, meId, ct);
+                newlyAwarded = codes.Select(c => c.ToString()).ToList();
+            }
+        }
+
         return Results.Ok(new AttemptResultDto(
             attempt.Id,
             queries.ToSummary(round),
@@ -150,7 +162,8 @@ public static class AttemptEndpoints
             attempt.QuestionCount,
             attempt.TotalTimeMs,
             revealed,
-            position));
+            position,
+            newlyAwarded));
     }
 
     private static Task<Attempt?> LoadAttemptAsync(DomusDbContext db, Guid roundId, Guid meId, CancellationToken ct) =>

@@ -1,3 +1,4 @@
+using Domus.Domain.Attempts;
 using Domus.Domain.Common;
 using Domus.Domain.Rounds;
 using Domus.Domain.Rooms;
@@ -128,6 +129,28 @@ public sealed class DomusQueries(DomusDbContext db, TimeProvider clock)
         }
 
         return streak;
+    }
+
+    public Task<int> GetSeasonRoundsCountAsync(Guid seasonId, CancellationToken ct = default) =>
+        db.Rounds.AsNoTracking()
+            .CountAsync(r => r.SeasonId == seasonId && r.Status == RoundStatus.Published, ct);
+
+    public Task<int> GetTotalRoundsPlayedAsync(Guid participantId, CancellationToken ct = default) =>
+        db.Attempts.AsNoTracking()
+            .CountAsync(a => a.ParticipantId == participantId && a.Status == AttemptStatus.Completed, ct);
+
+    public async Task<Guid?> GetFirstRoundIdAsync(Guid roomId, CancellationToken ct = default)
+    {
+        var seasonIds = await db.Seasons.AsNoTracking()
+            .Where(s => s.RoomId == roomId)
+            .Select(s => s.Id)
+            .ToListAsync(ct);
+
+        return await db.Rounds.AsNoTracking()
+            .Where(r => seasonIds.Contains(r.SeasonId) && r.Status == RoundStatus.Published)
+            .OrderBy(r => r.OpensAt)
+            .Select(r => (Guid?)r.Id)
+            .FirstOrDefaultAsync(ct);
     }
 
     public async Task<RankingDto> GetRoundRankingAsync(Round round, Guid meId, CancellationToken ct = default)
