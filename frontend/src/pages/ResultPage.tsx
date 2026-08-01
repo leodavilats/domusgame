@@ -1,4 +1,5 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
+import confetti from 'canvas-confetti'
 import { useNavigate, useParams } from 'react-router-dom'
 import { useApi } from '../api/hooks'
 import type { AttemptResult } from '../api/types'
@@ -29,6 +30,13 @@ export function ResultPage() {
         : accuracy >= 0.4
           ? 'Bom esforço!'
           : 'Semana de aprender!'
+
+  useEffect(() => {
+    if (accuracy !== 1) return
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return
+
+    void confetti({ particleCount: 140, spread: 80, origin: { y: 0.6 } })
+  }, [accuracy])
 
   async function onShare() {
     if (!data) return
